@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=5" />
+  <link rel="manifest" href="manifest.webmanifest?v=6" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
   <title>AJ's Garage</title>
 </head>
 <body>
@@ -91,26 +91,33 @@
 
           <form id="car-form" class="car-form">
             <label>Diecast Brand
-              <input id="diecast-brand" type="text" list="brand-options" placeholder="Choose or type a brand" />
-              <datalist id="brand-options">
-                <option value="Hot Wheels"></option>
-                <option value="Matchbox"></option>
-                <option value="M2"></option>
-                <option value="Cartuned"></option>
-                <option value="Maisto"></option>
-                <option value="Mini GT"></option>
-                <option value="Majorette"></option>
-                <option value="Other"></option>
-              </datalist>
+              <select id="diecast-brand">
+                <option value=""></option>
+                <option value="Hot Wheels">Hot Wheels</option>
+                <option value="Matchbox">Matchbox</option>
+                <option value="M2">M2</option>
+                <option value="Cartuned">Cartuned</option>
+                <option value="Maisto">Maisto</option>
+                <option value="Mini GT">Mini GT</option>
+                <option value="Majorette">Majorette</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label id="custom-brand-label" class="hidden">Other Brand
+              <input id="custom-brand" type="text" placeholder="Type brand name" />
             </label>
             <label>Model<input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" /></label>
             <div class="two-col">
               <label>Model Year
-                <input id="model-year" type="text" list="year-options" inputmode="numeric" placeholder="Choose or type a year" />
-                <datalist id="year-options"></datalist>
+                <select id="model-year">
+                  <option value=""></option>
+                </select>
               </label>
               <label>Scale<input id="scale" type="text" placeholder="1:64" /></label>
             </div>
+            <label id="custom-year-label" class="hidden">Other Model Year
+              <input id="custom-year" type="text" inputmode="numeric" placeholder="Type year" />
+            </label>
             <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
             <div class="two-col">
               <label>Quantity<input id="quantity" type="number" min="0" inputmode="numeric" placeholder="Optional" /></label>
@@ -132,6 +139,6 @@
     </section>
   </div>
 
-  <script type="module" src="app.js?v=5"></script>
+  <script type="module" src="app.js?v=6"></script>
 </body>
 </html>

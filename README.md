@@ -53,3 +53,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Removed Make from the app UI without deleting existing Make data from the database.
 - Added optional NIB / Loose status.
 - iPhone photo picker now allows camera or Photo Library selection.
+
+
+## v6
+- Brand is now a true dropdown with a visible Other option and custom brand field.
+- Model Year is now a true dropdown from 2028 down to 2000, plus Other with a custom year field.
+- Existing custom brands and out-of-range years automatically open in the custom fields when editing.

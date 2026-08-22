@@ -34,6 +34,54 @@ let editingCar = null
 let selectedPhotoFile = null
 let previewObjectUrl = null
 
+function syncBrandCustomField() {
+  const isOther = $('diecast-brand').value === 'Other'
+  $('custom-brand-label').classList.toggle('hidden', !isOther)
+  if (!isOther) $('custom-brand').value = ''
+}
+
+function syncYearCustomField() {
+  const isOther = $('model-year').value === 'Other'
+  $('custom-year-label').classList.toggle('hidden', !isOther)
+  if (!isOther) $('custom-year').value = ''
+}
+
+function setBrandValue(value) {
+  const raw = String(value ?? '').trim()
+  const preset = BRAND_PRESETS.find((brand) => brand !== 'Other' && brand.toLowerCase() === raw.toLowerCase())
+  if (!raw) {
+    $('diecast-brand').value = ''
+    $('custom-brand').value = ''
+  } else if (preset) {
+    $('diecast-brand').value = preset
+    $('custom-brand').value = ''
+  } else if (raw.toLowerCase() === 'other') {
+    $('diecast-brand').value = 'Other'
+    $('custom-brand').value = ''
+  } else {
+    $('diecast-brand').value = 'Other'
+    $('custom-brand').value = raw
+  }
+  syncBrandCustomField()
+}
+
+function setYearValue(value) {
+  const raw = String(value ?? '').trim()
+  const year = Number(raw)
+  const inPresetRange = Number.isInteger(year) && year >= 2000 && year <= 2028 && String(year) === raw
+  if (!raw) {
+    $('model-year').value = ''
+    $('custom-year').value = ''
+  } else if (inPresetRange) {
+    $('model-year').value = raw
+    $('custom-year').value = ''
+  } else {
+    $('model-year').value = 'Other'
+    $('custom-year').value = raw
+  }
+  syncYearCustomField()
+}
+
 function setActiveNav(active) {
   $('collection-nav').classList.toggle('active', active === 'collection')
   $('stats-nav').classList.toggle('active', active === 'stats')
@@ -86,9 +134,9 @@ function showEditor(car = null) {
 }
 
 function fillEditor(car) {
-  $('diecast-brand').value = car?.diecast_brand ?? ''
+  setBrandValue(car?.diecast_brand ?? '')
   $('model').value = car?.model ?? ''
-  $('model-year').value = car?.model_year ?? ''
+  setYearValue(car?.model_year ?? '')
   $('scale').value = car?.scale ?? ''
   $('series').value = car?.series_collection ?? ''
   $('quantity').value = car?.quantity ?? ''
@@ -329,12 +377,17 @@ function canonicalBrand(value) {
 
 function editorPayload() {
   const qtyRaw = $('quantity').value.trim()
-  const brandRaw = $('diecast-brand').value.trim()
+  const brandChoice = $('diecast-brand').value
+  const customBrand = $('custom-brand').value.trim()
+  const brandRaw = brandChoice === 'Other' ? (customBrand || 'Other') : brandChoice
+  const yearChoice = $('model-year').value
+  const customYear = $('custom-year').value.trim()
+  const yearRaw = yearChoice === 'Other' ? customYear : yearChoice
   return {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
     model: $('model').value.trim() || null,
-    model_year: $('model-year').value.trim() || null,
+    model_year: yearRaw || null,
     scale: $('scale').value.trim() || null,
     series_collection: $('series').value.trim() || null,
     quantity: qtyRaw === '' ? null : Number(qtyRaw),
@@ -419,14 +472,19 @@ async function deleteCar() {
 }
 
 function populateYearOptions() {
-  const list = $('year-options')
+  const select = $('model-year')
   const fragment = document.createDocumentFragment()
   for (let year = 2028; year >= 2000; year -= 1) {
     const option = document.createElement('option')
     option.value = String(year)
+    option.textContent = String(year)
     fragment.append(option)
   }
-  list.append(fragment)
+  const other = document.createElement('option')
+  other.value = 'Other'
+  other.textContent = 'Other'
+  fragment.append(other)
+  select.append(fragment)
 }
 
 $('auth-form').addEventListener('submit', async (e) => {
@@ -466,6 +524,8 @@ deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
 $('refresh-button').addEventListener('click', loadCars)
 searchInput.addEventListener('input', applySearch)
+$('diecast-brand').addEventListener('change', syncBrandCustomField)
+$('model-year').addEventListener('change', syncYearCustomField)
 photoInput.addEventListener('change', () => {
   selectedPhotoFile = photoInput.files?.[0] ?? null
   if (!selectedPhotoFile) return
