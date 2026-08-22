@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=14" />
+  <link rel="manifest" href="manifest.webmanifest?v=15" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=14" />
+  <link rel="stylesheet" href="styles.css?v=15" />
   <title>AJ's Garage</title>
 </head>
 <body>
@@ -135,7 +135,14 @@
               </div>
             </div>
             <div class="quick-core-row">
-              <label>Quantity<input id="quantity" type="number" min="0" inputmode="numeric" placeholder="Optional" /></label>
+              <div class="quantity-field">
+                <label for="quantity">Quantity</label>
+                <div class="quantity-control">
+                  <button id="quantity-minus" class="quantity-step" type="button" aria-label="Decrease quantity">−</button>
+                  <input id="quantity" type="number" min="1" step="1" inputmode="numeric" placeholder="Optional" aria-label="Quantity" />
+                  <button id="quantity-plus" class="quantity-step" type="button" aria-label="Increase quantity">+</button>
+                </div>
+              </div>
               <label>Special / Rarity
                 <select id="special-status">
                   <option value=""></option>
@@ -162,13 +169,14 @@
                 <input id="custom-year" type="text" inputmode="numeric" placeholder="Type year" />
               </label>
               <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
-              <label>NIB / Loose
-                <select id="package-status">
-                  <option value=""></option>
-                  <option value="NIB">NIB</option>
-                  <option value="Loose">Loose</option>
-                </select>
-              </label>
+              <div class="two-col number-fields">
+                <label>General Number
+                  <input id="general-number" type="text" inputmode="text" placeholder="e.g. 123/250" autocomplete="off" />
+                </label>
+                <label>Series / Collection Number
+                  <input id="series-collection-number" type="text" inputmode="text" placeholder="e.g. 3/10" autocomplete="off" />
+                </label>
+              </div>
               <label>Notes<textarea id="notes" rows="4" placeholder="Optional notes"></textarea></label>
             </div>
           </form>
@@ -180,6 +188,6 @@
     </section>
   </div>
 
-  <script type="module" src="app.js?v=14"></script>
+  <script type="module" src="app.js?v=15"></script>
 </body>
 </html>

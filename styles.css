@@ -116,3 +116,19 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   .summary-actions { margin-left:auto; }
   .sort-control select { min-width:136px; max-width:180px; }
 }
+
+
+/* v15 quantity stepper + numbering fields */
+.quantity-field { margin-bottom:15px; }
+.quantity-field > label { margin-bottom:7px; }
+.quantity-control { display:grid; grid-template-columns:44px minmax(0,1fr) 44px; gap:7px; align-items:center; }
+.quantity-control input { min-width:0; text-align:center; padding-left:7px; padding-right:7px; -moz-appearance:textfield; }
+.quantity-control input::-webkit-outer-spin-button, .quantity-control input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.quantity-step { height:46px; border:1px solid #343434; border-radius:12px; background:#181818; color:#f9fafb; font-size:24px; font-weight:850; line-height:1; padding:0; display:grid; place-items:center; }
+.quantity-step:active { transform:translateY(1px); background:#222; }
+.number-fields label { min-width:0; }
+@media (max-width:420px) {
+  .quantity-control { grid-template-columns:40px minmax(0,1fr) 40px; gap:5px; }
+  .quantity-step { height:46px; }
+  .number-fields { grid-template-columns:1fr; gap:0; }
+}

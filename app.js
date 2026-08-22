@@ -242,8 +242,9 @@ function fillEditor(car) {
   setYearValue(car?.model_year ?? '')
   $('scale').value = car?.scale ?? ''
   $('series').value = car?.series_collection ?? ''
+  $('general-number').value = car?.general_number ?? ''
+  $('series-collection-number').value = car?.series_collection_number ?? ''
   $('quantity').value = car?.quantity ?? ''
-  $('package-status').value = car?.package_status ?? ''
   $('special-status').value = SPECIAL_STATUSES.includes(car?.special_status) ? car.special_status : ''
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
@@ -394,7 +395,7 @@ function applySortPreference() {
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
   const matches = !q ? cars : cars.filter((car) =>
-    [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.package_status, car.special_status, car.notes]
+    [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q))
   )
@@ -407,7 +408,7 @@ function displayTitle(car) {
 }
 
 function displaySubtitle(car) {
-  return [car.diecast_brand, car.model_year, car.scale, car.package_status].filter(Boolean).join(' · ') || 'No details yet'
+  return [car.diecast_brand, car.model_year, car.scale].filter(Boolean).join(' · ') || 'No details yet'
 }
 
 function renderCars() {
@@ -563,12 +564,30 @@ function editorPayload() {
     model_year: yearRaw || null,
     scale: $('scale').value.trim() || null,
     series_collection: $('series').value.trim() || null,
-    quantity: qtyRaw === '' ? null : Number(qtyRaw),
-    package_status: $('package-status').value || null,
+    general_number: $('general-number').value.trim() || null,
+    series_collection_number: $('series-collection-number').value.trim() || null,
+    quantity: qtyRaw === '' ? null : Math.max(1, Math.floor(Number(qtyRaw) || 1)),
     special_status: $('special-status').value || null,
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }
+}
+
+function stepQuantity(delta) {
+  const input = $('quantity')
+  const parsed = Number(input.value)
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    input.value = '1'
+    return
+  }
+  input.value = String(Math.max(1, Math.floor(parsed) + delta))
+}
+
+function normalizeQuantityInput() {
+  const input = $('quantity')
+  if (input.value === '') return
+  const parsed = Number(input.value)
+  input.value = String(Number.isFinite(parsed) ? Math.max(1, Math.floor(parsed)) : 1)
 }
 
 async function saveCar() {
@@ -706,6 +725,9 @@ $('quick-add-button').addEventListener('click', () => showEditor(null, { quick: 
 $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', showCollection)
 $('save-button').addEventListener('click', saveCar)
+$('quantity-minus').addEventListener('click', () => stepQuantity(-1))
+$('quantity-plus').addEventListener('click', () => stepQuantity(1))
+$('quantity').addEventListener('change', normalizeQuantityInput)
 deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
 $('refresh-button').addEventListener('click', loadCars)

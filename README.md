@@ -112,3 +112,13 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Main collection photos now use a portrait 3:4 frame.
 - Photos use contain instead of cover so the complete image is visible without cropping.
 - Editor photo preview also shows the complete image.
+
+
+## v15
+- Added minus and plus buttons around Quantity for quick one-tap adjustments.
+- Quantity remains manually editable and is normalized to a minimum of 1 when entered.
+- Removed NIB / Loose from the app interface and collection display without deleting historical database values.
+- Added manual General Number field.
+- Added manual Series / Collection Number field.
+- New number fields save to Supabase and are included in collection search and backups.
+- Bumped the PWA cache to v15 so devices load the updated interface.
