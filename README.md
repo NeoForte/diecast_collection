@@ -106,3 +106,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Preserves Quick Add, duplicate detection, sorting, quantity badges, special/rarity highlighting, stats, backup, and all prior features.
 - Refined the black brick-wall background with smaller bricks and a very subtle repeating AJ monogram.
 - Bumped the PWA cache to v13 to prevent stale assets from masking the update.
+
+
+## v14
+- Main collection photos now use a portrait 3:4 frame.
+- Photos use contain instead of cover so the complete image is visible without cropping.
+- Editor photo preview also shows the complete image.
