@@ -1,5 +1,5 @@
-const CACHE = 'diecast-app-v7'
-const ASSETS = ['./', './index.html', './styles.css?v=7', './app.js?v=7', './manifest.webmanifest?v=7', './black-brick-wall.svg', './icon-192.png', './icon-512.png']
+const CACHE = 'diecast-app-v8'
+const ASSETS = ['./', './index.html', './styles.css?v=8', './app.js?v=8', './manifest.webmanifest?v=8', './black-brick-wall.svg', './icon-192.png', './icon-512.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)))

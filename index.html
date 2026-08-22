@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=7" />
+  <link rel="manifest" href="manifest.webmanifest?v=8" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
   <title>AJ's Garage</title>
 </head>
 <body>
@@ -49,6 +49,7 @@
             <input id="search-input" type="search" placeholder="Search brand, model, year…" />
             <button id="add-button" class="add-button" aria-label="Add car">＋</button>
           </div>
+          <button id="quick-add-button" class="quick-add-button" type="button">⚡ Quick Add</button>
           <div class="summary-row">
             <span id="car-count">0 cars</span>
             <div class="summary-actions">
@@ -107,20 +108,34 @@
               <input id="custom-brand" type="text" placeholder="Type brand name" />
             </label>
             <label>Model<input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" /></label>
-            <div class="two-col">
-              <label>Model Year
-                <select id="model-year">
+            <div class="quick-core-row">
+              <label>Quantity<input id="quantity" type="number" min="0" inputmode="numeric" placeholder="Optional" /></label>
+              <label>Special / Rarity
+                <select id="special-status">
                   <option value=""></option>
+                  <option value="TH">Treasure Hunt (TH)</option>
+                  <option value="STH">Super Treasure Hunt (STH)</option>
+                  <option value="Chase">Chase</option>
+                  <option value="Rare">Rare</option>
+                  <option value="Limited">Limited / Special Edition</option>
+                  <option value="Other">Other Special</option>
                 </select>
               </label>
-              <label>Scale<input id="scale" type="text" placeholder="1:64" /></label>
             </div>
-            <label id="custom-year-label" class="hidden">Other Model Year
-              <input id="custom-year" type="text" inputmode="numeric" placeholder="Type year" />
-            </label>
-            <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
-            <div class="two-col">
-              <label>Quantity<input id="quantity" type="number" min="0" inputmode="numeric" placeholder="Optional" /></label>
+            <button id="more-details-toggle" class="more-details-toggle hidden" type="button">More Details ▾</button>
+            <div id="more-details-section">
+              <div class="two-col">
+                <label>Model Year
+                  <select id="model-year">
+                    <option value=""></option>
+                  </select>
+                </label>
+                <label>Scale<input id="scale" type="text" placeholder="1:64" /></label>
+              </div>
+              <label id="custom-year-label" class="hidden">Other Model Year
+                <input id="custom-year" type="text" inputmode="numeric" placeholder="Type year" />
+              </label>
+              <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
               <label>NIB / Loose
                 <select id="package-status">
                   <option value=""></option>
@@ -128,19 +143,8 @@
                   <option value="Loose">Loose</option>
                 </select>
               </label>
+              <label>Notes<textarea id="notes" rows="4" placeholder="Optional notes"></textarea></label>
             </div>
-            <label>Special / Rarity
-              <select id="special-status">
-                <option value=""></option>
-                <option value="TH">Treasure Hunt (TH)</option>
-                <option value="STH">Super Treasure Hunt (STH)</option>
-                <option value="Chase">Chase</option>
-                <option value="Rare">Rare</option>
-                <option value="Limited">Limited / Special Edition</option>
-                <option value="Other">Other Special</option>
-              </select>
-            </label>
-            <label>Notes<textarea id="notes" rows="4" placeholder="Optional notes"></textarea></label>
           </form>
 
           <button id="delete-button" class="danger hidden" type="button">Delete Car</button>
@@ -150,6 +154,6 @@
     </section>
   </div>
 
-  <script type="module" src="app.js?v=7"></script>
+  <script type="module" src="app.js?v=8"></script>
 </body>
 </html>

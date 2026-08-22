@@ -34,6 +34,9 @@ let filteredCars = []
 let editingCar = null
 let selectedPhotoFile = null
 let previewObjectUrl = null
+let quickAddMode = false
+let quickAddKeepBrand = ''
+let quickAddKeepCustomBrand = ''
 
 function syncBrandCustomField() {
   const isOther = $('diecast-brand').value === 'Other'
@@ -120,18 +123,28 @@ function showStats() {
   renderStats()
 }
 
-function showEditor(car = null) {
+function showEditor(car = null, options = {}) {
   hideScreens()
   editorScreen.classList.add('active')
   mainNav.classList.add('hidden')
   editingCar = car
+  quickAddMode = !car && Boolean(options.quick)
   selectedPhotoFile = null
   editorMessage.textContent = ''
   if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
   previewObjectUrl = null
-  $('editor-title').textContent = car ? 'Car Details' : 'Add Car'
+  $('editor-title').textContent = car ? 'Car Details' : (quickAddMode ? 'Quick Add' : 'Add Car')
+  $('save-button').textContent = quickAddMode ? 'Save & Next' : 'Save'
+  $('more-details-toggle').classList.toggle('hidden', !quickAddMode)
+  $('more-details-section').classList.toggle('quick-collapsed', quickAddMode)
+  $('more-details-toggle').textContent = 'More Details ▾'
   deleteButton.classList.toggle('hidden', !car)
   fillEditor(car)
+  if (quickAddMode && quickAddKeepBrand) {
+    $('diecast-brand').value = quickAddKeepBrand
+    $('custom-brand').value = quickAddKeepCustomBrand
+    syncBrandCustomField()
+  }
 }
 
 function fillEditor(car) {
@@ -280,6 +293,12 @@ function renderCars() {
     card.querySelector('.car-title').textContent = displayTitle(car)
     card.querySelector('.car-sub').textContent = displaySubtitle(car)
     const photoBox = card.querySelector('.car-photo')
+    if (car.photo_path) {
+      const img = document.createElement('img')
+      img.alt = displayTitle(car)
+      photoBox.replaceChildren(img)
+      loadPrivatePhoto(car.photo_path, img)
+    }
     const quantity = Number(car.quantity)
     if (Number.isFinite(quantity) && quantity > 1) {
       const qtyBadge = document.createElement('div')
@@ -292,12 +311,6 @@ function renderCars() {
       specialBadge.className = 'special-badge'
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
       photoBox.append(specialBadge)
-    }
-    if (car.photo_path) {
-      const img = document.createElement('img')
-      img.alt = displayTitle(car)
-      photoBox.replaceChildren(img)
-      loadPrivatePhoto(car.photo_path, img)
     }
     const open = () => showEditor(car)
     card.addEventListener('click', open)
@@ -460,13 +473,21 @@ async function saveCar() {
     }
 
     await loadCars()
-    showCollection()
+    if (quickAddMode && !editingCar) {
+      quickAddKeepBrand = $('diecast-brand').value
+      quickAddKeepCustomBrand = $('custom-brand').value
+      showEditor(null, { quick: true })
+      editorMessage.textContent = 'Saved ✓ Ready for the next car.'
+      setTimeout(() => { if (quickAddMode) editorMessage.textContent = '' }, 1400)
+    } else {
+      showCollection()
+    }
   } catch (err) {
     console.error(err)
     editorMessage.textContent = err.message || 'Could not save car.'
   } finally {
     saveButton.disabled = false
-    saveButton.textContent = 'Save'
+    saveButton.textContent = quickAddMode ? 'Save & Next' : 'Save'
   }
 }
 
@@ -537,6 +558,7 @@ $('logout-btn').addEventListener('click', () => supabase.auth.signOut())
 $('collection-nav').addEventListener('click', showCollection)
 $('stats-nav').addEventListener('click', showStats)
 $('add-button').addEventListener('click', () => showEditor())
+$('quick-add-button').addEventListener('click', () => showEditor(null, { quick: true }))
 $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', showCollection)
 $('save-button').addEventListener('click', saveCar)
@@ -546,6 +568,11 @@ $('refresh-button').addEventListener('click', loadCars)
 searchInput.addEventListener('input', applySearch)
 $('diecast-brand').addEventListener('change', syncBrandCustomField)
 $('model-year').addEventListener('change', syncYearCustomField)
+$('more-details-toggle').addEventListener('click', () => {
+  const section = $('more-details-section')
+  const collapsed = section.classList.toggle('quick-collapsed')
+  $('more-details-toggle').textContent = collapsed ? 'More Details ▾' : 'Fewer Details ▴'
+})
 photoInput.addEventListener('change', () => {
   selectedPhotoFile = photoInput.files?.[0] ?? null
   if (!selectedPhotoFile) return

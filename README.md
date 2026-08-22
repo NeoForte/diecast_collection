@@ -67,3 +67,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added Special / Rarity options: TH, STH, Chase, Rare, Limited / Special Edition, and Other Special.
 - Special cars are visually highlighted on the collection page with a status badge and accent border.
 - Search now includes special / rarity status.
+
+
+## v8 update
+- Added Quick Add bulk-entry mode.
+- Quick Add keeps the previous diecast brand after Save & Next.
+- Quick Add shows Photo, Brand, Model, Quantity, and Special/Rarity first.
+- Model Year, Scale, Series/Collection, NIB/Loose, and Notes are available under More Details.
+- Fixed quantity and special badges so they remain visible over saved photos.
+- Updated PWA cache to v8.
