@@ -38,3 +38,8 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added one-click Export Backup.
 - Backup downloads a dated JSON file with all car records and private photo paths.
 - Photo image files remain stored privately in Supabase and are not embedded in the JSON backup.
+
+
+## v4 fix
+- Force-loads the newest app JavaScript to prevent a stale cached file from leaving Export Backup unwired.
+- Export Backup now uses the already-loaded collection data and gives visible feedback/errors.

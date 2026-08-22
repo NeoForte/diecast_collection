@@ -116,44 +116,45 @@ function backupFilename() {
   return `Diecast_Backup_${year}-${month}-${day}.json`
 }
 
-async function exportBackup() {
-  if (!session?.user) return
+function exportBackup() {
+  if (!session?.user) {
+    alert('Your session expired. Sign out and sign back in, then try the backup again.')
+    return
+  }
+
   const button = $('backup-button')
   const originalText = button.textContent
   button.disabled = true
   button.textContent = 'Exporting…'
 
   try {
-    const { data, error } = await supabase
-      .from('cars')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (error) throw error
-
     const backup = {
       format: 'diecast-collection-backup',
       version: 1,
       exported_at: new Date().toISOString(),
-      car_count: data?.length ?? 0,
+      car_count: cars.length,
       note: 'Car data backup. photo_path values point to private photos stored in Supabase; image files are not embedded in this JSON file.',
-      cars: data ?? [],
+      cars,
     }
 
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    const json = JSON.stringify(backup, null, 2)
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.download = backupFilename()
+    link.style.display = 'none'
     document.body.appendChild(link)
     link.click()
     link.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
 
     button.textContent = 'Saved ✓'
     setTimeout(() => { button.textContent = originalText }, 1800)
   } catch (err) {
     console.error(err)
     button.textContent = 'Backup failed'
+    alert(`Backup failed: ${err.message || err}`)
     setTimeout(() => { button.textContent = originalText }, 2200)
   } finally {
     button.disabled = false
