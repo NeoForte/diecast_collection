@@ -5,14 +5,20 @@ const APP_URL = 'https://neoforte.github.io/diecast_collection/'
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
+const BRAND_PRESETS = ['Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
+
 const $ = (id) => document.getElementById(id)
 const authView = $('auth-view')
 const mainView = $('main-view')
+const mainNav = $('main-nav')
 const collectionScreen = $('collection-screen')
+const statsScreen = $('stats-screen')
 const editorScreen = $('editor-screen')
 const carsGrid = $('cars-grid')
 const emptyState = $('empty-state')
 const carCount = $('car-count')
+const statsTotal = $('stats-total')
+const brandStats = $('brand-stats')
 const searchInput = $('search-input')
 const authMessage = $('auth-message')
 const editorMessage = $('editor-message')
@@ -28,6 +34,17 @@ let editingCar = null
 let selectedPhotoFile = null
 let previewObjectUrl = null
 
+function setActiveNav(active) {
+  $('collection-nav').classList.toggle('active', active === 'collection')
+  $('stats-nav').classList.toggle('active', active === 'stats')
+}
+
+function hideScreens() {
+  collectionScreen.classList.remove('active')
+  statsScreen.classList.remove('active')
+  editorScreen.classList.remove('active')
+}
+
 function showAuth() {
   authView.classList.remove('hidden')
   mainView.classList.add('hidden')
@@ -40,13 +57,24 @@ function showMain() {
 }
 
 function showCollection() {
-  editorScreen.classList.remove('active')
+  hideScreens()
   collectionScreen.classList.add('active')
+  mainNav.classList.remove('hidden')
+  setActiveNav('collection')
+}
+
+function showStats() {
+  hideScreens()
+  statsScreen.classList.add('active')
+  mainNav.classList.remove('hidden')
+  setActiveNav('stats')
+  renderStats()
 }
 
 function showEditor(car = null) {
-  collectionScreen.classList.remove('active')
+  hideScreens()
   editorScreen.classList.add('active')
+  mainNav.classList.add('hidden')
   editingCar = car
   selectedPhotoFile = null
   editorMessage.textContent = ''
@@ -59,12 +87,12 @@ function showEditor(car = null) {
 
 function fillEditor(car) {
   $('diecast-brand').value = car?.diecast_brand ?? ''
-  $('make').value = car?.make ?? ''
   $('model').value = car?.model ?? ''
   $('model-year').value = car?.model_year ?? ''
   $('scale').value = car?.scale ?? ''
   $('series').value = car?.series_collection ?? ''
   $('quantity').value = car?.quantity ?? ''
+  $('package-status').value = car?.package_status ?? ''
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
   setPhotoPreview(null)
@@ -97,6 +125,7 @@ async function loadCars() {
   const { data, error } = await supabase
     .from('cars')
     .select('*')
+    .eq('user_id', session.user.id)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -105,15 +134,15 @@ async function loadCars() {
   }
   cars = data ?? []
   applySearch()
+  renderStats()
 }
-
 
 function backupFilename() {
   const now = new Date()
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
-  return `Diecast_Backup_${year}-${month}-${day}.json`
+  return `AJs_Garage_Backup_${year}-${month}-${day}.json`
 }
 
 function exportBackup() {
@@ -129,8 +158,8 @@ function exportBackup() {
 
   try {
     const backup = {
-      format: 'diecast-collection-backup',
-      version: 1,
+      format: 'ajs-garage-backup',
+      version: 2,
       exported_at: new Date().toISOString(),
       car_count: cars.length,
       note: 'Car data backup. photo_path values point to private photos stored in Supabase; image files are not embedded in this JSON file.',
@@ -164,7 +193,7 @@ function exportBackup() {
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
   filteredCars = !q ? cars : cars.filter((car) =>
-    [car.diecast_brand, car.make, car.model, car.model_year, car.scale, car.series_collection, car.notes]
+    [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.package_status, car.notes]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q))
   )
@@ -172,12 +201,11 @@ function applySearch() {
 }
 
 function displayTitle(car) {
-  const primary = [car.make, car.model].filter(Boolean).join(' ')
-  return primary || car.diecast_brand || 'Untitled Car'
+  return car.model || car.diecast_brand || 'Untitled Car'
 }
 
 function displaySubtitle(car) {
-  return [car.diecast_brand, car.model_year, car.scale].filter(Boolean).join(' · ') || 'No details yet'
+  return [car.diecast_brand, car.model_year, car.scale, car.package_status].filter(Boolean).join(' · ') || 'No details yet'
 }
 
 function renderCars() {
@@ -211,6 +239,62 @@ function renderCars() {
   }
 }
 
+function renderStats() {
+  statsTotal.textContent = `${cars.length} ${cars.length === 1 ? 'car' : 'cars'}`
+  brandStats.replaceChildren()
+
+  const counts = new Map()
+  const displayNames = new Map()
+  for (const brand of BRAND_PRESETS) {
+    const key = brand.toLowerCase()
+    counts.set(key, 0)
+    displayNames.set(key, brand)
+  }
+
+  let unspecified = 0
+  for (const car of cars) {
+    const raw = String(car.diecast_brand ?? '').trim()
+    if (!raw) {
+      unspecified += 1
+      continue
+    }
+    const key = raw.toLowerCase()
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+    if (!displayNames.has(key)) displayNames.set(key, raw)
+  }
+
+  const entries = [...counts.entries()].map(([key, count]) => ({
+    key,
+    brand: displayNames.get(key) ?? key,
+    count,
+    presetIndex: BRAND_PRESETS.findIndex((name) => name.toLowerCase() === key),
+  }))
+
+  entries.sort((a, b) => {
+    const aPreset = a.presetIndex >= 0
+    const bPreset = b.presetIndex >= 0
+    if (aPreset && bPreset) return a.presetIndex - b.presetIndex
+    if (aPreset) return -1
+    if (bPreset) return 1
+    return a.brand.localeCompare(b.brand)
+  })
+
+  if (unspecified > 0) entries.push({ brand: 'Unspecified', count: unspecified })
+
+  for (const entry of entries) {
+    const row = document.createElement('div')
+    row.className = 'stat-row'
+    const name = document.createElement('div')
+    name.className = 'stat-brand'
+    name.textContent = entry.brand
+    const count = document.createElement('div')
+    count.className = 'stat-count'
+    count.textContent = String(entry.count)
+    row.append(name, count)
+    brandStats.append(row)
+  }
+}
+
 async function compressImage(file, maxDimension = 1600, quality = 0.78) {
   const bitmap = await createImageBitmap(file)
   const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height))
@@ -237,17 +321,24 @@ async function uploadPhoto(carId, file) {
   return path
 }
 
+function canonicalBrand(value) {
+  const raw = value.trim()
+  const preset = BRAND_PRESETS.find((brand) => brand.toLowerCase() === raw.toLowerCase())
+  return preset ?? raw
+}
+
 function editorPayload() {
   const qtyRaw = $('quantity').value.trim()
+  const brandRaw = $('diecast-brand').value.trim()
   return {
     user_id: session.user.id,
-    diecast_brand: $('diecast-brand').value.trim() || null,
-    make: $('make').value.trim() || null,
+    diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
     model: $('model').value.trim() || null,
     model_year: $('model-year').value.trim() || null,
     scale: $('scale').value.trim() || null,
     series_collection: $('series').value.trim() || null,
     quantity: qtyRaw === '' ? null : Number(qtyRaw),
+    package_status: $('package-status').value || null,
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }
@@ -259,7 +350,6 @@ async function saveCar() {
     return
   }
   const saveButton = $('save-button')
-  const originalSaveText = saveButton.textContent
   editorMessage.textContent = 'Saving…'
   saveButton.textContent = 'Saving…'
   saveButton.disabled = true
@@ -271,6 +361,7 @@ async function saveCar() {
         .from('cars')
         .update(payload)
         .eq('id', editingCar.id)
+        .eq('user_id', session.user.id)
         .select()
         .single()
       if (error) throw error
@@ -287,7 +378,11 @@ async function saveCar() {
 
     if (selectedPhotoFile) {
       const path = await uploadPhoto(car.id, selectedPhotoFile)
-      const { error } = await supabase.from('cars').update({ photo_path: path }).eq('id', car.id)
+      const { error } = await supabase
+        .from('cars')
+        .update({ photo_path: path })
+        .eq('id', car.id)
+        .eq('user_id', session.user.id)
       if (error) throw error
     }
 
@@ -297,7 +392,6 @@ async function saveCar() {
     console.error(err)
     editorMessage.textContent = err.message || 'Could not save car.'
   } finally {
-    const saveButton = $('save-button')
     saveButton.disabled = false
     saveButton.textContent = 'Save'
   }
@@ -310,7 +404,11 @@ async function deleteCar() {
     if (editingCar.photo_path) {
       await supabase.storage.from('car-photos').remove([editingCar.photo_path])
     }
-    const { error } = await supabase.from('cars').delete().eq('id', editingCar.id)
+    const { error } = await supabase
+      .from('cars')
+      .delete()
+      .eq('id', editingCar.id)
+      .eq('user_id', session.user.id)
     if (error) throw error
     await loadCars()
     showCollection()
@@ -318,6 +416,17 @@ async function deleteCar() {
     console.error(err)
     editorMessage.textContent = err.message || 'Could not delete car.'
   }
+}
+
+function populateYearOptions() {
+  const list = $('year-options')
+  const fragment = document.createDocumentFragment()
+  for (let year = 2028; year >= 2000; year -= 1) {
+    const option = document.createElement('option')
+    option.value = String(year)
+    fragment.append(option)
+  }
+  list.append(fragment)
 }
 
 $('auth-form').addEventListener('submit', async (e) => {
@@ -347,6 +456,8 @@ $('signup-btn').addEventListener('click', async () => {
 })
 
 $('logout-btn').addEventListener('click', () => supabase.auth.signOut())
+$('collection-nav').addEventListener('click', showCollection)
+$('stats-nav').addEventListener('click', showStats)
 $('add-button').addEventListener('click', () => showEditor())
 $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', showCollection)
@@ -363,18 +474,19 @@ photoInput.addEventListener('change', () => {
   setPhotoPreview(previewObjectUrl)
 })
 
+populateYearOptions()
+
 supabase.auth.onAuthStateChange((_event, newSession) => {
   session = newSession
   if (session) {
     showMain()
-    // Do not await Supabase API calls inside onAuthStateChange.
-    // Supabase documents a deadlock where later client calls can otherwise hang.
     setTimeout(() => {
       loadCars()
     }, 0)
   } else {
     cars = []
-    renderCars()
+    applySearch()
+    renderStats()
     showAuth()
   }
 })

@@ -1,4 +1,4 @@
-# My Diecast Collection
+# AJ's Garage
 
 Private personal PWA for cataloging diecast cars.
 
@@ -43,3 +43,13 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 ## v4 fix
 - Force-loads the newest app JavaScript to prevent a stale cached file from leaving Export Backup unwired.
 - Export Backup now uses the already-loaded collection data and gives visible feedback/errors.
+
+## v5 AJ's Garage update
+- Renamed the app to AJ's Garage.
+- Switched all app pages to a black/dark theme.
+- Added a Stats page with diecast-brand counters.
+- Brand field now offers Hot Wheels, Matchbox, M2, Cartuned, Maisto, Mini GT, Majorette, and Other while still allowing typed custom brands.
+- Model Year now offers 2028 down to 2000 while still allowing any typed year.
+- Removed Make from the app UI without deleting existing Make data from the database.
+- Added optional NIB / Loose status.
+- iPhone photo picker now allows camera or Photo Library selection.

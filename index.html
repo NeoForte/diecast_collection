@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111827" />
+  <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Diecast" />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
+  <link rel="manifest" href="manifest.webmanifest?v=5" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css" />
-  <title>My Diecast Collection</title>
+  <link rel="stylesheet" href="styles.css?v=5" />
+  <title>AJ's Garage</title>
 </head>
 <body>
   <div id="app">
     <section id="auth-view" class="view center-view">
       <div class="auth-card">
-        <div class="app-mark">DC</div>
-        <h1>My Diecast Collection</h1>
-        <p class="muted">Private collection catalog</p>
+        <div class="app-mark">AJ</div>
+        <h1>AJ's Garage</h1>
+        <p class="muted">Private diecast collection</p>
         <form id="auth-form">
           <label>Email<input id="email" type="email" autocomplete="email" /></label>
           <label>Password<input id="password" type="password" autocomplete="current-password" /></label>
@@ -32,16 +32,21 @@
     <section id="main-view" class="view hidden">
       <header class="topbar">
         <div>
-          <div class="eyebrow">MY COLLECTION</div>
-          <h1>Diecast</h1>
+          <div class="eyebrow">PRIVATE COLLECTION</div>
+          <h1>AJ's Garage</h1>
         </div>
         <button id="logout-btn" class="text-button">Sign out</button>
       </header>
 
       <main>
+        <nav id="main-nav" class="main-nav" aria-label="App pages">
+          <button id="collection-nav" class="nav-button active" type="button">Collection</button>
+          <button id="stats-nav" class="nav-button" type="button">Stats</button>
+        </nav>
+
         <section id="collection-screen" class="screen active">
           <div class="toolbar">
-            <input id="search-input" type="search" placeholder="Search brand, make, model, year…" />
+            <input id="search-input" type="search" placeholder="Search brand, model, year…" />
             <button id="add-button" class="add-button" aria-label="Add car">＋</button>
           </div>
           <div class="summary-row">
@@ -60,6 +65,17 @@
           </div>
         </section>
 
+        <section id="stats-screen" class="screen">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">DIECAST BRANDS</div>
+              <h2>Brand Stats</h2>
+            </div>
+            <span id="stats-total" class="stats-total">0 cars</span>
+          </div>
+          <div id="brand-stats" class="brand-stats"></div>
+        </section>
+
         <section id="editor-screen" class="screen">
           <div class="editor-header">
             <button id="cancel-button" class="text-button">Cancel</button>
@@ -69,20 +85,43 @@
 
           <div class="photo-picker">
             <img id="photo-preview" class="hidden" alt="Car preview" />
-            <div id="photo-placeholder">📷<span>Add Photo</span></div>
-            <input id="photo-input" type="file" accept="image/*" capture="environment" />
+            <div id="photo-placeholder">📷<span>Take Photo or Choose from Library</span></div>
+            <input id="photo-input" type="file" accept="image/*" />
           </div>
 
           <form id="car-form" class="car-form">
-            <label>Diecast Brand<input id="diecast-brand" type="text" placeholder="Hot Wheels, Matchbox, M2…" /></label>
-            <label>Make<input id="make" type="text" placeholder="Porsche, Ford, Chevrolet…" /></label>
+            <label>Diecast Brand
+              <input id="diecast-brand" type="text" list="brand-options" placeholder="Choose or type a brand" />
+              <datalist id="brand-options">
+                <option value="Hot Wheels"></option>
+                <option value="Matchbox"></option>
+                <option value="M2"></option>
+                <option value="Cartuned"></option>
+                <option value="Maisto"></option>
+                <option value="Mini GT"></option>
+                <option value="Majorette"></option>
+                <option value="Other"></option>
+              </datalist>
+            </label>
             <label>Model<input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" /></label>
             <div class="two-col">
-              <label>Model Year<input id="model-year" type="text" inputmode="numeric" placeholder="1969" /></label>
+              <label>Model Year
+                <input id="model-year" type="text" list="year-options" inputmode="numeric" placeholder="Choose or type a year" />
+                <datalist id="year-options"></datalist>
+              </label>
               <label>Scale<input id="scale" type="text" placeholder="1:64" /></label>
             </div>
             <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
-            <label>Quantity<input id="quantity" type="number" min="0" inputmode="numeric" placeholder="Optional" /></label>
+            <div class="two-col">
+              <label>Quantity<input id="quantity" type="number" min="0" inputmode="numeric" placeholder="Optional" /></label>
+              <label>NIB / Loose
+                <select id="package-status">
+                  <option value=""></option>
+                  <option value="NIB">NIB</option>
+                  <option value="Loose">Loose</option>
+                </select>
+              </label>
+            </div>
             <label>Notes<textarea id="notes" rows="4" placeholder="Optional notes"></textarea></label>
           </form>
 
@@ -93,6 +132,6 @@
     </section>
   </div>
 
-  <script type="module" src="app.js?v=4"></script>
+  <script type="module" src="app.js?v=5"></script>
 </body>
 </html>
