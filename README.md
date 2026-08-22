@@ -82,3 +82,15 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Quick Add moved into the compact top navigation.
 - Stats now separate Unique Cars from Grand Total (quantity).
 - Sign out now requires confirmation.
+
+
+## v10
+- Model-only duplicate detection on Add and Quick Add.
+- Exact model matches are flagged before saving.
+- A single exact match can be incremented directly with Increase Qty; Add Anyway dismisses the warning.
+
+
+## v11
+- Added main-page collection sorting.
+- Sort options: newest, oldest, brand A–Z/Z–A, model A–Z/Z–A, quantity high/low, and special-first.
+- Selected sort is remembered on the device.

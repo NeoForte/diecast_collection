@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=8" />
+  <link rel="manifest" href="manifest.webmanifest?v=11" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=11" />
   <title>AJ's Garage</title>
 </head>
 <body>
@@ -51,7 +51,23 @@
             <button id="add-button" class="add-button" aria-label="Add car">＋</button>
           </div>
           <div class="summary-row">
-            <span id="car-count">0 cars</span>
+            <div class="collection-summary-left">
+              <span id="car-count">0 cars</span>
+              <label class="sort-control" for="sort-select">
+                <span>Sort</span>
+                <select id="sort-select" aria-label="Sort collection">
+                  <option value="newest">Newest Added</option>
+                  <option value="oldest">Oldest Added</option>
+                  <option value="brand-az">Brand A–Z</option>
+                  <option value="brand-za">Brand Z–A</option>
+                  <option value="model-az">Model A–Z</option>
+                  <option value="model-za">Model Z–A</option>
+                  <option value="qty-high">Quantity High–Low</option>
+                  <option value="qty-low">Quantity Low–High</option>
+                  <option value="special-first">Special First</option>
+                </select>
+              </label>
+            </div>
             <div class="summary-actions">
               <button id="backup-button" class="text-button" type="button">Export Backup</button>
               <button id="refresh-button" class="text-button" type="button">Refresh</button>
@@ -110,7 +126,14 @@
             <label id="custom-brand-label" class="hidden">Other Brand
               <input id="custom-brand" type="text" placeholder="Type brand name" />
             </label>
-            <label>Model<input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" /></label>
+            <label>Model<input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" /></label>
+            <div id="duplicate-warning" class="duplicate-warning hidden" role="status" aria-live="polite">
+              <div id="duplicate-warning-text"></div>
+              <div id="duplicate-warning-actions" class="duplicate-warning-actions">
+                <button id="duplicate-increase-btn" type="button">Increase Qty</button>
+                <button id="duplicate-anyway-btn" type="button">Add Anyway</button>
+              </div>
+            </div>
             <div class="quick-core-row">
               <label>Quantity<input id="quantity" type="number" min="0" inputmode="numeric" placeholder="Optional" /></label>
               <label>Special / Rarity
@@ -157,6 +180,6 @@
     </section>
   </div>
 
-  <script type="module" src="app.js?v=8"></script>
+  <script type="module" src="app.js?v=11"></script>
 </body>
 </html>

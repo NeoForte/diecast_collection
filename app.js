@@ -22,12 +22,17 @@ const statsTotal = $('stats-total')
 const statsGrandTotal = $('stats-grand-total')
 const brandStats = $('brand-stats')
 const searchInput = $('search-input')
+const sortSelect = $('sort-select')
 const authMessage = $('auth-message')
 const editorMessage = $('editor-message')
 const deleteButton = $('delete-button')
 const photoPreview = $('photo-preview')
 const photoPlaceholder = $('photo-placeholder')
 const photoInput = $('photo-input')
+const duplicateWarning = $('duplicate-warning')
+const duplicateWarningText = $('duplicate-warning-text')
+const duplicateIncreaseBtn = $('duplicate-increase-btn')
+const duplicateAnywayBtn = $('duplicate-anyway-btn')
 
 let session = null
 let cars = []
@@ -38,6 +43,8 @@ let previewObjectUrl = null
 let quickAddMode = false
 let quickAddKeepBrand = ''
 let quickAddKeepCustomBrand = ''
+let duplicateDismissedModel = ''
+let duplicateCheckTimer = null
 
 function syncBrandCustomField() {
   const isOther = $('diecast-brand').value === 'Other'
@@ -124,6 +131,85 @@ function showStats() {
   renderStats()
 }
 
+
+function normalizeModel(value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+function modelMatches(value) {
+  const normalized = normalizeModel(value)
+  if (!normalized || editingCar) return []
+  return cars.filter((car) => normalizeModel(car.model) === normalized)
+}
+
+function hideDuplicateWarning() {
+  duplicateWarning.classList.add('hidden')
+  duplicateWarningText.textContent = ''
+  duplicateIncreaseBtn.classList.remove('hidden')
+}
+
+function checkDuplicateModel() {
+  const raw = $('model').value.trim()
+  const normalized = normalizeModel(raw)
+  if (!normalized || normalized === duplicateDismissedModel || editingCar) {
+    hideDuplicateWarning()
+    return
+  }
+
+  const matches = modelMatches(raw)
+  if (!matches.length) {
+    hideDuplicateWarning()
+    return
+  }
+
+  duplicateWarning.classList.remove('hidden')
+  if (matches.length === 1) {
+    const match = matches[0]
+    const qty = Math.max(1, Number(match.quantity) || 1)
+    const brand = match.diecast_brand ? `${match.diecast_brand} · ` : ''
+    duplicateWarningText.textContent = `Possible duplicate: ${brand}${match.model} is already in your garage (qty ${qty}).`
+    duplicateIncreaseBtn.classList.remove('hidden')
+  } else {
+    duplicateWarningText.textContent = `Possible duplicate: ${matches.length} existing entries use the model “${raw}”. Check the collection before adding another.`
+    duplicateIncreaseBtn.classList.add('hidden')
+  }
+}
+
+async function increaseDuplicateQuantity() {
+  const matches = modelMatches($('model').value)
+  if (matches.length !== 1 || !session?.user) return
+  const match = matches[0]
+  const currentQty = Math.max(1, Number(match.quantity) || 1)
+  duplicateIncreaseBtn.disabled = true
+  duplicateAnywayBtn.disabled = true
+  duplicateWarningText.textContent = 'Updating quantity…'
+  try {
+    const { error } = await supabase
+      .from('cars')
+      .update({ quantity: currentQty + 1, updated_at: new Date().toISOString() })
+      .eq('id', match.id)
+      .eq('user_id', session.user.id)
+    if (error) throw error
+    await loadCars()
+    const keptBrand = $('diecast-brand').value
+    const keptCustomBrand = $('custom-brand').value
+    if (quickAddMode) {
+      quickAddKeepBrand = keptBrand
+      quickAddKeepCustomBrand = keptCustomBrand
+      showEditor(null, { quick: true })
+      editorMessage.textContent = `Quantity increased to ${currentQty + 1} ✓ Ready for the next car.`
+      setTimeout(() => { if (quickAddMode) editorMessage.textContent = '' }, 1600)
+    } else {
+      showCollection()
+    }
+  } catch (error) {
+    duplicateWarningText.textContent = error.message || 'Could not update quantity.'
+  } finally {
+    duplicateIncreaseBtn.disabled = false
+    duplicateAnywayBtn.disabled = false
+  }
+}
+
 function showEditor(car = null, options = {}) {
   hideScreens()
   editorScreen.classList.add('active')
@@ -132,6 +218,8 @@ function showEditor(car = null, options = {}) {
   quickAddMode = !car && Boolean(options.quick)
   selectedPhotoFile = null
   editorMessage.textContent = ''
+  duplicateDismissedModel = ''
+  hideDuplicateWarning()
   if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
   previewObjectUrl = null
   $('editor-title').textContent = car ? 'Car Details' : (quickAddMode ? 'Quick Add' : 'Add Car')
@@ -254,13 +342,63 @@ function exportBackup() {
   }
 }
 
+const SORT_STORAGE_KEY = 'ajs-garage-sort'
+const VALID_SORTS = new Set(['newest', 'oldest', 'brand-az', 'brand-za', 'model-az', 'model-za', 'qty-high', 'qty-low', 'special-first'])
+
+function textForSort(value) {
+  const text = String(value ?? '').trim()
+  return text || '\uffff'
+}
+
+function dateValue(value) {
+  const time = Date.parse(value || '')
+  return Number.isFinite(time) ? time : 0
+}
+
+function specialRank(car) {
+  return car?.special_status ? 0 : 1
+}
+
+function sortCars(list) {
+  const mode = VALID_SORTS.has(sortSelect?.value) ? sortSelect.value : 'newest'
+  const copy = [...list]
+  const byText = (a, b, field, direction = 1) => {
+    const primary = textForSort(a?.[field]).localeCompare(textForSort(b?.[field]), undefined, { numeric: true, sensitivity: 'base' }) * direction
+    if (primary !== 0) return primary
+    return dateValue(b?.created_at) - dateValue(a?.created_at)
+  }
+
+  copy.sort((a, b) => {
+    switch (mode) {
+      case 'oldest': return dateValue(a.created_at) - dateValue(b.created_at)
+      case 'brand-az': return byText(a, b, 'diecast_brand', 1)
+      case 'brand-za': return byText(a, b, 'diecast_brand', -1)
+      case 'model-az': return byText(a, b, 'model', 1)
+      case 'model-za': return byText(a, b, 'model', -1)
+      case 'qty-high': return (Math.max(1, Number(b.quantity) || 1) - Math.max(1, Number(a.quantity) || 1)) || (dateValue(b.created_at) - dateValue(a.created_at))
+      case 'qty-low': return (Math.max(1, Number(a.quantity) || 1) - Math.max(1, Number(b.quantity) || 1)) || (dateValue(b.created_at) - dateValue(a.created_at))
+      case 'special-first': return (specialRank(a) - specialRank(b)) || (dateValue(b.created_at) - dateValue(a.created_at))
+      case 'newest':
+      default: return dateValue(b.created_at) - dateValue(a.created_at)
+    }
+  })
+  return copy
+}
+
+function applySortPreference() {
+  let saved = 'newest'
+  try { saved = localStorage.getItem(SORT_STORAGE_KEY) || 'newest' } catch {}
+  sortSelect.value = VALID_SORTS.has(saved) ? saved : 'newest'
+}
+
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
-  filteredCars = !q ? cars : cars.filter((car) =>
+  const matches = !q ? cars : cars.filter((car) =>
     [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.package_status, car.special_status, car.notes]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q))
   )
+  filteredCars = sortCars(matches)
   renderCars()
 }
 
@@ -515,7 +653,8 @@ async function deleteCar() {
   }
 }
 
-function populateYearOptions() {
+function populateYearOptions()
+applySortPreference() {
   const select = $('model-year')
   const fragment = document.createDocumentFragment()
   for (let year = 2028; year >= 2000; year -= 1) {
@@ -572,6 +711,24 @@ deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
 $('refresh-button').addEventListener('click', loadCars)
 searchInput.addEventListener('input', applySearch)
+sortSelect.addEventListener('change', () => {
+  try { localStorage.setItem(SORT_STORAGE_KEY, sortSelect.value) } catch {}
+  applySearch()
+})
+$('model').addEventListener('input', () => {
+  duplicateDismissedModel = ''
+  clearTimeout(duplicateCheckTimer)
+  duplicateCheckTimer = setTimeout(checkDuplicateModel, 280)
+})
+$('model').addEventListener('blur', () => {
+  clearTimeout(duplicateCheckTimer)
+  checkDuplicateModel()
+})
+duplicateIncreaseBtn.addEventListener('click', increaseDuplicateQuantity)
+duplicateAnywayBtn.addEventListener('click', () => {
+  duplicateDismissedModel = normalizeModel($('model').value)
+  hideDuplicateWarning()
+})
 $('diecast-brand').addEventListener('change', syncBrandCustomField)
 $('model-year').addEventListener('change', syncYearCustomField)
 $('more-details-toggle').addEventListener('click', () => {
