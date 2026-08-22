@@ -59,3 +59,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Brand is now a true dropdown with a visible Other option and custom brand field.
 - Model Year is now a true dropdown from 2028 down to 2000, plus Other with a custom year field.
 - Existing custom brands and out-of-range years automatically open in the custom fields when editing.
+
+
+## v7
+- Main collection cards now show a top-right quantity number only when quantity is greater than 1.
+- Added a subtle black brick-wall background throughout the app.
+- Added Special / Rarity options: TH, STH, Chase, Rare, Limited / Special Edition, and Other Special.
+- Special cars are visually highlighted on the collection page with a status badge and accent border.
+- Search now includes special / rarity status.

@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=6" />
+  <link rel="manifest" href="manifest.webmanifest?v=7" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
   <title>AJ's Garage</title>
 </head>
 <body>
@@ -129,6 +129,17 @@
                 </select>
               </label>
             </div>
+            <label>Special / Rarity
+              <select id="special-status">
+                <option value=""></option>
+                <option value="TH">Treasure Hunt (TH)</option>
+                <option value="STH">Super Treasure Hunt (STH)</option>
+                <option value="Chase">Chase</option>
+                <option value="Rare">Rare</option>
+                <option value="Limited">Limited / Special Edition</option>
+                <option value="Other">Other Special</option>
+              </select>
+            </label>
             <label>Notes<textarea id="notes" rows="4" placeholder="Optional notes"></textarea></label>
           </form>
 
@@ -139,6 +150,6 @@
     </section>
   </div>
 
-  <script type="module" src="app.js?v=6"></script>
+  <script type="module" src="app.js?v=7"></script>
 </body>
 </html>

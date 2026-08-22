@@ -6,6 +6,7 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
 const BRAND_PRESETS = ['Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
+const SPECIAL_STATUSES = ['TH', 'STH', 'Chase', 'Rare', 'Limited', 'Other']
 
 const $ = (id) => document.getElementById(id)
 const authView = $('auth-view')
@@ -141,6 +142,7 @@ function fillEditor(car) {
   $('series').value = car?.series_collection ?? ''
   $('quantity').value = car?.quantity ?? ''
   $('package-status').value = car?.package_status ?? ''
+  $('special-status').value = SPECIAL_STATUSES.includes(car?.special_status) ? car.special_status : ''
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
   setPhotoPreview(null)
@@ -241,7 +243,7 @@ function exportBackup() {
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
   filteredCars = !q ? cars : cars.filter((car) =>
-    [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.package_status, car.notes]
+    [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.package_status, car.special_status, car.notes]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q))
   )
@@ -265,6 +267,10 @@ function renderCars() {
     const card = document.createElement('article')
     card.className = 'car-card'
     card.tabIndex = 0
+    const specialStatus = SPECIAL_STATUSES.includes(car.special_status) ? car.special_status : ''
+    if (specialStatus) {
+      card.classList.add('special-card', `special-${specialStatus.toLowerCase()}`)
+    }
     card.innerHTML = `
       <div class="car-photo"><span>🚗</span></div>
       <div class="car-body">
@@ -274,6 +280,19 @@ function renderCars() {
     card.querySelector('.car-title').textContent = displayTitle(car)
     card.querySelector('.car-sub').textContent = displaySubtitle(car)
     const photoBox = card.querySelector('.car-photo')
+    const quantity = Number(car.quantity)
+    if (Number.isFinite(quantity) && quantity > 1) {
+      const qtyBadge = document.createElement('div')
+      qtyBadge.className = 'quantity-badge'
+      qtyBadge.textContent = String(quantity)
+      photoBox.append(qtyBadge)
+    }
+    if (specialStatus) {
+      const specialBadge = document.createElement('div')
+      specialBadge.className = 'special-badge'
+      specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
+      photoBox.append(specialBadge)
+    }
     if (car.photo_path) {
       const img = document.createElement('img')
       img.alt = displayTitle(car)
@@ -392,6 +411,7 @@ function editorPayload() {
     series_collection: $('series').value.trim() || null,
     quantity: qtyRaw === '' ? null : Number(qtyRaw),
     package_status: $('package-status').value || null,
+    special_status: $('special-status').value || null,
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="260" viewBox="0 0 520 260">
+<defs>
+  <linearGradient id="brick" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#171717"/><stop offset=".48" stop-color="#0e0e0e"/><stop offset="1" stop-color="#070707"/></linearGradient>
+  <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="11" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .08"/></feComponentTransfer></filter>
+</defs>
+<rect width="520" height="260" fill="#030303"/>
+<g stroke="#252525" stroke-width="3">
+  <rect x="2" y="2" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="132" y="2" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="262" y="2" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="392" y="2" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="-63" y="67" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="67" y="67" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="197" y="67" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="327" y="67" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="457" y="67" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="2" y="132" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="132" y="132" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="262" y="132" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="392" y="132" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="-63" y="197" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="67" y="197" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="197" y="197" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="327" y="197" width="126" height="61" rx="3" fill="url(#brick)"/>
+  <rect x="457" y="197" width="126" height="61" rx="3" fill="url(#brick)"/>
+</g>
+<rect width="520" height="260" filter="url(#noise)" opacity=".45"/>
+<rect width="520" height="260" fill="none" stroke="#000" stroke-opacity=".25"/>
+</svg>
