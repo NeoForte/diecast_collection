@@ -19,20 +19,14 @@ const carsGrid = $('cars-grid')
 const emptyState = $('empty-state')
 const carCount = $('car-count')
 const statsTotal = $('stats-total')
-const statsGrandTotal = $('stats-grand-total')
 const brandStats = $('brand-stats')
 const searchInput = $('search-input')
-const sortSelect = $('sort-select')
 const authMessage = $('auth-message')
 const editorMessage = $('editor-message')
 const deleteButton = $('delete-button')
 const photoPreview = $('photo-preview')
 const photoPlaceholder = $('photo-placeholder')
 const photoInput = $('photo-input')
-const duplicateWarning = $('duplicate-warning')
-const duplicateWarningText = $('duplicate-warning-text')
-const duplicateIncreaseBtn = $('duplicate-increase-btn')
-const duplicateAnywayBtn = $('duplicate-anyway-btn')
 
 let session = null
 let cars = []
@@ -40,11 +34,6 @@ let filteredCars = []
 let editingCar = null
 let selectedPhotoFile = null
 let previewObjectUrl = null
-let quickAddMode = false
-let quickAddKeepBrand = ''
-let quickAddKeepCustomBrand = ''
-let duplicateDismissedModel = ''
-let duplicateCheckTimer = null
 
 function syncBrandCustomField() {
   const isOther = $('diecast-brand').value === 'Other'
@@ -131,109 +120,18 @@ function showStats() {
   renderStats()
 }
 
-
-function normalizeModel(value) {
-  return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
-}
-
-function modelMatches(value) {
-  const normalized = normalizeModel(value)
-  if (!normalized || editingCar) return []
-  return cars.filter((car) => normalizeModel(car.model) === normalized)
-}
-
-function hideDuplicateWarning() {
-  duplicateWarning.classList.add('hidden')
-  duplicateWarningText.textContent = ''
-  duplicateIncreaseBtn.classList.remove('hidden')
-}
-
-function checkDuplicateModel() {
-  const raw = $('model').value.trim()
-  const normalized = normalizeModel(raw)
-  if (!normalized || normalized === duplicateDismissedModel || editingCar) {
-    hideDuplicateWarning()
-    return
-  }
-
-  const matches = modelMatches(raw)
-  if (!matches.length) {
-    hideDuplicateWarning()
-    return
-  }
-
-  duplicateWarning.classList.remove('hidden')
-  if (matches.length === 1) {
-    const match = matches[0]
-    const qty = Math.max(1, Number(match.quantity) || 1)
-    const brand = match.diecast_brand ? `${match.diecast_brand} · ` : ''
-    duplicateWarningText.textContent = `Possible duplicate: ${brand}${match.model} is already in your garage (qty ${qty}).`
-    duplicateIncreaseBtn.classList.remove('hidden')
-  } else {
-    duplicateWarningText.textContent = `Possible duplicate: ${matches.length} existing entries use the model “${raw}”. Check the collection before adding another.`
-    duplicateIncreaseBtn.classList.add('hidden')
-  }
-}
-
-async function increaseDuplicateQuantity() {
-  const matches = modelMatches($('model').value)
-  if (matches.length !== 1 || !session?.user) return
-  const match = matches[0]
-  const currentQty = Math.max(1, Number(match.quantity) || 1)
-  duplicateIncreaseBtn.disabled = true
-  duplicateAnywayBtn.disabled = true
-  duplicateWarningText.textContent = 'Updating quantity…'
-  try {
-    const { error } = await supabase
-      .from('cars')
-      .update({ quantity: currentQty + 1, updated_at: new Date().toISOString() })
-      .eq('id', match.id)
-      .eq('user_id', session.user.id)
-    if (error) throw error
-    await loadCars()
-    const keptBrand = $('diecast-brand').value
-    const keptCustomBrand = $('custom-brand').value
-    if (quickAddMode) {
-      quickAddKeepBrand = keptBrand
-      quickAddKeepCustomBrand = keptCustomBrand
-      showEditor(null, { quick: true })
-      editorMessage.textContent = `Quantity increased to ${currentQty + 1} ✓ Ready for the next car.`
-      setTimeout(() => { if (quickAddMode) editorMessage.textContent = '' }, 1600)
-    } else {
-      showCollection()
-    }
-  } catch (error) {
-    duplicateWarningText.textContent = error.message || 'Could not update quantity.'
-  } finally {
-    duplicateIncreaseBtn.disabled = false
-    duplicateAnywayBtn.disabled = false
-  }
-}
-
-function showEditor(car = null, options = {}) {
+function showEditor(car = null) {
   hideScreens()
   editorScreen.classList.add('active')
   mainNav.classList.add('hidden')
   editingCar = car
-  quickAddMode = !car && Boolean(options.quick)
   selectedPhotoFile = null
   editorMessage.textContent = ''
-  duplicateDismissedModel = ''
-  hideDuplicateWarning()
   if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
   previewObjectUrl = null
-  $('editor-title').textContent = car ? 'Car Details' : (quickAddMode ? 'Quick Add' : 'Add Car')
-  $('save-button').textContent = quickAddMode ? 'Save & Next' : 'Save'
-  $('more-details-toggle').classList.toggle('hidden', !quickAddMode)
-  $('more-details-section').classList.toggle('quick-collapsed', quickAddMode)
-  $('more-details-toggle').textContent = 'More Details ▾'
+  $('editor-title').textContent = car ? 'Car Details' : 'Add Car'
   deleteButton.classList.toggle('hidden', !car)
   fillEditor(car)
-  if (quickAddMode && quickAddKeepBrand) {
-    $('diecast-brand').value = quickAddKeepBrand
-    $('custom-brand').value = quickAddKeepCustomBrand
-    syncBrandCustomField()
-  }
 }
 
 function fillEditor(car) {
@@ -342,63 +240,13 @@ function exportBackup() {
   }
 }
 
-const SORT_STORAGE_KEY = 'ajs-garage-sort'
-const VALID_SORTS = new Set(['newest', 'oldest', 'brand-az', 'brand-za', 'model-az', 'model-za', 'qty-high', 'qty-low', 'special-first'])
-
-function textForSort(value) {
-  const text = String(value ?? '').trim()
-  return text || '\uffff'
-}
-
-function dateValue(value) {
-  const time = Date.parse(value || '')
-  return Number.isFinite(time) ? time : 0
-}
-
-function specialRank(car) {
-  return car?.special_status ? 0 : 1
-}
-
-function sortCars(list) {
-  const mode = VALID_SORTS.has(sortSelect?.value) ? sortSelect.value : 'newest'
-  const copy = [...list]
-  const byText = (a, b, field, direction = 1) => {
-    const primary = textForSort(a?.[field]).localeCompare(textForSort(b?.[field]), undefined, { numeric: true, sensitivity: 'base' }) * direction
-    if (primary !== 0) return primary
-    return dateValue(b?.created_at) - dateValue(a?.created_at)
-  }
-
-  copy.sort((a, b) => {
-    switch (mode) {
-      case 'oldest': return dateValue(a.created_at) - dateValue(b.created_at)
-      case 'brand-az': return byText(a, b, 'diecast_brand', 1)
-      case 'brand-za': return byText(a, b, 'diecast_brand', -1)
-      case 'model-az': return byText(a, b, 'model', 1)
-      case 'model-za': return byText(a, b, 'model', -1)
-      case 'qty-high': return (Math.max(1, Number(b.quantity) || 1) - Math.max(1, Number(a.quantity) || 1)) || (dateValue(b.created_at) - dateValue(a.created_at))
-      case 'qty-low': return (Math.max(1, Number(a.quantity) || 1) - Math.max(1, Number(b.quantity) || 1)) || (dateValue(b.created_at) - dateValue(a.created_at))
-      case 'special-first': return (specialRank(a) - specialRank(b)) || (dateValue(b.created_at) - dateValue(a.created_at))
-      case 'newest':
-      default: return dateValue(b.created_at) - dateValue(a.created_at)
-    }
-  })
-  return copy
-}
-
-function applySortPreference() {
-  let saved = 'newest'
-  try { saved = localStorage.getItem(SORT_STORAGE_KEY) || 'newest' } catch {}
-  sortSelect.value = VALID_SORTS.has(saved) ? saved : 'newest'
-}
-
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
-  const matches = !q ? cars : cars.filter((car) =>
+  filteredCars = !q ? cars : cars.filter((car) =>
     [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.package_status, car.special_status, car.notes]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q))
   )
-  filteredCars = sortCars(matches)
   renderCars()
 }
 
@@ -432,12 +280,6 @@ function renderCars() {
     card.querySelector('.car-title').textContent = displayTitle(car)
     card.querySelector('.car-sub').textContent = displaySubtitle(car)
     const photoBox = card.querySelector('.car-photo')
-    if (car.photo_path) {
-      const img = document.createElement('img')
-      img.alt = displayTitle(car)
-      photoBox.replaceChildren(img)
-      loadPrivatePhoto(car.photo_path, img)
-    }
     const quantity = Number(car.quantity)
     if (Number.isFinite(quantity) && quantity > 1) {
       const qtyBadge = document.createElement('div')
@@ -451,6 +293,12 @@ function renderCars() {
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
       photoBox.append(specialBadge)
     }
+    if (car.photo_path) {
+      const img = document.createElement('img')
+      img.alt = displayTitle(car)
+      photoBox.replaceChildren(img)
+      loadPrivatePhoto(car.photo_path, img)
+    }
     const open = () => showEditor(car)
     card.addEventListener('click', open)
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter') open() })
@@ -459,9 +307,7 @@ function renderCars() {
 }
 
 function renderStats() {
-  statsTotal.textContent = String(cars.length)
-  const grandTotal = cars.reduce((sum, car) => sum + Math.max(1, Number(car.quantity) || 1), 0)
-  statsGrandTotal.textContent = String(grandTotal)
+  statsTotal.textContent = `${cars.length} ${cars.length === 1 ? 'car' : 'cars'}`
   brandStats.replaceChildren()
 
   const counts = new Map()
@@ -614,21 +460,13 @@ async function saveCar() {
     }
 
     await loadCars()
-    if (quickAddMode && !editingCar) {
-      quickAddKeepBrand = $('diecast-brand').value
-      quickAddKeepCustomBrand = $('custom-brand').value
-      showEditor(null, { quick: true })
-      editorMessage.textContent = 'Saved ✓ Ready for the next car.'
-      setTimeout(() => { if (quickAddMode) editorMessage.textContent = '' }, 1400)
-    } else {
-      showCollection()
-    }
+    showCollection()
   } catch (err) {
     console.error(err)
     editorMessage.textContent = err.message || 'Could not save car.'
   } finally {
     saveButton.disabled = false
-    saveButton.textContent = quickAddMode ? 'Save & Next' : 'Save'
+    saveButton.textContent = 'Save'
   }
 }
 
@@ -695,14 +533,10 @@ $('signup-btn').addEventListener('click', async () => {
   authMessage.textContent = error ? error.message : 'Account created. Check your email to confirm it, then sign in.'
 })
 
-$('logout-btn').addEventListener('click', async () => {
-  if (!window.confirm('Are you sure you want to sign out?')) return
-  await supabase.auth.signOut()
-})
+$('logout-btn').addEventListener('click', () => supabase.auth.signOut())
 $('collection-nav').addEventListener('click', showCollection)
 $('stats-nav').addEventListener('click', showStats)
 $('add-button').addEventListener('click', () => showEditor())
-$('quick-add-button').addEventListener('click', () => showEditor(null, { quick: true }))
 $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', showCollection)
 $('save-button').addEventListener('click', saveCar)
@@ -710,31 +544,8 @@ deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
 $('refresh-button').addEventListener('click', loadCars)
 searchInput.addEventListener('input', applySearch)
-sortSelect.addEventListener('change', () => {
-  try { localStorage.setItem(SORT_STORAGE_KEY, sortSelect.value) } catch {}
-  applySearch()
-})
-$('model').addEventListener('input', () => {
-  duplicateDismissedModel = ''
-  clearTimeout(duplicateCheckTimer)
-  duplicateCheckTimer = setTimeout(checkDuplicateModel, 280)
-})
-$('model').addEventListener('blur', () => {
-  clearTimeout(duplicateCheckTimer)
-  checkDuplicateModel()
-})
-duplicateIncreaseBtn.addEventListener('click', increaseDuplicateQuantity)
-duplicateAnywayBtn.addEventListener('click', () => {
-  duplicateDismissedModel = normalizeModel($('model').value)
-  hideDuplicateWarning()
-})
 $('diecast-brand').addEventListener('change', syncBrandCustomField)
 $('model-year').addEventListener('change', syncYearCustomField)
-$('more-details-toggle').addEventListener('click', () => {
-  const section = $('more-details-section')
-  const collapsed = section.classList.toggle('quick-collapsed')
-  $('more-details-toggle').textContent = collapsed ? 'More Details ▾' : 'Fewer Details ▴'
-})
 photoInput.addEventListener('change', () => {
   selectedPhotoFile = photoInput.files?.[0] ?? null
   if (!selectedPhotoFile) return
@@ -744,7 +555,6 @@ photoInput.addEventListener('change', () => {
 })
 
 populateYearOptions()
-applySortPreference()
 
 supabase.auth.onAuthStateChange((_event, newSession) => {
   session = newSession
