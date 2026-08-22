@@ -42,6 +42,7 @@
         <nav id="main-nav" class="main-nav" aria-label="App pages">
           <button id="collection-nav" class="nav-button active" type="button">Collection</button>
           <button id="stats-nav" class="nav-button" type="button">Stats</button>
+          <button id="quick-add-button" class="nav-button" type="button">⚡ Quick Add</button>
         </nav>
 
         <section id="collection-screen" class="screen active">
@@ -49,7 +50,6 @@
             <input id="search-input" type="search" placeholder="Search brand, model, year…" />
             <button id="add-button" class="add-button" aria-label="Add car">＋</button>
           </div>
-          <button id="quick-add-button" class="quick-add-button" type="button">⚡ Quick Add</button>
           <div class="summary-row">
             <span id="car-count">0 cars</span>
             <div class="summary-actions">
@@ -72,7 +72,10 @@
               <div class="eyebrow">DIECAST BRANDS</div>
               <h2>Brand Stats</h2>
             </div>
-            <span id="stats-total" class="stats-total">0 cars</span>
+          </div>
+          <div class="stats-overview">
+            <div class="stat-summary-card"><span>Unique Cars</span><strong id="stats-total">0</strong></div>
+            <div class="stat-summary-card"><span>Grand Total</span><strong id="stats-grand-total">0</strong></div>
           </div>
           <div id="brand-stats" class="brand-stats"></div>
         </section>

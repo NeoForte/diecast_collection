@@ -19,6 +19,7 @@ const carsGrid = $('cars-grid')
 const emptyState = $('empty-state')
 const carCount = $('car-count')
 const statsTotal = $('stats-total')
+const statsGrandTotal = $('stats-grand-total')
 const brandStats = $('brand-stats')
 const searchInput = $('search-input')
 const authMessage = $('auth-message')
@@ -320,7 +321,9 @@ function renderCars() {
 }
 
 function renderStats() {
-  statsTotal.textContent = `${cars.length} ${cars.length === 1 ? 'car' : 'cars'}`
+  statsTotal.textContent = String(cars.length)
+  const grandTotal = cars.reduce((sum, car) => sum + Math.max(1, Number(car.quantity) || 1), 0)
+  statsGrandTotal.textContent = String(grandTotal)
   brandStats.replaceChildren()
 
   const counts = new Map()
@@ -554,7 +557,10 @@ $('signup-btn').addEventListener('click', async () => {
   authMessage.textContent = error ? error.message : 'Account created. Check your email to confirm it, then sign in.'
 })
 
-$('logout-btn').addEventListener('click', () => supabase.auth.signOut())
+$('logout-btn').addEventListener('click', async () => {
+  if (!window.confirm('Are you sure you want to sign out?')) return
+  await supabase.auth.signOut()
+})
 $('collection-nav').addEventListener('click', showCollection)
 $('stats-nav').addEventListener('click', showStats)
 $('add-button').addEventListener('click', () => showEditor())

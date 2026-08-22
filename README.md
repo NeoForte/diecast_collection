@@ -76,3 +76,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Model Year, Scale, Series/Collection, NIB/Loose, and Notes are available under More Details.
 - Fixed quantity and special badges so they remain visible over saved photos.
 - Updated PWA cache to v8.
+
+
+## v9
+- Quick Add moved into the compact top navigation.
+- Stats now separate Unique Cars from Grand Total (quantity).
+- Sign out now requires confirmation.

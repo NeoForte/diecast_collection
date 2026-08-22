@@ -86,3 +86,12 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
 .more-details-toggle { width: 100%; border: 1px solid #303030; border-radius: 11px; padding: 10px 12px; margin: 1px 0 15px; background: #181818; color: #d4d4d4; font-weight: 800; }
 #more-details-section.quick-collapsed { display: none; }
 @media (max-width: 420px) { .quick-core-row { grid-template-columns: 1fr 1.25fr; gap: 9px; } }
+
+/* v9 navigation + stats */
+.main-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.main-nav .nav-button { width:100%; min-width:0; padding:10px 8px; font-size:13px; white-space:nowrap; }
+.stats-overview { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 0 18px; }
+.stat-summary-card { background:rgba(15,15,15,.92); border:1px solid #303030; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:4px; }
+.stat-summary-card span { color:#aaa; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+.stat-summary-card strong { font-size:28px; line-height:1; }
+@media (max-width:420px){ .main-nav .nav-button { font-size:12px; padding:9px 5px; } }
