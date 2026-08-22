@@ -107,6 +107,59 @@ async function loadCars() {
   applySearch()
 }
 
+
+function backupFilename() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `Diecast_Backup_${year}-${month}-${day}.json`
+}
+
+async function exportBackup() {
+  if (!session?.user) return
+  const button = $('backup-button')
+  const originalText = button.textContent
+  button.disabled = true
+  button.textContent = 'Exporting…'
+
+  try {
+    const { data, error } = await supabase
+      .from('cars')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+
+    const backup = {
+      format: 'diecast-collection-backup',
+      version: 1,
+      exported_at: new Date().toISOString(),
+      car_count: data?.length ?? 0,
+      note: 'Car data backup. photo_path values point to private photos stored in Supabase; image files are not embedded in this JSON file.',
+      cars: data ?? [],
+    }
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = backupFilename()
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+
+    button.textContent = 'Saved ✓'
+    setTimeout(() => { button.textContent = originalText }, 1800)
+  } catch (err) {
+    console.error(err)
+    button.textContent = 'Backup failed'
+    setTimeout(() => { button.textContent = originalText }, 2200)
+  } finally {
+    button.disabled = false
+  }
+}
+
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
   filteredCars = !q ? cars : cars.filter((car) =>
@@ -298,6 +351,7 @@ $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', showCollection)
 $('save-button').addEventListener('click', saveCar)
 deleteButton.addEventListener('click', deleteCar)
+$('backup-button').addEventListener('click', exportBackup)
 $('refresh-button').addEventListener('click', loadCars)
 searchInput.addEventListener('input', applySearch)
 photoInput.addEventListener('change', () => {

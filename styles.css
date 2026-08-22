@@ -33,7 +33,9 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
 .toolbar { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
 .toolbar input { background: white; }
 .add-button { width: 48px; height: 48px; border: 0; border-radius: 14px; background: #111827; color: white; font-size: 28px; line-height: 1; }
-.summary-row { display: flex; justify-content: space-between; align-items: center; color: #6b7280; padding: 12px 2px 8px; font-size: 14px; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: #6b7280; padding: 12px 2px 8px; font-size: 14px; }
+.summary-actions { display: flex; align-items: center; gap: 2px; }
+.summary-actions .text-button:disabled { opacity: .55; cursor: default; }
 .cars-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .car-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.04); border: 1px solid #eceef1; }
 .car-photo { aspect-ratio: 4 / 3; background: #e5e7eb; display: grid; place-items: center; overflow: hidden; font-size: 30px; }

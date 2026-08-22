@@ -32,3 +32,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Fixed a Supabase auth-state deadlock that could make Save appear to do nothing.
 - Confirmation emails now explicitly redirect to the GitHub Pages app URL.
 - Save button now shows Saving… while a save is in progress.
+
+
+## v3 backup
+- Added one-click Export Backup.
+- Backup downloads a dated JSON file with all car records and private photo paths.
+- Photo image files remain stored privately in Supabase and are not embedded in the JSON backup.
