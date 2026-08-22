@@ -26,3 +26,9 @@ Private personal PWA for cataloging diecast cars.
 
 ## iPhone install
 Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as Web App if shown.
+
+
+## v2 fix
+- Fixed a Supabase auth-state deadlock that could make Save appear to do nothing.
+- Confirmation emails now explicitly redirect to the GitHub Pages app URL.
+- Save button now shows Saving… while a save is in progress.

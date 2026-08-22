@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.102.0'
 
 const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
+const APP_URL = 'https://neoforte.github.io/diecast_collection/'
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
@@ -199,9 +200,15 @@ function editorPayload() {
 }
 
 async function saveCar() {
-  if (!session?.user) return
+  if (!session?.user) {
+    editorMessage.textContent = 'Your session expired. Sign out and sign back in.'
+    return
+  }
+  const saveButton = $('save-button')
+  const originalSaveText = saveButton.textContent
   editorMessage.textContent = 'Saving…'
-  $('save-button').disabled = true
+  saveButton.textContent = 'Saving…'
+  saveButton.disabled = true
   try {
     const payload = editorPayload()
     let car
@@ -236,7 +243,9 @@ async function saveCar() {
     console.error(err)
     editorMessage.textContent = err.message || 'Could not save car.'
   } finally {
-    $('save-button').disabled = false
+    const saveButton = $('save-button')
+    saveButton.disabled = false
+    saveButton.textContent = 'Save'
   }
 }
 
@@ -275,7 +284,11 @@ $('signup-btn').addEventListener('click', async () => {
     return
   }
   authMessage.textContent = 'Creating account…'
-  const { error } = await supabase.auth.signUp({ email, password })
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: APP_URL },
+  })
   authMessage.textContent = error ? error.message : 'Account created. Check your email to confirm it, then sign in.'
 })
 
@@ -295,11 +308,15 @@ photoInput.addEventListener('change', () => {
   setPhotoPreview(previewObjectUrl)
 })
 
-supabase.auth.onAuthStateChange(async (_event, newSession) => {
+supabase.auth.onAuthStateChange((_event, newSession) => {
   session = newSession
   if (session) {
     showMain()
-    await loadCars()
+    // Do not await Supabase API calls inside onAuthStateChange.
+    // Supabase documents a deadlock where later client calls can otherwise hang.
+    setTimeout(() => {
+      loadCars()
+    }, 0)
   } else {
     cars = []
     renderCars()
