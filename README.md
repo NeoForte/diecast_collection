@@ -94,3 +94,8 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added main-page collection sorting.
 - Sort options: newest, oldest, brand A–Z/Z–A, model A–Z/Z–A, quantity high/low, and special-first.
 - Selected sort is remembered on the device.
+
+
+## v12 hotfix
+- Fixed v11 startup initialization issue that could prevent sign-in.
+- Retains all v11 sorting features.

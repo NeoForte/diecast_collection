@@ -653,8 +653,7 @@ async function deleteCar() {
   }
 }
 
-function populateYearOptions()
-applySortPreference() {
+function populateYearOptions() {
   const select = $('model-year')
   const fragment = document.createDocumentFragment()
   for (let year = 2028; year >= 2000; year -= 1) {
@@ -745,6 +744,7 @@ photoInput.addEventListener('change', () => {
 })
 
 populateYearOptions()
+applySortPreference()
 
 supabase.auth.onAuthStateChange((_event, newSession) => {
   session = newSession
