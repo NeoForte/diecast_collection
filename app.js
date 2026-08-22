@@ -290,46 +290,103 @@ async function loadCars() {
   renderStats()
 }
 
-function backupFilename() {
+function backupFilename(extension = 'zip') {
   const now = new Date()
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
-  return `AJs_Garage_Backup_${year}-${month}-${day}.json`
+  return `AJs_Garage_Backup_${year}-${month}-${day}.${extension}`
 }
 
-function exportBackup() {
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.style.display = 'none'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
+}
+
+function requireZipSupport() {
+  if (!window.JSZip) throw new Error('Backup ZIP support did not load. Refresh the app and try again.')
+  return window.JSZip
+}
+
+async function exportBackup() {
   if (!session?.user) {
     alert('Your session expired. Sign out and sign back in, then try the backup again.')
     return
   }
 
   const button = $('backup-button')
+  const restoreButton = $('restore-button')
   const originalText = button.textContent
   button.disabled = true
-  button.textContent = 'Exporting…'
+  restoreButton.disabled = true
+  button.textContent = 'Preparing…'
 
   try {
-    const backup = {
-      format: 'ajs-garage-backup',
-      version: 2,
-      exported_at: new Date().toISOString(),
-      car_count: cars.length,
-      note: 'Car data backup. photo_path values point to private photos stored in Supabase; image files are not embedded in this JSON file.',
-      cars,
+    const JSZip = requireZipSupport()
+    await loadCars()
+
+    const zip = new JSZip()
+    const photoMap = {}
+    const photoCars = cars.filter((car) => Boolean(car.photo_path))
+    const failures = []
+
+    for (let index = 0; index < photoCars.length; index += 1) {
+      const car = photoCars[index]
+      button.textContent = `Photos ${index + 1}/${photoCars.length}`
+      const { data, error } = await supabase.storage.from('car-photos').download(car.photo_path)
+      if (error || !data) {
+        failures.push(car.model || car.id)
+        continue
+      }
+      const photoFile = `photos/${car.id}.jpg`
+      photoMap[car.id] = photoFile
+      zip.file(photoFile, data, { binary: true, compression: 'STORE' })
     }
 
-    const json = JSON.stringify(backup, null, 2)
-    const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = backupFilename()
-    link.style.display = 'none'
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 5000)
+    if (failures.length) {
+      const preview = failures.slice(0, 5).join(', ')
+      const more = failures.length > 5 ? ` and ${failures.length - 5} more` : ''
+      throw new Error(`${failures.length} stored photo${failures.length === 1 ? '' : 's'} could not be downloaded (${preview}${more}). No backup file was created so you do not mistake an incomplete backup for a complete one. Please retry.`)
+    }
+
+    const backupCars = cars.map((car) => ({ ...car }))
+    const backup = {
+      format: 'ajs-garage-backup',
+      version: 3,
+      exported_at: new Date().toISOString(),
+      source_user_id: session.user.id,
+      car_count: backupCars.length,
+      photo_count: Object.keys(photoMap).length,
+      note: 'Self-contained AJ\'s Garage backup. backup.json contains collection records and the photos folder contains the actual private car images.',
+      photos: photoMap,
+      cars: backupCars,
+    }
+
+    zip.file('backup.json', JSON.stringify(backup, null, 2))
+    zip.file('README.txt', [
+      "AJ's Garage Disaster-Recovery Backup",
+      '',
+      `Exported: ${backup.exported_at}`,
+      `Cars: ${backup.car_count}`,
+      `Photos: ${backup.photo_count}`,
+      '',
+      'Keep this ZIP file somewhere safe. Do not unzip or modify it before restoring in AJ\'s Garage.',
+      'The backup contains collection data plus the actual stored car images.',
+    ].join('\n'))
+
+    button.textContent = 'Packing…'
+    const blob = await zip.generateAsync(
+      { type: 'blob', compression: 'STORE' },
+      (metadata) => { button.textContent = `Packing ${Math.round(metadata.percent)}%` },
+    )
+    downloadBlob(blob, backupFilename('zip'))
 
     button.textContent = 'Saved ✓'
     setTimeout(() => { button.textContent = originalText }, 1800)
@@ -337,9 +394,209 @@ function exportBackup() {
     console.error(err)
     button.textContent = 'Backup failed'
     alert(`Backup failed: ${err.message || err}`)
-    setTimeout(() => { button.textContent = originalText }, 2200)
+    setTimeout(() => { button.textContent = originalText }, 2600)
   } finally {
     button.disabled = false
+    restoreButton.disabled = false
+  }
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''))
+}
+
+function nullableText(value) {
+  const text = String(value ?? '').trim()
+  return text || null
+}
+
+function restoreQuantity(value) {
+  if (value === null || value === undefined || value === '') return null
+  const number = Number(value)
+  return Number.isFinite(number) ? Math.max(1, Math.floor(number)) : null
+}
+
+function restoreDate(value, fallback) {
+  const text = String(value ?? '')
+  return Number.isFinite(Date.parse(text)) ? text : fallback
+}
+
+function safePhotoBackupPath(value, originalId) {
+  const path = String(value ?? '')
+  const expected = `photos/${originalId}.jpg`
+  return path === expected ? path : null
+}
+
+async function readBackupFile(file) {
+  const lowerName = file.name.toLowerCase()
+  if (lowerName.endsWith('.json') || file.type === 'application/json') {
+    const backup = JSON.parse(await file.text())
+    return { backup, zip: null, legacyJson: true }
+  }
+
+  const JSZip = requireZipSupport()
+  const zip = await JSZip.loadAsync(file)
+  const backupEntry = zip.file('backup.json')
+  if (!backupEntry) throw new Error('This ZIP does not contain backup.json and is not an AJ\'s Garage backup.')
+  const backup = JSON.parse(await backupEntry.async('string'))
+  return { backup, zip, legacyJson: false }
+}
+
+function validateBackup(backup) {
+  if (!backup || backup.format !== 'ajs-garage-backup' || !Array.isArray(backup.cars)) {
+    throw new Error('This file is not a valid AJ\'s Garage backup.')
+  }
+  if (backup.cars.length > 20000) throw new Error('This backup contains an unexpected number of records and was not restored.')
+}
+
+function restorePayload(car, targetId, initialPhotoPath) {
+  const now = new Date().toISOString()
+  return {
+    id: targetId,
+    user_id: session.user.id,
+    photo_path: initialPhotoPath,
+    diecast_brand: nullableText(car.diecast_brand),
+    make: nullableText(car.make),
+    model: nullableText(car.model),
+    model_year: nullableText(car.model_year),
+    scale: nullableText(car.scale),
+    series_collection: nullableText(car.series_collection),
+    quantity: restoreQuantity(car.quantity),
+    notes: nullableText(car.notes),
+    created_at: restoreDate(car.created_at, now),
+    updated_at: restoreDate(car.updated_at, now),
+    package_status: nullableText(car.package_status),
+    special_status: nullableText(car.special_status),
+    general_number: nullableText(car.general_number),
+    series_collection_number: nullableText(car.series_collection_number),
+  }
+}
+
+async function upsertRestoreRows(rows) {
+  const chunkSize = 100
+  for (let start = 0; start < rows.length; start += chunkSize) {
+    const chunk = rows.slice(start, start + chunkSize)
+    const { error } = await supabase.from('cars').upsert(chunk, { onConflict: 'id' })
+    if (error) throw error
+  }
+}
+
+async function restoreBackupFile(file) {
+  if (!session?.user) {
+    alert('Your session expired. Sign out and sign back in, then try the restore again.')
+    return
+  }
+
+  const restoreButton = $('restore-button')
+  const backupButton = $('backup-button')
+  const originalText = restoreButton.textContent
+  restoreButton.disabled = true
+  backupButton.disabled = true
+  restoreButton.textContent = 'Reading…'
+
+  try {
+    const { backup, zip, legacyJson } = await readBackupFile(file)
+    validateBackup(backup)
+
+    const backupVersion = Number(backup.version) || 1
+    const sourceUserId = nullableText(backup.source_user_id) || nullableText(backup.cars.find((car) => car?.user_id)?.user_id)
+    const sameAccount = Boolean(sourceUserId && sourceUserId === session.user.id)
+    const photoMap = backup.photos && typeof backup.photos === 'object' ? backup.photos : {}
+    const embeddedPhotoCount = zip ? Object.keys(photoMap).length : 0
+    const exportedDate = Number.isFinite(Date.parse(backup.exported_at || ''))
+      ? new Date(backup.exported_at).toLocaleString()
+      : 'unknown date'
+
+    const accountNote = sameAccount
+      ? 'Matching backed-up cars will be updated.'
+      : 'This backup came from a different or unknown account, so restored cars will receive new IDs.'
+    const photoNote = embeddedPhotoCount
+      ? `${embeddedPhotoCount} embedded photo${embeddedPhotoCount === 1 ? '' : 's'} will also be restored.`
+      : 'This backup has no embedded images. Car data will restore, but image recovery depends on any old Supabase photo paths still existing.'
+
+    const approved = window.confirm(
+      `Restore AJ's Garage backup from ${exportedDate}?\n\n` +
+      `${backup.cars.length} car${backup.cars.length === 1 ? '' : 's'}\n` +
+      `${photoNote}\n\n${accountNote}\n` +
+      'Current cars that are not in the backup will NOT be deleted.'
+    )
+    if (!approved) return
+
+    restoreButton.textContent = 'Preparing…'
+    await loadCars()
+    const existingById = new Map(cars.map((car) => [car.id, car]))
+    const restoreItems = backup.cars.map((car) => {
+      const originalId = String(car?.id || '')
+      const targetId = sameAccount && isUuid(originalId) ? originalId : crypto.randomUUID()
+      const existing = existingById.get(targetId)
+      const embeddedPath = zip ? safePhotoBackupPath(photoMap[originalId], originalId) : null
+      const legacyPath = !embeddedPath && sameAccount && String(car?.photo_path || '').startsWith(`${session.user.id}/`)
+        ? String(car.photo_path)
+        : null
+      const initialPhotoPath = existing?.photo_path || legacyPath || null
+      return {
+        originalId,
+        targetId,
+        embeddedPath,
+        payload: restorePayload(car || {}, targetId, initialPhotoPath),
+      }
+    })
+
+    restoreButton.textContent = `Cars 0/${restoreItems.length}`
+    const rows = restoreItems.map((item) => item.payload)
+    await upsertRestoreRows(rows)
+    restoreButton.textContent = `Cars ${restoreItems.length}/${restoreItems.length}`
+
+    const photoItems = restoreItems.filter((item) => item.embeddedPath)
+    const photoFailures = []
+    for (let index = 0; index < photoItems.length; index += 1) {
+      const item = photoItems[index]
+      restoreButton.textContent = `Photos ${index + 1}/${photoItems.length}`
+      try {
+        const entry = zip.file(item.embeddedPath)
+        if (!entry) throw new Error(`Missing ${item.embeddedPath}`)
+        const blob = await entry.async('blob')
+        const targetPath = `${session.user.id}/${item.targetId}.jpg`
+        const { error: uploadError } = await supabase.storage.from('car-photos').upload(targetPath, blob, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        })
+        if (uploadError) throw uploadError
+        const { error: updateError } = await supabase
+          .from('cars')
+          .update({ photo_path: targetPath, updated_at: item.payload.updated_at })
+          .eq('id', item.targetId)
+          .eq('user_id', session.user.id)
+        if (updateError) throw updateError
+      } catch (error) {
+        console.error(error)
+        photoFailures.push(item.originalId || item.targetId)
+      }
+    }
+
+    await loadCars()
+    showCollection()
+
+    if (photoFailures.length) {
+      restoreButton.textContent = 'Partial restore'
+      alert(`Car data was restored, but ${photoFailures.length} photo${photoFailures.length === 1 ? '' : 's'} could not be restored. You can safely retry the same backup ZIP; the restore is non-destructive.`)
+    } else {
+      restoreButton.textContent = 'Restored ✓'
+      const legacyMessage = legacyJson || backupVersion < 3
+        ? '\n\nThis was an older JSON/data-only backup, so images were not embedded in the file.'
+        : ''
+      alert(`Restore complete: ${restoreItems.length} car${restoreItems.length === 1 ? '' : 's'} and ${photoItems.length} embedded photo${photoItems.length === 1 ? '' : 's'} processed.${legacyMessage}`)
+    }
+    setTimeout(() => { restoreButton.textContent = originalText }, 2200)
+  } catch (err) {
+    console.error(err)
+    restoreButton.textContent = 'Restore failed'
+    alert(`Restore failed: ${err.message || err}`)
+    setTimeout(() => { restoreButton.textContent = originalText }, 2800)
+  } finally {
+    restoreButton.disabled = false
+    backupButton.disabled = false
+    $('restore-input').value = ''
   }
 }
 
@@ -730,6 +987,11 @@ $('quantity-plus').addEventListener('click', () => stepQuantity(1))
 $('quantity').addEventListener('change', normalizeQuantityInput)
 deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
+$('restore-button').addEventListener('click', () => $('restore-input').click())
+$('restore-input').addEventListener('change', () => {
+  const file = $('restore-input').files?.[0]
+  if (file) restoreBackupFile(file)
+})
 $('refresh-button').addEventListener('click', loadCars)
 searchInput.addEventListener('input', applySearch)
 sortSelect.addEventListener('change', () => {

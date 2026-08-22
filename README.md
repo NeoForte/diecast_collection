@@ -122,3 +122,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added manual Series / Collection Number field.
 - New number fields save to Supabase and are included in collection search and backups.
 - Bumped the PWA cache to v15 so devices load the updated interface.
+
+
+## v16 disaster-recovery backup
+- Export Backup now creates one dated ZIP containing `backup.json` plus every private car photo.
+- Backup export verifies that every expected stored photo was downloaded before producing the ZIP, so an incomplete image backup is not silently treated as complete.
+- Added Restore Backup for v16 ZIP backups. Restore rebuilds collection records and uploads the embedded images back to private Supabase Storage.
+- Restore is non-destructive: it merges/updates backed-up records and does not delete unrelated cars already in the garage.
+- Backups from a different account are restored with new car IDs so they do not conflict with records owned by another account.
+- Legacy JSON backups from v3-v15 can still restore car data, but those older backups cannot restore image files because they never contained the images.
+- Bundled JSZip 3.10.1 locally so backup/restore does not depend on an extra CDN request.
+- Bumped the PWA cache to v16.

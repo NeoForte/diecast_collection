@@ -39,7 +39,7 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
 .toolbar input { background: #151515; }
 .add-button { width: 48px; height: 48px; border: 0; border-radius: 14px; background: #f9fafb; color: #050505; font-size: 28px; line-height: 1; }
 .summary-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: #9ca3af; padding: 12px 2px 8px; font-size: 14px; }
-.summary-actions { display: flex; align-items: center; gap: 2px; }
+.summary-actions { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
 .summary-actions .text-button:disabled { opacity: .55; cursor: default; }
 .cars-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .car-card { position: relative; background: rgba(17,17,17,.96); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 14px rgba(0,0,0,.35); border: 1px solid #292929; transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease; }
