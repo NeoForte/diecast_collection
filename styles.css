@@ -384,3 +384,18 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
     gap: 10px;
   }
 }
+
+/* v25 anchor quantity controls */
+.car-card {
+  display: flex;
+  flex-direction: column;
+}
+.car-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.card-quantity-control {
+  margin-top: auto !important;
+}

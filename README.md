@@ -194,3 +194,8 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 ## v24
 - Toy Number automatically converts to uppercase while typing.
 - Toy Number is also forced to uppercase when saved.
+
+
+## v25
+- Fixed collection cards so the +/- quantity controls anchor consistently at the bottom.
+- Replaced the app icon with a custom white/silver metallic Porsche 911-style icon.
