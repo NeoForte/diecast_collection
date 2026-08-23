@@ -144,3 +144,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Elite 64 cards use a gunmetal-blue border.
 - Red Line Club cards use a metallic red border.
 - Existing TH / Chase / Rare styling is unchanged.
+
+
+## v18
+- Added minus and plus quantity controls directly to every collection card.
+- Card quantity changes auto-save immediately to Supabase; minimum quantity remains 1.
+- Added model type-ahead suggestions from cars already in the collection; matches narrow as more text is entered.
+- Existing duplicate-model warning remains in place.
+- Bumped PWA cache and asset versions to v18.

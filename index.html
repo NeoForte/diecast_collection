@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=16" />
+  <link rel="manifest" href="manifest.webmanifest?v=18" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=16" />
+  <link rel="stylesheet" href="styles.css?v=18" />
   <title>AJ's Garage</title>
 </head>
 <body>
@@ -128,7 +128,10 @@
             <label id="custom-brand-label" class="hidden">Other Brand
               <input id="custom-brand" type="text" placeholder="Type brand name" />
             </label>
-            <label>Model<input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" /></label>
+            <label class="model-field">Model
+              <input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" aria-autocomplete="list" aria-controls="model-suggestions" />
+              <div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars already in your garage"></div>
+            </label>
             <div id="duplicate-warning" class="duplicate-warning hidden" role="status" aria-live="polite">
               <div id="duplicate-warning-text"></div>
               <div id="duplicate-warning-actions" class="duplicate-warning-actions">
@@ -195,6 +198,6 @@
   </div>
 
   <script src="jszip.min.js?v=16"></script>
-  <script type="module" src="app.js?v=16"></script>
+  <script type="module" src="app.js?v=18"></script>
 </body>
 </html>

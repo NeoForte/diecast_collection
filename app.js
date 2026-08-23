@@ -46,6 +46,7 @@ const photoPreview = $('photo-preview')
 const photoPlaceholder = $('photo-placeholder')
 const photoInput = $('photo-input')
 const duplicateWarning = $('duplicate-warning')
+const modelSuggestions = $('model-suggestions')
 const duplicateWarningText = $('duplicate-warning-text')
 const duplicateIncreaseBtn = $('duplicate-increase-btn')
 const duplicateAnywayBtn = $('duplicate-anyway-btn')
@@ -158,6 +159,72 @@ function modelMatches(value) {
   return cars.filter((car) => normalizeModel(car.model) === normalized)
 }
 
+function matchingModelCars(value) {
+  const q = normalizeModel(value)
+  if (!q) return []
+  return cars
+    .filter((car) => normalizeModel(car.model).includes(q))
+    .sort((a, b) => {
+      const am = normalizeModel(a.model)
+      const bm = normalizeModel(b.model)
+      const aStarts = am.startsWith(q) ? 0 : 1
+      const bStarts = bm.startsWith(q) ? 0 : 1
+      if (aStarts !== bStarts) return aStarts - bStarts
+      return am.localeCompare(bm, undefined, { numeric: true, sensitivity: 'base' })
+    })
+    .slice(0, 8)
+}
+
+function hideModelSuggestions() {
+  modelSuggestions.classList.add('hidden')
+  modelSuggestions.replaceChildren()
+}
+
+function renderModelSuggestions() {
+  const input = $('model')
+  const q = input.value.trim()
+  if (!q) {
+    hideModelSuggestions()
+    return
+  }
+  const matches = matchingModelCars(q)
+  if (!matches.length) {
+    hideModelSuggestions()
+    return
+  }
+
+  modelSuggestions.replaceChildren()
+  for (const car of matches) {
+    const option = document.createElement('button')
+    option.type = 'button'
+    option.className = 'model-suggestion'
+    option.setAttribute('role', 'option')
+
+    const title = document.createElement('span')
+    title.className = 'model-suggestion-title'
+    title.textContent = car.model || 'Untitled Car'
+
+    const meta = document.createElement('span')
+    meta.className = 'model-suggestion-meta'
+    const qty = Math.max(1, Number(car.quantity) || 1)
+    meta.textContent = [car.diecast_brand, car.model_year, `Qty ${qty}`].filter(Boolean).join(' · ')
+
+    option.append(title, meta)
+    option.addEventListener('mousedown', (event) => event.preventDefault())
+    option.addEventListener('click', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      input.value = car.model || ''
+      hideModelSuggestions()
+      duplicateDismissedModel = ''
+      checkDuplicateModel()
+      input.focus()
+    })
+    modelSuggestions.append(option)
+  }
+  modelSuggestions.classList.remove('hidden')
+}
+
 function hideDuplicateWarning() {
   duplicateWarning.classList.add('hidden')
   duplicateWarningText.textContent = ''
@@ -255,6 +322,7 @@ function showEditor(car = null, options = {}) {
 function fillEditor(car) {
   setBrandValue(car?.diecast_brand ?? '')
   $('model').value = car?.model ?? ''
+  hideModelSuggestions()
   setYearValue(car?.model_year ?? '')
   $('scale').value = car?.scale ?? ''
   $('series').value = car?.series_collection ?? ''
@@ -684,6 +752,36 @@ function displaySubtitle(car) {
   return [car.diecast_brand, car.model_year, car.scale].filter(Boolean).join(' · ') || 'No details yet'
 }
 
+async function updateCardQuantity(car, delta, controls) {
+  if (!session?.user || !car?.id) return
+  const currentQty = Math.max(1, Number(car.quantity) || 1)
+  const nextQty = Math.max(1, currentQty + delta)
+  if (nextQty === currentQty) return
+
+  const buttons = controls?.querySelectorAll('button') || []
+  buttons.forEach((button) => { button.disabled = true })
+  controls?.classList.add('saving')
+
+  try {
+    const { error } = await supabase
+      .from('cars')
+      .update({ quantity: nextQty, updated_at: new Date().toISOString() })
+      .eq('id', car.id)
+      .eq('user_id', session.user.id)
+    if (error) throw error
+
+    car.quantity = nextQty
+    car.updated_at = new Date().toISOString()
+    applySearch()
+    renderStats()
+  } catch (error) {
+    console.error(error)
+    controls?.classList.remove('saving')
+    buttons.forEach((button) => { button.disabled = false })
+    window.alert(error.message || 'Could not update quantity.')
+  }
+}
+
 function renderCars() {
   carsGrid.replaceChildren()
   carCount.textContent = `${cars.length} ${cars.length === 1 ? 'car' : 'cars'}`
@@ -727,6 +825,39 @@ function renderCars() {
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
       photoBox.append(specialBadge)
     }
+
+    const qtyControls = document.createElement('div')
+    qtyControls.className = 'card-quantity-control'
+    const minusButton = document.createElement('button')
+    minusButton.type = 'button'
+    minusButton.className = 'card-quantity-button'
+    minusButton.textContent = '−'
+    minusButton.setAttribute('aria-label', `Decrease quantity for ${displayTitle(car)}`)
+    minusButton.disabled = Math.max(1, Number(car.quantity) || 1) <= 1
+    const qtyValue = document.createElement('span')
+    qtyValue.className = 'card-quantity-value'
+    qtyValue.textContent = String(Math.max(1, Number(car.quantity) || 1))
+    qtyValue.setAttribute('aria-label', `Quantity ${qtyValue.textContent}`)
+    const plusButton = document.createElement('button')
+    plusButton.type = 'button'
+    plusButton.className = 'card-quantity-button'
+    plusButton.textContent = '+'
+    plusButton.setAttribute('aria-label', `Increase quantity for ${displayTitle(car)}`)
+    qtyControls.append(minusButton, qtyValue, plusButton)
+    card.querySelector('.car-body').append(qtyControls)
+
+    minusButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      updateCardQuantity(car, -1, qtyControls)
+    })
+    plusButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      updateCardQuantity(car, 1, qtyControls)
+    })
+    qtyControls.addEventListener('keydown', (event) => event.stopPropagation())
+
     const open = () => showEditor(car)
     card.addEventListener('click', open)
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter') open() })
@@ -1018,11 +1149,14 @@ sortSelect.addEventListener('change', () => {
 })
 $('model').addEventListener('input', () => {
   duplicateDismissedModel = ''
+  renderModelSuggestions()
   clearTimeout(duplicateCheckTimer)
   duplicateCheckTimer = setTimeout(checkDuplicateModel, 280)
 })
+$('model').addEventListener('focus', renderModelSuggestions)
 $('model').addEventListener('blur', () => {
   clearTimeout(duplicateCheckTimer)
+  setTimeout(hideModelSuggestions, 120)
   checkDuplicateModel()
 })
 duplicateIncreaseBtn.addEventListener('click', increaseDuplicateQuantity)

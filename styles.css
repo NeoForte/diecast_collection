@@ -149,3 +149,21 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   .quantity-step { height:46px; }
   .number-fields { grid-template-columns:1fr; gap:0; }
 }
+
+
+/* v18 card quantity autosave */
+.card-quantity-control { display:grid; grid-template-columns:36px minmax(32px,1fr) 36px; align-items:center; gap:6px; margin-top:10px; padding-top:9px; border-top:1px solid #292929; }
+.card-quantity-button { width:36px; height:32px; border:1px solid #3d3d3d; border-radius:9px; background:#1d1d1d; color:#fff; font-size:20px; font-weight:900; line-height:1; display:grid; place-items:center; padding:0; }
+.card-quantity-button:active:not(:disabled) { background:#303030; transform:translateY(1px); }
+.card-quantity-button:disabled { opacity:.32; cursor:default; }
+.card-quantity-value { text-align:center; color:#f7f7f7; font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; }
+.card-quantity-control.saving { opacity:.62; }
+
+/* v18 model type-ahead */
+.model-field { position:relative; }
+.model-suggestions { position:absolute; z-index:30; top:100%; left:0; right:0; margin-top:-9px; max-height:290px; overflow:auto; border:1px solid #3b3b3b; border-radius:12px; background:#111; box-shadow:0 14px 34px rgba(0,0,0,.62); }
+.model-suggestion { width:100%; border:0; border-bottom:1px solid #292929; border-radius:0; padding:10px 12px; background:#111; color:#fff; text-align:left; display:grid; gap:3px; }
+.model-suggestion:last-child { border-bottom:0; }
+.model-suggestion:active, .model-suggestion:hover { background:#202020; }
+.model-suggestion-title { font-size:14px; font-weight:850; line-height:1.2; }
+.model-suggestion-meta { color:#a3a3a3; font-size:12px; line-height:1.25; }
