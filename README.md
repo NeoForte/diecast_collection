@@ -152,3 +152,13 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added model type-ahead suggestions from cars already in the collection; matches narrow as more text is entered.
 - Existing duplicate-model warning remains in place.
 - Bumped PWA cache and asset versions to v18.
+
+
+## v19
+- Replaced Scale in the app UI with Color (common dropdown values + custom typed color).
+- Added optional Hot Wheels Toy Number field, searchable in Collection search.
+- Added None and custom typed-brand support to Diecast Brand.
+- Removed Other Special label; Special Category now supports a custom typed value.
+- Brand Stats rows are clickable and filter the Collection to that brand.
+- Model/duplicate suggestions now include the existing car photo thumbnail when available.
+- Existing Scale database values are preserved but no longer shown/edited.

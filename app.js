@@ -5,8 +5,9 @@ const APP_URL = 'https://neoforte.github.io/diecast_collection/'
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
-const BRAND_PRESETS = ['Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
-const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Car Culture Premium', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Other']
+const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
+const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Car Culture Premium', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
+const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 
 function specialClassForStatus(status) {
   const map = {
@@ -19,7 +20,6 @@ function specialClassForStatus(status) {
     'Chase': 'special-chase',
     'Rare': 'special-rare',
     'Limited': 'special-limited',
-    'Other': 'special-other',
   }
   return map[status] || ''
 }
@@ -50,6 +50,10 @@ const modelSuggestions = $('model-suggestions')
 const duplicateWarningText = $('duplicate-warning-text')
 const duplicateIncreaseBtn = $('duplicate-increase-btn')
 const duplicateAnywayBtn = $('duplicate-anyway-btn')
+const customSpecialLabel = $('custom-special-label')
+const customSpecial = $('custom-special')
+const customColorLabel = $('custom-color-label')
+const customColor = $('custom-color')
 
 let session = null
 let cars = []
@@ -67,6 +71,18 @@ function syncBrandCustomField() {
   const isOther = $('diecast-brand').value === 'Other'
   $('custom-brand-label').classList.toggle('hidden', !isOther)
   if (!isOther) $('custom-brand').value = ''
+}
+
+function syncSpecialCustomField() {
+  const isOther = $('special-status').value === 'Other'
+  customSpecialLabel.classList.toggle('hidden', !isOther)
+  if (!isOther) customSpecial.value = ''
+}
+
+function syncColorCustomField() {
+  const isOther = $('color').value === 'Other'
+  customColorLabel.classList.toggle('hidden', !isOther)
+  if (!isOther) customColor.value = ''
 }
 
 function syncYearCustomField() {
@@ -109,6 +125,38 @@ function setYearValue(value) {
     $('custom-year').value = raw
   }
   syncYearCustomField()
+}
+
+function setSpecialValue(value) {
+  const raw = String(value ?? '').trim()
+  const preset = SPECIAL_STATUSES.find((status) => status.toLowerCase() === raw.toLowerCase())
+  if (!raw) {
+    $('special-status').value = ''
+    customSpecial.value = ''
+  } else if (preset) {
+    $('special-status').value = preset
+    customSpecial.value = ''
+  } else {
+    $('special-status').value = 'Other'
+    customSpecial.value = raw
+  }
+  syncSpecialCustomField()
+}
+
+function setColorValue(value) {
+  const raw = String(value ?? '').trim()
+  const preset = COLOR_PRESETS.find((color) => color !== 'Other' && color.toLowerCase() === raw.toLowerCase())
+  if (!raw) {
+    $('color').value = ''
+    customColor.value = ''
+  } else if (preset) {
+    $('color').value = preset
+    customColor.value = ''
+  } else {
+    $('color').value = 'Other'
+    customColor.value = raw
+  }
+  syncColorCustomField()
 }
 
 function setActiveNav(active) {
@@ -200,6 +248,19 @@ function renderModelSuggestions() {
     option.className = 'model-suggestion'
     option.setAttribute('role', 'option')
 
+    const thumb = document.createElement('div')
+    thumb.className = 'model-suggestion-thumb'
+    thumb.textContent = '🚗'
+    if (car.photo_path) {
+      const img = document.createElement('img')
+      img.alt = ''
+      thumb.replaceChildren(img)
+      loadPrivatePhoto(car.photo_path, img)
+    }
+
+    const text = document.createElement('span')
+    text.className = 'model-suggestion-text'
+
     const title = document.createElement('span')
     title.className = 'model-suggestion-title'
     title.textContent = car.model || 'Untitled Car'
@@ -207,9 +268,10 @@ function renderModelSuggestions() {
     const meta = document.createElement('span')
     meta.className = 'model-suggestion-meta'
     const qty = Math.max(1, Number(car.quantity) || 1)
-    meta.textContent = [car.diecast_brand, car.model_year, `Qty ${qty}`].filter(Boolean).join(' · ')
+    meta.textContent = [car.diecast_brand, car.model_year, car.color, car.hotwheels_toy_number, `Qty ${qty}`].filter(Boolean).join(' · ')
 
-    option.append(title, meta)
+    text.append(title, meta)
+    option.append(thumb, text)
     option.addEventListener('mousedown', (event) => event.preventDefault())
     option.addEventListener('click', (event) => {
       event.preventDefault()
@@ -324,12 +386,13 @@ function fillEditor(car) {
   $('model').value = car?.model ?? ''
   hideModelSuggestions()
   setYearValue(car?.model_year ?? '')
-  $('scale').value = car?.scale ?? ''
+  setColorValue(car?.color ?? '')
+  $('hotwheels-toy-number').value = car?.hotwheels_toy_number ?? ''
   $('series').value = car?.series_collection ?? ''
   $('general-number').value = car?.general_number ?? ''
   $('series-collection-number').value = car?.series_collection_number ?? ''
   $('quantity').value = car?.quantity ?? ''
-  $('special-status').value = SPECIAL_STATUSES.includes(car?.special_status) ? car.special_status : ''
+  setSpecialValue(car?.special_status ?? '')
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
   setPhotoPreview(null)
@@ -736,7 +799,7 @@ function applySortPreference() {
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
   const matches = !q ? cars : cars.filter((car) =>
-    [car.diecast_brand, car.model, car.model_year, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
+    [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q))
   )
@@ -749,7 +812,7 @@ function displayTitle(car) {
 }
 
 function displaySubtitle(car) {
-  return [car.diecast_brand, car.model_year, car.scale].filter(Boolean).join(' · ') || 'No details yet'
+  return [car.diecast_brand, car.model_year, car.color].filter(Boolean).join(' · ') || 'No details yet'
 }
 
 async function updateCardQuantity(car, delta, controls) {
@@ -874,6 +937,7 @@ function renderStats() {
   const counts = new Map()
   const displayNames = new Map()
   for (const brand of BRAND_PRESETS) {
+    if (brand === 'Other') continue
     const key = brand.toLowerCase()
     counts.set(key, 0)
     displayNames.set(key, brand)
@@ -910,8 +974,10 @@ function renderStats() {
   if (unspecified > 0) entries.push({ brand: 'Unspecified', count: unspecified })
 
   for (const entry of entries) {
-    const row = document.createElement('div')
-    row.className = 'stat-row'
+    const row = document.createElement('button')
+    row.type = 'button'
+    row.className = 'stat-row stat-row-button'
+    row.setAttribute('aria-label', `Show ${entry.brand} cars`)
     const name = document.createElement('div')
     name.className = 'stat-brand'
     name.textContent = entry.brand
@@ -919,6 +985,19 @@ function renderStats() {
     count.className = 'stat-count'
     count.textContent = String(entry.count)
     row.append(name, count)
+    row.addEventListener('click', () => {
+      const brand = entry.brand
+      searchInput.value = brand === 'Unspecified' ? '' : brand
+      showCollection()
+      if (brand === 'Unspecified') {
+        filteredCars = sortCars(cars.filter((car) => !String(car.diecast_brand ?? '').trim()))
+        renderCars()
+      } else {
+        filteredCars = sortCars(cars.filter((car) => String(car.diecast_brand ?? '').trim().toLowerCase() === brand.toLowerCase()))
+        renderCars()
+      }
+      searchInput.focus()
+    })
     brandStats.append(row)
   }
 }
@@ -963,17 +1042,24 @@ function editorPayload() {
   const yearChoice = $('model-year').value
   const customYear = $('custom-year').value.trim()
   const yearRaw = yearChoice === 'Other' ? customYear : yearChoice
+  const colorChoice = $('color').value
+  const customColorRaw = customColor.value.trim()
+  const colorRaw = colorChoice === 'Other' ? customColorRaw : colorChoice
+  const specialChoice = $('special-status').value
+  const customSpecialRaw = customSpecial.value.trim()
+  const specialRaw = specialChoice === 'Other' ? customSpecialRaw : specialChoice
   return {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
     model: $('model').value.trim() || null,
     model_year: yearRaw || null,
-    scale: $('scale').value.trim() || null,
+    color: colorRaw || null,
+    hotwheels_toy_number: $('hotwheels-toy-number').value.trim() || null,
     series_collection: $('series').value.trim() || null,
     general_number: $('general-number').value.trim() || null,
     series_collection_number: $('series-collection-number').value.trim() || null,
     quantity: qtyRaw === '' ? null : Math.max(1, Math.floor(Number(qtyRaw) || 1)),
-    special_status: $('special-status').value || null,
+    special_status: specialRaw || null,
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }
@@ -1165,6 +1251,8 @@ duplicateAnywayBtn.addEventListener('click', () => {
   hideDuplicateWarning()
 })
 $('diecast-brand').addEventListener('change', syncBrandCustomField)
+$('special-status').addEventListener('change', syncSpecialCustomField)
+$('color').addEventListener('change', syncColorCustomField)
 $('model-year').addEventListener('change', syncYearCustomField)
 $('more-details-toggle').addEventListener('click', () => {
   const section = $('more-details-section')

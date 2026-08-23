@@ -1,4 +1,4 @@
-const CACHE = 'diecast-app-v18'
+const CACHE = 'diecast-app-v19'
 const ASSETS = ['./', './index.html', './styles.css?v=18', './app.js?v=18', './manifest.webmanifest?v=18', './jszip.min.js?v=18', './black-brick-wall.svg', './icon-192.png', './icon-512.png']
 
 self.addEventListener('install', (event) => {
