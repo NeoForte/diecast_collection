@@ -171,3 +171,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Renamed Hot Wheels Toy Number to Toy Number.
 - Split Car Culture Premium into separate Premium and Car Culture Special Category options.
 - Custom cars use a unique iridescent multi-layer border/glow so they stand out independently of STH/RLC/etc.
+
+
+## v21
+- Made collection cards more compact with a near-square photo area.
+- Reduced card text, badge, and +/- quantity-control sizing.
+- Normalized editor input/select heights so Color and Series match the rest of the form.
