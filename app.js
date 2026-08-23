@@ -6,7 +6,23 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
 const BRAND_PRESETS = ['Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
-const SPECIAL_STATUSES = ['TH', 'STH', 'Chase', 'Rare', 'Limited', 'Other']
+const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Car Culture Premium', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Other']
+
+function specialClassForStatus(status) {
+  const map = {
+    'TH': 'special-th',
+    'STH': 'special-sth',
+    'Silver Series': 'special-silver-series',
+    'Car Culture Premium': 'special-car-culture-premium',
+    'Elite 64': 'special-elite-64',
+    'Red Line Club': 'special-red-line-club',
+    'Chase': 'special-chase',
+    'Rare': 'special-rare',
+    'Limited': 'special-limited',
+    'Other': 'special-other',
+  }
+  return map[status] || ''
+}
 
 const $ = (id) => document.getElementById(id)
 const authView = $('auth-view')
@@ -679,7 +695,9 @@ function renderCars() {
     card.tabIndex = 0
     const specialStatus = SPECIAL_STATUSES.includes(car.special_status) ? car.special_status : ''
     if (specialStatus) {
-      card.classList.add('special-card', `special-${specialStatus.toLowerCase()}`)
+      const specialClass = specialClassForStatus(specialStatus)
+      card.classList.add('special-card')
+      if (specialClass) card.classList.add(specialClass)
     }
     card.innerHTML = `
       <div class="car-photo"><span>🚗</span></div>

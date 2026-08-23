@@ -133,3 +133,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Legacy JSON backups from v3-v15 can still restore car data, but those older backups cannot restore image files because they never contained the images.
 - Bundled JSZip 3.10.1 locally so backup/restore does not depend on an extra CDN request.
 - Bumped the PWA cache to v16.
+
+
+## v17
+- Renamed Special / Rarity to Special Category.
+- Added Silver Series, Car Culture Premium, Elite 64, and Red Line Club.
+- STH cards use a gold border.
+- Silver Series cards use a silver border.
+- Car Culture Premium cards use a graphite border.
+- Elite 64 cards use a gunmetal-blue border.
+- Red Line Club cards use a metallic red border.
+- Existing TH / Chase / Rare styling is unchanged.
