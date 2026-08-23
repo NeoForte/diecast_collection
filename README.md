@@ -199,3 +199,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 ## v25
 - Fixed collection cards so the +/- quantity controls anchor consistently at the bottom.
 - Replaced the app icon with a custom white/silver metallic Porsche 911-style icon.
+
+
+## v26
+- Updated backup format to version 4.
+- Restore now includes Color, Toy Number, and Custom status.
+- Backup/restore remains compatible with older fields and embedded photos.
+- Current schema fields are preserved during same-account or throwaway-account restore testing.

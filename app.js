@@ -509,12 +509,12 @@ async function exportBackup() {
     const backupCars = cars.map((car) => ({ ...car }))
     const backup = {
       format: 'ajs-garage-backup',
-      version: 3,
+      version: 4,
       exported_at: new Date().toISOString(),
       source_user_id: session.user.id,
       car_count: backupCars.length,
       photo_count: Object.keys(photoMap).length,
-      note: 'Self-contained AJ\'s Garage backup. backup.json contains collection records and the photos folder contains the actual private car images.',
+      note: 'Self-contained AJ\'s Garage backup. backup.json contains all current collection fields and the photos folder contains the actual private car images.',
       photos: photoMap,
       cars: backupCars,
     }
@@ -564,6 +564,12 @@ function restoreQuantity(value) {
   if (value === null || value === undefined || value === '') return null
   const number = Number(value)
   return Number.isFinite(number) ? Math.max(1, Math.floor(number)) : null
+}
+
+function restoreBoolean(value) {
+  if (value === true || value === false) return value
+  const text = String(value ?? '').trim().toLowerCase()
+  return text === 'true' || text === '1' || text === 'yes'
 }
 
 function restoreDate(value, fallback) {
@@ -619,6 +625,9 @@ function restorePayload(car, targetId, initialPhotoPath) {
     special_status: nullableText(car.special_status),
     general_number: nullableText(car.general_number),
     series_collection_number: nullableText(car.series_collection_number),
+    color: nullableText(car.color),
+    hotwheels_toy_number: nullableText(car.hotwheels_toy_number),
+    is_custom: restoreBoolean(car.is_custom),
   }
 }
 
