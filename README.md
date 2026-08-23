@@ -182,3 +182,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 ## v22
 - Hotfix for v21 layout changes not appearing.
 - Updated all cache-busting asset versions so the compact-card CSS loads correctly.
+
+
+## v23
+- Fixed Custom checkbox/text overflow on narrow screens.
+- Cleaned up Color and Series field vertical alignment.
+- Switched collection cards to 3-wide on mobile and 4-wide on wider screens.
+- Further reduced card text, badges, spacing, and +/- controls for the denser grid.

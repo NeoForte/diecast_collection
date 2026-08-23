@@ -266,3 +266,121 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   height:42px;
   box-sizing:border-box;
 }
+
+/* v23 layout cleanup */
+
+/* Keep Brand + Custom control fully inside the form on narrow screens */
+.brand-custom-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  width: 100%;
+}
+.brand-field {
+  min-width: 0;
+}
+.custom-check-label {
+  margin: 0 0 14px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  max-width: 76px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+  font-size: 12px;
+}
+.custom-check-label span {
+  display: inline-block;
+  max-width: 52px;
+  overflow: visible;
+}
+.custom-check-label input {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+}
+
+/* Normalize editor vertical alignment */
+.two-col {
+  align-items: start;
+}
+.two-col > label {
+  display: flex;
+  flex-direction: column;
+}
+#color,
+#series {
+  margin-top: 0 !important;
+}
+.car-form label > input,
+.car-form label > select,
+.car-form label > textarea {
+  margin-top: 6px;
+}
+
+/* Three-column compact collection grid */
+.cars-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.car-card {
+  border-radius: 12px;
+}
+.car-photo {
+  aspect-ratio: 1 / 1;
+}
+.car-body {
+  padding: 6px 7px 7px;
+}
+.car-card .car-title {
+  font-size: 12px;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+.car-card .car-sub {
+  font-size: 9.5px;
+  line-height: 1.15;
+}
+.card-quantity-control {
+  grid-template-columns: 23px minmax(0,1fr) 23px !important;
+  gap: 3px !important;
+  margin-top: 5px !important;
+}
+.card-quantity-button {
+  width: 23px !important;
+  height: 22px !important;
+  min-width: 23px !important;
+  min-height: 22px !important;
+  font-size: 13px !important;
+}
+.card-quantity-value {
+  font-size: 11px !important;
+}
+.quantity-badge {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+.special-badge {
+  min-height: 20px !important;
+  padding: 3px 5px !important;
+  font-size: 8.5px !important;
+  border-radius: 6px;
+}
+.badge-stack {
+  top: 5px;
+  left: 5px;
+  gap: 3px;
+}
+
+/* Give wider screens a bit more breathing room */
+@media (min-width: 700px) {
+  .cars-grid {
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px;
+  }
+}
