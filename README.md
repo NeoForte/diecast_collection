@@ -189,3 +189,8 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Cleaned up Color and Series field vertical alignment.
 - Switched collection cards to 3-wide on mobile and 4-wide on wider screens.
 - Further reduced card text, badges, spacing, and +/- controls for the denser grid.
+
+
+## v24
+- Toy Number automatically converts to uppercase while typing.
+- Toy Number is also forced to uppercase when saved.

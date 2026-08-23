@@ -390,7 +390,7 @@ function fillEditor(car) {
   hideModelSuggestions()
   setYearValue(car?.model_year ?? '')
   setColorValue(car?.color ?? '')
-  $('hotwheels-toy-number').value = car?.hotwheels_toy_number ?? ''
+  $('hotwheels-toy-number').value = String(car?.hotwheels_toy_number ?? '').toUpperCase()
   $('series').value = car?.series_collection ?? ''
   $('general-number').value = car?.general_number ?? ''
   $('series-collection-number').value = car?.series_collection_number ?? ''
@@ -1070,7 +1070,7 @@ function editorPayload() {
     model: $('model').value.trim() || null,
     model_year: yearRaw || null,
     color: colorRaw || null,
-    hotwheels_toy_number: $('hotwheels-toy-number').value.trim() || null,
+    hotwheels_toy_number: $('hotwheels-toy-number').value.trim().toUpperCase() || null,
     series_collection: $('series').value.trim() || null,
     general_number: $('general-number').value.trim() || null,
     series_collection_number: $('series-collection-number').value.trim() || null,
@@ -1236,6 +1236,16 @@ $('save-button').addEventListener('click', saveCar)
 $('quantity-minus').addEventListener('click', () => stepQuantity(-1))
 $('quantity-plus').addEventListener('click', () => stepQuantity(1))
 $('quantity').addEventListener('change', normalizeQuantityInput)
+$('hotwheels-toy-number').addEventListener('input', (event) => {
+  const input = event.currentTarget
+  const start = input.selectionStart
+  const end = input.selectionEnd
+  const upper = input.value.toUpperCase()
+  if (input.value !== upper) {
+    input.value = upper
+    if (start !== null && end !== null) input.setSelectionRange(start, end)
+  }
+})
 deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
 $('restore-button').addEventListener('click', () => $('restore-input').click())
