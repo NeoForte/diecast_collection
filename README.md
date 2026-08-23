@@ -162,3 +162,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Brand Stats rows are clickable and filter the Collection to that brand.
 - Model/duplicate suggestions now include the existing car photo thumbnail when available.
 - Existing Scale database values are preserved but no longer shown/edited.
+
+
+## v20
+- Added a small Custom checkbox next to Diecast Brand.
+- Custom cars save a dedicated database flag and receive a CUSTOM badge.
+- Cards can display multiple badges simultaneously.
+- Renamed Hot Wheels Toy Number to Toy Number.
+- Split Car Culture Premium into separate Premium and Car Culture Special Category options.
+- Custom cars use a unique iridescent multi-layer border/glow so they stand out independently of STH/RLC/etc.

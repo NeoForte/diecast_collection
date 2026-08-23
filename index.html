@@ -112,7 +112,8 @@
           </div>
 
           <form id="car-form" class="car-form">
-            <label>Diecast Brand
+            <div class="brand-custom-row">
+              <label class="brand-field">Diecast Brand
               <select id="diecast-brand">
                 <option value=""></option>
                 <option value="None">None</option>
@@ -125,7 +126,12 @@
                 <option value="Majorette">Majorette</option>
                 <option value="Other">Type your own…</option>
               </select>
-            </label>
+              </label>
+              <label class="custom-check-label">
+                <input id="is-custom" type="checkbox" />
+                <span>Custom</span>
+              </label>
+            </div>
             <label id="custom-brand-label" class="hidden">Custom Brand
               <input id="custom-brand" type="text" placeholder="Type brand name" />
             </label>
@@ -155,7 +161,8 @@
                   <option value="TH">Treasure Hunt (TH)</option>
                   <option value="STH">Super Treasure Hunt (STH)</option>
                   <option value="Silver Series">Silver Series</option>
-                  <option value="Car Culture Premium">Car Culture Premium</option>
+                  <option value="Premium">Premium</option>
+                  <option value="Car Culture">Car Culture</option>
                   <option value="Elite 64">Elite 64</option>
                   <option value="Red Line Club">Red Line Club</option>
                   <option value="Chase">Chase</option>
@@ -203,7 +210,7 @@
               <label id="custom-color-label" class="hidden">Custom Color
                 <input id="custom-color" type="text" placeholder="Type color" />
               </label>
-              <label>Hot Wheels Toy Number
+              <label>Toy Number
                 <input id="hotwheels-toy-number" type="text" placeholder="JBC11" autocomplete="off" />
               </label>
               <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
@@ -227,6 +234,6 @@
   </div>
 
   <script src="jszip.min.js?v=16"></script>
-  <script type="module" src="app.js?v=18"></script>
+  <script type="module" src="app.js?v=20"></script>
 </body>
 </html>

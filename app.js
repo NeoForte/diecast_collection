@@ -6,7 +6,7 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
-const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Car Culture Premium', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
+const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 
 function specialClassForStatus(status) {
@@ -14,7 +14,8 @@ function specialClassForStatus(status) {
     'TH': 'special-th',
     'STH': 'special-sth',
     'Silver Series': 'special-silver-series',
-    'Car Culture Premium': 'special-car-culture-premium',
+    'Premium': 'special-premium',
+    'Car Culture': 'special-car-culture',
     'Elite 64': 'special-elite-64',
     'Red Line Club': 'special-red-line-club',
     'Chase': 'special-chase',
@@ -54,6 +55,7 @@ const customSpecialLabel = $('custom-special-label')
 const customSpecial = $('custom-special')
 const customColorLabel = $('custom-color-label')
 const customColor = $('custom-color')
+const customCheckbox = $('is-custom')
 
 let session = null
 let cars = []
@@ -268,7 +270,7 @@ function renderModelSuggestions() {
     const meta = document.createElement('span')
     meta.className = 'model-suggestion-meta'
     const qty = Math.max(1, Number(car.quantity) || 1)
-    meta.textContent = [car.diecast_brand, car.model_year, car.color, car.hotwheels_toy_number, `Qty ${qty}`].filter(Boolean).join(' · ')
+    meta.textContent = [car.diecast_brand, car.model_year, car.color, car.hotwheels_toy_number, car.is_custom ? 'CUSTOM' : null, `Qty ${qty}`].filter(Boolean).join(' · ')
 
     text.append(title, meta)
     option.append(thumb, text)
@@ -383,6 +385,7 @@ function showEditor(car = null, options = {}) {
 
 function fillEditor(car) {
   setBrandValue(car?.diecast_brand ?? '')
+  customCheckbox.checked = Boolean(car?.is_custom)
   $('model').value = car?.model ?? ''
   hideModelSuggestions()
   setYearValue(car?.model_year ?? '')
@@ -798,11 +801,11 @@ function applySortPreference() {
 
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
-  const matches = !q ? cars : cars.filter((car) =>
-    [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
-      .filter(Boolean)
-      .some((v) => String(v).toLowerCase().includes(q))
-  )
+  const matches = !q ? cars : cars.filter((car) => {
+    const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
+    if (car.is_custom) values.push('custom')
+    return values.filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
+  })
   filteredCars = sortCars(matches)
   renderCars()
 }
@@ -860,6 +863,9 @@ function renderCars() {
       card.classList.add('special-card')
       if (specialClass) card.classList.add(specialClass)
     }
+    if (car.is_custom) {
+      card.classList.add('custom-car-card')
+    }
     card.innerHTML = `
       <div class="car-photo"><span>🚗</span></div>
       <div class="car-body">
@@ -882,12 +888,21 @@ function renderCars() {
       qtyBadge.textContent = String(quantity)
       photoBox.append(qtyBadge)
     }
+    const badgeStack = document.createElement('div')
+    badgeStack.className = 'badge-stack'
     if (specialStatus) {
       const specialBadge = document.createElement('div')
       specialBadge.className = 'special-badge'
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
-      photoBox.append(specialBadge)
+      badgeStack.append(specialBadge)
     }
+    if (car.is_custom) {
+      const customBadge = document.createElement('div')
+      customBadge.className = 'special-badge custom-badge'
+      customBadge.textContent = 'CUSTOM'
+      badgeStack.append(customBadge)
+    }
+    if (badgeStack.childElementCount) photoBox.append(badgeStack)
 
     const qtyControls = document.createElement('div')
     qtyControls.className = 'card-quantity-control'
@@ -1051,6 +1066,7 @@ function editorPayload() {
   return {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
+    is_custom: Boolean(customCheckbox.checked),
     model: $('model').value.trim() || null,
     model_year: yearRaw || null,
     color: colorRaw || null,
