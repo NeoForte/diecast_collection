@@ -177,3 +177,8 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Made collection cards more compact with a near-square photo area.
 - Reduced card text, badge, and +/- quantity-control sizing.
 - Normalized editor input/select heights so Color and Series match the rest of the form.
+
+
+## v22
+- Hotfix for v21 layout changes not appearing.
+- Updated all cache-busting asset versions so the compact-card CSS loads correctly.
