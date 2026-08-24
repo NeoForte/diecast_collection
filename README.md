@@ -320,3 +320,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Replaced Home Screen icons with a simplified metallic-blue 64 emblem optimized for small sizes.
 - Default round profile icon now visually matches the app branding; user-uploaded profile icons still override it.
 - No authentication, Supabase schema, collection-data, or Add/Edit behavior changes.
+
+
+## Version 2.4.1
+
+- Header layout polish: visually centered the Pocket 64 banner in the top bar.
+- Added more spacing between the personal profile icon and the brand banner.
+- Increased logo breathing room so the full wheel/tire shows cleanly without feeling clipped.
+- Branding design unchanged; this is a presentation/layout refinement only.
