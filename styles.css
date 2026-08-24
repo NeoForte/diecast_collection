@@ -1143,3 +1143,16 @@ html:not([data-theme="light"]) #editor-screen .photo-picker {
 html[data-theme="light"] #editor-screen {
   background: rgba(255,255,255,.52);
 }
+
+
+/* Pocket 64 v2.4 premium brand refresh */
+.profile-icon-button {
+  background-color:#07101b;
+  background-image:url('icon-192.png');
+  background-size:cover;
+  background-position:center;
+  border-color:rgba(96,165,250,.42);
+}
+.profile-icon-button #profile-icon-fallback { opacity:0; }
+.brand-banner { filter:drop-shadow(0 2px 5px rgba(0,0,0,.45)); }
+html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23,42,.18)); }

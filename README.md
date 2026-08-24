@@ -311,3 +311,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Hotfix: restored the missing `function` keyword on `populateYearOptions`.
 - This fixes the runtime startup failure that prevented the login UI from initializing.
 - No Supabase schema or collection-data changes in this hotfix.
+
+
+## Version 2.4
+
+- Premium Pocket 64 branding refresh based on the selected metallic performance concept.
+- Replaced the header/auth banner with a sharper silver-and-metallic-blue production wordmark.
+- Replaced Home Screen icons with a simplified metallic-blue 64 emblem optimized for small sizes.
+- Default round profile icon now visually matches the app branding; user-uploaded profile icons still override it.
+- No authentication, Supabase schema, collection-data, or Add/Edit behavior changes.
