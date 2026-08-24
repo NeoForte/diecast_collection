@@ -208,8 +208,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Current schema fields are preserved during same-account or throwaway-account restore testing.
 
 
-## v27
-- Fixed main Collection card quantity +/- updates so they no longer rebuild the entire grid or reload every car photo.
-- Quantity value and top-right quantity badge now update in place after the Supabase save completes.
-- Quantity High-Low / Low-High sorting still reorders existing card DOM nodes without remounting images.
-- Bumped PWA cache and asset versions to v27.
+## v28
+- Prevented redundant full collection reloads when Supabase refreshes the auth session after returning from another app.
+- Added true viewport-based lazy loading for collection photos using IntersectionObserver.
+- Added native image lazy-loading/async decoding as a fallback optimization.
+- Added an in-memory signed photo URL cache to avoid repeatedly requesting the same private photo URL during a session.
+- Preserved the v27 in-place +/- quantity update behavior so quantity changes do not rebuild the grid.
+- Bumped the PWA cache and all asset versions to v28.

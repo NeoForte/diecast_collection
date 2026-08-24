@@ -68,6 +68,22 @@ let quickAddKeepBrand = ''
 let quickAddKeepCustomBrand = ''
 let duplicateDismissedModel = ''
 let duplicateCheckTimer = null
+let loadedCarsUserId = null
+let carsLoadPromise = null
+
+const photoUrlCache = new Map()
+const photoLoadPromises = new Map()
+const photoObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        const img = entry.target
+        photoObserver.unobserve(img)
+        const path = img.dataset.privatePhotoPath
+        if (path) loadPrivatePhoto(path, img)
+      }
+    }, { rootMargin: '500px 0px' })
+  : null
 
 function syncBrandCustomField() {
   const isOther = $('diecast-brand').value === 'Other'
@@ -414,30 +430,64 @@ function setPhotoPreview(src) {
   }
 }
 
+async function getPrivatePhotoUrl(path) {
+  const cached = photoUrlCache.get(path)
+  const now = Date.now()
+  if (cached && cached.expiresAt > now + 60_000) return cached.url
+
+  if (photoLoadPromises.has(path)) return photoLoadPromises.get(path)
+
+  const promise = (async () => {
+    const { data, error } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
+    if (error || !data?.signedUrl) return null
+    photoUrlCache.set(path, { url: data.signedUrl, expiresAt: now + 55 * 60_000 })
+    return data.signedUrl
+  })().finally(() => photoLoadPromises.delete(path))
+
+  photoLoadPromises.set(path, promise)
+  return promise
+}
+
 async function loadPrivatePhoto(path, imgEl, placeholderEl = null) {
-  const { data, error } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
-  if (!error && data?.signedUrl) {
-    imgEl.src = data.signedUrl
-    imgEl.classList.remove('hidden')
-    if (placeholderEl) placeholderEl.classList.add('hidden')
-  }
+  const signedUrl = await getPrivatePhotoUrl(path)
+  if (!signedUrl || !imgEl.isConnected) return
+  imgEl.src = signedUrl
+  imgEl.classList.remove('hidden')
+  if (placeholderEl) placeholderEl.classList.add('hidden')
+}
+
+function lazyLoadPrivatePhoto(path, imgEl) {
+  imgEl.loading = 'lazy'
+  imgEl.decoding = 'async'
+  imgEl.dataset.privatePhotoPath = path
+  if (photoObserver) photoObserver.observe(imgEl)
+  else loadPrivatePhoto(path, imgEl)
 }
 
 async function loadCars() {
-  if (!session?.user) return
-  const { data, error } = await supabase
-    .from('cars')
-    .select('*')
-    .eq('user_id', session.user.id)
-    .order('created_at', { ascending: false })
+  const userId = session?.user?.id
+  if (!userId) return
+  if (carsLoadPromise) return carsLoadPromise
 
-  if (error) {
-    console.error(error)
-    return
-  }
-  cars = data ?? []
-  applySearch()
-  renderStats()
+  carsLoadPromise = (async () => {
+    const { data, error } = await supabase
+      .from('cars')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error(error)
+      return
+    }
+    if (session?.user?.id !== userId) return
+    cars = data ?? []
+    loadedCarsUserId = userId
+    applySearch()
+    renderStats()
+  })().finally(() => { carsLoadPromise = null })
+
+  return carsLoadPromise
 }
 
 function backupFilename(extension = 'zip') {
@@ -937,7 +987,7 @@ function renderCars() {
       const img = document.createElement('img')
       img.alt = displayTitle(car)
       photoBox.replaceChildren(img)
-      loadPrivatePhoto(car.photo_path, img)
+      lazyLoadPrivatePhoto(car.photo_path, img)
     }
     const quantity = Number(car.quantity)
     if (Number.isFinite(quantity) && quantity > 1) {
@@ -1354,15 +1404,23 @@ photoInput.addEventListener('change', () => {
 populateYearOptions()
 applySortPreference()
 
-supabase.auth.onAuthStateChange((_event, newSession) => {
+supabase.auth.onAuthStateChange((event, newSession) => {
+  const previousUserId = session?.user?.id ?? null
+  const nextUserId = newSession?.user?.id ?? null
   session = newSession
+
   if (session) {
     showMain()
-    setTimeout(() => {
-      loadCars()
-    }, 0)
+    // Mobile browsers commonly emit TOKEN_REFRESHED after returning from another app.
+    // Keep the current collection mounted unless this is actually a different/new user.
+    if (loadedCarsUserId !== nextUserId && previousUserId !== nextUserId) {
+      setTimeout(() => loadCars(), 0)
+    }
   } else {
     cars = []
+    filteredCars = []
+    loadedCarsUserId = null
+    photoUrlCache.clear()
     applySearch()
     renderStats()
     showAuth()
@@ -1373,7 +1431,7 @@ const { data: { session: initialSession } } = await supabase.auth.getSession()
 session = initialSession
 if (session) {
   showMain()
-  await loadCars()
+  if (loadedCarsUserId !== session.user.id) await loadCars()
 } else {
   showAuth()
 }
