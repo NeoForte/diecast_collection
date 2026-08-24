@@ -399,3 +399,162 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
 .card-quantity-control {
   margin-top: auto !important;
 }
+
+
+/* v29 editor cleanup */
+.car-form {
+  padding: 18px;
+}
+
+.car-form > label,
+.car-form .two-col > label,
+.car-form .number-fields > label,
+.quantity-field,
+.brand-field {
+  margin-bottom: 14px;
+}
+
+.car-form label,
+.editor-field-label,
+.quantity-field > label {
+  color: #d6d6d6;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .025em;
+}
+
+.car-form label > input,
+.car-form label > select,
+.car-form label > textarea,
+.quantity-control {
+  margin-top: 6px;
+}
+
+.car-form input,
+.car-form select {
+  min-height: 44px;
+  height: 44px;
+  border-radius: 11px;
+  padding: 10px 12px;
+}
+
+.car-form textarea {
+  border-radius: 11px;
+  padding: 11px 12px;
+}
+
+.brand-custom-row {
+  grid-template-columns: minmax(0, 1fr) 64px;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.brand-field {
+  width: 100%;
+}
+
+.custom-field {
+  width: 64px;
+  display: grid;
+  grid-template-rows: auto 44px;
+  gap: 6px;
+  align-items: start;
+  justify-items: center;
+}
+
+.custom-field .editor-field-label {
+  width: 100%;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.custom-check-label {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #343434;
+  border-radius: 11px;
+  background: #181818;
+  cursor: pointer;
+}
+
+.custom-check-label input {
+  width: 20px !important;
+  height: 20px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  accent-color: #f9fafb;
+}
+
+.quick-core-row {
+  grid-template-columns: minmax(150px, .8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.quantity-field > label {
+  display: block;
+  margin: 0;
+}
+
+.quantity-control {
+  grid-template-columns: 40px minmax(54px, 1fr) 40px;
+  gap: 6px;
+}
+
+.quantity-step {
+  width: 40px;
+  height: 44px;
+  border-radius: 11px;
+  font-size: 22px;
+}
+
+.quantity-control input {
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 8px 6px !important;
+  font-weight: 800;
+}
+
+#special-status,
+#model-year,
+#color {
+  padding-right: 34px;
+}
+
+#hotwheels-toy-number,
+#general-number,
+#series-collection-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.number-fields {
+  gap: 12px;
+}
+
+#more-details-section > label:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+  .car-form { padding: 14px; }
+  .brand-custom-row { grid-template-columns: minmax(0, 1fr) 58px; gap: 9px; }
+  .custom-field { width: 58px; }
+  .custom-check-label { width: 44px; }
+  .quick-core-row { grid-template-columns: minmax(132px, .9fr) minmax(0, 1.1fr); gap: 9px; }
+  .quantity-control { grid-template-columns: 36px minmax(48px, 1fr) 36px; gap: 5px; }
+  .quantity-step { width: 36px; }
+}
+
+@media (max-width: 365px) {
+  .quick-core-row { grid-template-columns: 1fr; }
+  .quantity-field { max-width: 190px; }
+  .number-fields { grid-template-columns: 1fr; }
+}

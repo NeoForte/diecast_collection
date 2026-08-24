@@ -215,3 +215,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added an in-memory signed photo URL cache to avoid repeatedly requesting the same private photo URL during a session.
 - Preserved the v27 in-place +/- quantity update behavior so quantity changes do not rebuild the grid.
 - Bumped the PWA cache and all asset versions to v28.
+
+
+## v29
+- Cleaned up the Add/Edit Car entry form spacing, label placement, and control sizing.
+- Moved the word Custom above its checkbox and gave the checkbox its own aligned control box.
+- Normalized input heights, label typography, quantity controls, and responsive spacing.
+- Preserved all v28 lazy-loading and return-from-background refresh fixes.
+- Bumped the PWA cache and asset versions to v29.

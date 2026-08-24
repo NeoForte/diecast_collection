@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=28" />
+  <link rel="manifest" href="manifest.webmanifest?v=29" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=28" />
+  <link rel="stylesheet" href="styles.css?v=29" />
   <title>AJ's Garage</title>
 </head>
 <body>
@@ -127,10 +127,12 @@
                 <option value="Other">Type your own…</option>
               </select>
               </label>
-              <label class="custom-check-label">
-                <input id="is-custom" type="checkbox" />
-                <span>Custom</span>
-              </label>
+              <div class="custom-field">
+                <span class="editor-field-label">Custom</span>
+                <label class="custom-check-label" for="is-custom">
+                  <input id="is-custom" type="checkbox" />
+                </label>
+              </div>
             </div>
             <label id="custom-brand-label" class="hidden">Custom Brand
               <input id="custom-brand" type="text" placeholder="Type brand name" />
@@ -233,7 +235,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=28"></script>
-  <script type="module" src="app.js?v=28"></script>
+  <script src="jszip.min.js?v=29"></script>
+  <script type="module" src="app.js?v=29"></script>
 </body>
 </html>
