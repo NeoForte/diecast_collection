@@ -268,3 +268,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Shows the current Pocket 64 version in Settings.
 - Adds Profile Icon access from Settings.
 - Preserves the persistent private photo cache and all v33 collection behavior.
+
+
+## Version 2.1
+
+- Moved Refresh beside Settings in the compact collection utility row.
+- Softened Add/Edit Car field outlines and made the focused field the visual emphasis.
+- Added a gentle, dismissible backup reminder for established garages, plus a last-backup date in Settings.
+- Reworked Share to generate a standalone branded Pocket 64 PNG card for the selected car and use the native share sheet when file sharing is supported.
+- Preserved the persistent private-photo cache and all v2.0 behavior.

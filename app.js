@@ -8,8 +8,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.0'
+const APP_VERSION = '2.1'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
+const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
+const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
+const BACKUP_REMINDER_MIN_CARS = 15
+const BACKUP_REMINDER_DAYS = 30
+const BACKUP_REMINDER_SNOOZE_DAYS = 7
 const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)')
 
 function getSavedAppearance() {
@@ -252,6 +257,49 @@ function showStats() {
   renderStats()
 }
 
+function getStoredTimestamp(key) {
+  try {
+    const value = Number(localStorage.getItem(key) || 0)
+    return Number.isFinite(value) ? value : 0
+  } catch { return 0 }
+}
+
+function formatBackupDate(timestamp) {
+  if (!timestamp) return 'No backup recorded on this device yet.'
+  return `Last backup: ${new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
+}
+
+function updateBackupStatus() {
+  const timestamp = getStoredTimestamp(LAST_BACKUP_STORAGE_KEY)
+  const text = $('last-backup-text')
+  if (text) text.textContent = formatBackupDate(timestamp)
+}
+
+function updateBackupReminder() {
+  const reminder = $('backup-reminder')
+  if (!reminder) return
+  const now = Date.now()
+  const last = getStoredTimestamp(LAST_BACKUP_STORAGE_KEY)
+  const dismissed = getStoredTimestamp(BACKUP_REMINDER_DISMISSED_KEY)
+  const oldEnough = !last || (now - last) >= BACKUP_REMINDER_DAYS * 86400000
+  const snoozed = dismissed && (now - dismissed) < BACKUP_REMINDER_SNOOZE_DAYS * 86400000
+  const shouldShow = cars.length >= BACKUP_REMINDER_MIN_CARS && oldEnough && !snoozed
+  reminder.classList.toggle('hidden', !shouldShow)
+  if (shouldShow) {
+    const copy = $('backup-reminder-copy')
+    if (copy) copy.textContent = last ? 'Your last backup is getting old.' : 'Create your first portable backup.'
+  }
+}
+
+function recordSuccessfulBackup() {
+  try {
+    localStorage.setItem(LAST_BACKUP_STORAGE_KEY, String(Date.now()))
+    localStorage.removeItem(BACKUP_REMINDER_DISMISSED_KEY)
+  } catch {}
+  updateBackupStatus()
+  updateBackupReminder()
+}
+
 function showSettings() {
   hideScreens()
   settingsScreen.classList.add('active')
@@ -259,6 +307,7 @@ function showSettings() {
   setActiveNav(null)
   const appearanceSelect = $('appearance-select')
   if (appearanceSelect) appearanceSelect.value = getSavedAppearance()
+  updateBackupStatus()
 }
 
 
@@ -602,6 +651,7 @@ async function loadCars() {
     loadedCarsUserId = userId
     applySearch()
     renderStats()
+    updateBackupReminder()
   })().finally(() => { carsLoadPromise = null })
 
   return carsLoadPromise
@@ -704,6 +754,7 @@ async function exportBackup() {
       (metadata) => { button.textContent = `Packing ${Math.round(metadata.percent)}%` },
     )
     downloadBlob(blob, backupFilename('zip'))
+    recordSuccessfulBackup()
 
     button.textContent = 'Saved ✓'
     setTimeout(() => { button.textContent = originalText }, 1800)
@@ -1475,26 +1526,7 @@ $('signup-btn').addEventListener('click', async () => {
 })
 
 
-async function shareCurrentCar() {
-  if (!editingCar) return
-  const title = displayTitle(editingCar)
-  const details = [editingCar.diecast_brand, editingCar.model_year, editingCar.color, editingCar.special_status].filter(Boolean).join(' · ')
-  const text = [`${title} — Pocket 64`, details].filter(Boolean).join('\n')
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: `${title} — Pocket 64`, text, url: APP_URL })
-      return
-    }
-    await navigator.clipboard.writeText(`${text}\n${APP_URL}`)
-    alert('Share text copied to your clipboard.')
-  } catch (err) {
-    if (err?.name !== 'AbortError') {
-      console.error(err)
-      alert('Sharing is not available right now.')
-    }
-  }
-}
-
+function safeShareFilename(value) {\n  return String(value || 'car').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'car'\n}\n\nfunction loadImageFromBlob(blob) {\n  return new Promise((resolve, reject) => {\n    const url = URL.createObjectURL(blob)\n    const img = new Image()\n    img.onload = () => { URL.revokeObjectURL(url); resolve(img) }\n    img.onerror = (err) => { URL.revokeObjectURL(url); reject(err) }\n    img.src = url\n  })\n}\n\nfunction canvasToBlob(canvas, type = 'image/png', quality) {\n  return new Promise((resolve) => canvas.toBlob(resolve, type, quality))\n}\n\nfunction drawCoverImage(ctx, img, x, y, w, h) {\n  const scale = Math.max(w / img.width, h / img.height)\n  const sw = w / scale\n  const sh = h / scale\n  const sx = Math.max(0, (img.width - sw) / 2)\n  const sy = Math.max(0, (img.height - sh) / 2)\n  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h)\n}\n\nfunction fitCanvasText(ctx, text, maxWidth, startSize, minSize = 34, weight = 800) {\n  let size = startSize\n  while (size > minSize) {\n    ctx.font = `${weight} ${size}px system-ui, -apple-system, sans-serif`\n    if (ctx.measureText(text).width <= maxWidth) break\n    size -= 2\n  }\n  return size\n}\n\nasync function createCarShareCard(car) {\n  const canvas = document.createElement('canvas')\n  canvas.width = 1080\n  canvas.height = 1350\n  const ctx = canvas.getContext('2d')\n  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)\n  gradient.addColorStop(0, '#171717')\n  gradient.addColorStop(1, '#050505')\n  ctx.fillStyle = gradient\n  ctx.fillRect(0, 0, canvas.width, canvas.height)\n\n  const photoX = 54, photoY = 54, photoW = 972, photoH = 820\n  ctx.save()\n  ctx.beginPath()\n  ctx.roundRect(photoX, photoY, photoW, photoH, 32)\n  ctx.clip()\n  ctx.fillStyle = '#111'\n  ctx.fillRect(photoX, photoY, photoW, photoH)\n  if (car.photo_path) {\n    const blob = await getPrivatePhotoBlob(car.photo_path)\n    if (blob) {\n      try { drawCoverImage(ctx, await loadImageFromBlob(blob), photoX, photoY, photoW, photoH) } catch {}\n    }\n  }\n  ctx.restore()\n\n  const title = displayTitle(car)\n  ctx.fillStyle = '#fff'\n  const titleSize = fitCanvasText(ctx, title, 950, 70, 42, 850)\n  ctx.font = `850 ${titleSize}px system-ui, -apple-system, sans-serif`\n  ctx.fillText(title, 64, 978)\n\n  const meta = [car.diecast_brand, car.model_year, car.color].filter(Boolean).join('  •  ')\n  ctx.fillStyle = '#b8bec7'\n  ctx.font = '500 34px system-ui, -apple-system, sans-serif'\n  if (meta) ctx.fillText(meta, 66, 1040)\n\n  const extra = [car.special_status, car.series_collection, car.hotwheels_toy_number ? `Toy # ${car.hotwheels_toy_number}` : null].filter(Boolean).join('  •  ')\n  ctx.fillStyle = '#8d96a2'\n  ctx.font = '500 28px system-ui, -apple-system, sans-serif'\n  if (extra) {\n    const max = 940\n    let shown = extra\n    while (shown.length > 8 && ctx.measureText(shown).width > max) shown = shown.slice(0, -2)\n    if (shown !== extra) shown = `${shown.trim()}…`\n    ctx.fillText(shown, 66, 1095)\n  }\n\n  ctx.strokeStyle = 'rgba(255,255,255,.12)'\n  ctx.lineWidth = 2\n  ctx.beginPath(); ctx.moveTo(64, 1150); ctx.lineTo(1016, 1150); ctx.stroke()\n  ctx.fillStyle = '#fff'\n  ctx.font = '850 44px system-ui, -apple-system, sans-serif'\n  ctx.fillText('POCKET 64', 66, 1230)\n  ctx.fillStyle = '#7f8791'\n  ctx.font = '500 24px system-ui, -apple-system, sans-serif'\n  ctx.fillText('Your collection. In your pocket.', 66, 1273)\n\n  const blob = await canvasToBlob(canvas, 'image/png')\n  if (!blob) throw new Error('Could not create share image.')\n  return new File([blob], `${safeShareFilename(title)}-Pocket64.png`, { type: 'image/png' })\n}\n\nasync function shareCurrentCar() {\n  if (!editingCar) return\n  const button = $('share-button')\n  const original = button.textContent\n  button.disabled = true\n  button.textContent = 'Preparing…'\n  try {\n    const file = await createCarShareCard(editingCar)\n    const shareData = { files: [file], title: `${displayTitle(editingCar)} — Pocket 64`, text: 'Shared from Pocket 64' }\n    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {\n      await navigator.share(shareData)\n      return\n    }\n    downloadBlob(file, file.name)\n    alert('Share card saved as an image. You can share it from Photos or Files.')\n  } catch (err) {\n    if (err?.name !== 'AbortError') {\n      console.error(err)\n      alert(`Could not create the share card: ${err.message || err}`)\n    }\n  } finally {\n    button.disabled = false\n    button.textContent = original\n  }\n}\n
 async function loadProfileIcon() {
   if (!session?.user) return
   const path = `${session.user.id}/profile-icon.jpg`
@@ -1571,6 +1603,11 @@ $('hotwheels-toy-number').addEventListener('input', (event) => {
 })
 deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
+$('backup-reminder-now').addEventListener('click', exportBackup)
+$('backup-reminder-later').addEventListener('click', () => {
+  try { localStorage.setItem(BACKUP_REMINDER_DISMISSED_KEY, String(Date.now())) } catch {}
+  updateBackupReminder()
+})
 $('restore-button').addEventListener('click', () => $('restore-input').click())
 $('restore-input').addEventListener('change', () => {
   const file = $('restore-input').files?.[0]

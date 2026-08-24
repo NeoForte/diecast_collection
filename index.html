@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=2.0" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.1" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=2.0" />
+  <link rel="stylesheet" href="styles.css?v=2.1" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -39,7 +39,6 @@
           <img class="brand-banner" src="pocket64-banner.png" alt="Pocket 64" />
         </div>
         <div class="topbar-actions">
-          <button id="refresh-button" class="text-button">Refresh</button>
           <button id="logout-btn" class="text-button">Sign out</button>
         </div>
       </header>
@@ -59,6 +58,10 @@
           </div>
           <div id="active-filter-row" class="active-filter-row hidden">
             <button id="active-filter-pill" class="active-filter-pill" type="button" aria-label="Clear brand filter"></button>
+          </div>
+          <div id="backup-reminder" class="backup-reminder hidden" role="status">
+            <div><strong>Protect your garage</strong><span id="backup-reminder-copy">It has been a while since your last backup.</span></div>
+            <div class="backup-reminder-actions"><button id="backup-reminder-now" type="button">Export</button><button id="backup-reminder-later" type="button">Later</button></div>
           </div>
           <div class="summary-row">
             <div class="collection-summary-left">
@@ -80,6 +83,7 @@
                 <button id="backup-button" class="text-button collection-action-link" type="button">Export</button>
                 <button id="restore-button" class="text-button collection-action-link" type="button">Restore</button>
                 <button id="settings-button" class="text-button collection-action-link" type="button">Settings</button>
+                <button id="refresh-button" class="text-button collection-action-link" type="button">Refresh</button>
                 <input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" />
               </div>
             </div>
@@ -135,10 +139,17 @@
             </button>
             <div class="settings-card">
               <div class="settings-copy">
+                <strong>Backup</strong>
+                <span id="last-backup-text">No backup recorded on this device yet.</span>
+              </div>
+              <span class="settings-action">Manual</span>
+            </div>
+            <div class="settings-card">
+              <div class="settings-copy">
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 2.0</span>
+              <span class="version-badge">Version 2.1</span>
             </div>
           </div>
         </section>
@@ -295,7 +306,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=2.0"></script>
-  <script type="module" src="app.js?v=2.0"></script>
+  <script src="jszip.min.js?v=2.1"></script>
+  <script type="module" src="app.js?v=2.1"></script>
 </body>
 </html>

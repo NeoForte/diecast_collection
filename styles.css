@@ -812,3 +812,80 @@ html[data-theme="light"] .version-badge { background:#eef2f7; color:#374151; bor
   font-weight:800;
   white-space:nowrap;
 }
+
+
+/* Pocket 64 v2.1 — quieter editor, backup reminder, five-item utility row */
+.collection-summary-left {
+  grid-template-columns:minmax(0,auto) auto auto auto auto !important;
+}
+@media (max-width:390px) {
+  .collection-summary-left { column-gap:2px !important; }
+  .sort-control select { width:82px !important; max-width:82px !important; font-size:10px !important; }
+  .collection-action-link { font-size:10px !important; padding-left:1px !important; padding-right:1px !important; }
+}
+
+.car-form > label,
+.car-form .brand-field,
+.car-form .quantity-field > label,
+.car-form .quick-core-row > label,
+.car-form .details-grid > label {
+  color:var(--p64-label);
+}
+.car-form input,
+.car-form select,
+.car-form textarea {
+  border-color:rgba(255,255,255,.12) !important;
+  box-shadow:none !important;
+  background:rgba(255,255,255,.045) !important;
+}
+.car-form input:hover,
+.car-form select:hover,
+.car-form textarea:hover {
+  border-color:rgba(255,255,255,.18) !important;
+}
+.car-form input:focus,
+.car-form select:focus,
+.car-form textarea:focus {
+  border-color:rgba(96,165,250,.75) !important;
+  box-shadow:0 0 0 3px rgba(59,130,246,.12) !important;
+  background:rgba(255,255,255,.06) !important;
+}
+html[data-theme="light"] .car-form input,
+html[data-theme="light"] .car-form select,
+html[data-theme="light"] .car-form textarea {
+  background:rgba(255,255,255,.78) !important;
+  border-color:rgba(15,23,42,.13) !important;
+}
+html[data-theme="light"] .car-form input:focus,
+html[data-theme="light"] .car-form select:focus,
+html[data-theme="light"] .car-form textarea:focus {
+  border-color:rgba(37,99,235,.62) !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.10) !important;
+}
+.custom-toggle { border:0 !important; background:transparent !important; box-shadow:none !important; }
+
+.backup-reminder {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:8px 0 10px;
+  padding:10px 12px;
+  border:1px solid rgba(96,165,250,.24);
+  border-radius:12px;
+  background:rgba(59,130,246,.08);
+}
+.backup-reminder > div:first-child { display:grid; gap:2px; min-width:0; }
+.backup-reminder strong { font-size:12px; color:var(--p64-text); }
+.backup-reminder span { font-size:11px; color:var(--p64-muted); }
+.backup-reminder-actions { display:flex; align-items:center; gap:5px; flex:0 0 auto; }
+.backup-reminder-actions button {
+  width:auto;
+  border:0;
+  background:transparent;
+  color:var(--p64-blue);
+  font-size:11px;
+  font-weight:800;
+  padding:5px;
+}
+html[data-theme="light"] .backup-reminder { background:rgba(37,99,235,.06); border-color:rgba(37,99,235,.18); }
