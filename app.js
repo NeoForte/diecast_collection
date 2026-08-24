@@ -8,7 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.4.3'
+const APP_VERSION = '2.4.4'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -1729,7 +1729,7 @@ $('logout-btn').addEventListener('click', async () => {
 $('collection-nav').addEventListener('click', showCollection)
 $('social-nav').addEventListener('click', showSocial)
 $('stats-nav').addEventListener('click', showStats)
-$('settings-button').addEventListener('click', showSettings)
+$('header-settings-button').addEventListener('click', showSettings)
 $('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
 $('settings-profile-icon').addEventListener('click', () => $('profile-icon-input').click())
 $('add-button').addEventListener('click', () => showEditor())

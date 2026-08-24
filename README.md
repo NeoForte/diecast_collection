@@ -344,3 +344,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Preserved full wheel/tire breathing room in the banner asset.
 - Added separation between the centered brand logo and the personal profile icon.
 - No auth, database, form, or collection behavior changes.
+
+
+## Version 2.4.4
+
+- Reduced the centered Pocket 64 banner size for better breathing room.
+- Adjusted the header presentation so the full tire/wheel can display without top clipping.
+- Removed Settings and Refresh boxes from the Collection utility row.
+- Replaced the top-right Sign Out control with a standard gear Settings button.
+- Moved Refresh into Settings.
+- Moved Sign Out into Settings under Account.
+- No database or collection-data changes.
