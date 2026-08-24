@@ -246,3 +246,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Export now reuses locally cached photo blobs when available instead of automatically downloading every photo from Supabase again.
 - Replaced photos and restored photos invalidate their cached copy so the updated image is shown.
 - Service worker upgrades preserve the private photo cache between Pocket 64 releases.
+
+
+## v32
+- Keeps the Collection utility controls on one compact row on mobile: Sort dropdown, Export, Restore, Settings.
+- Tightens the Sort control to prevent wrapping on narrow iPhone widths.
+
+
+## v33
+- Forces Sort, Export, Restore, and Settings into one compact row on narrow phones.
+- Shortens visible Sort option labels so the dropdown does not push utility links onto another line.
+- Preserves v31/v32 persistent private photo caching and egress optimizations.

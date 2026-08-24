@@ -595,3 +595,18 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   .collection-summary-left { gap:6px; }
   .collection-action-link { font-size:12px; padding:8px 5px; }
 }
+
+/* v32 compact collection utility row */
+.collection-summary-left { flex-wrap:nowrap; white-space:nowrap; overflow:hidden; }
+.sort-control { flex:0 0 auto; gap:4px; }
+.sort-control select { min-width:110px; max-width:118px; width:118px; padding:7px 22px 7px 8px; font-size:12px; }
+.collection-file-actions { flex:0 0 auto; }
+.collection-action-link { font-size:12px; padding:7px 4px; }
+@media (max-width:420px) {
+  .summary-row { padding-left:0; padding-right:0; }
+  .collection-summary-left { gap:3px; }
+  .sort-control { gap:3px; font-size:11px; }
+  .sort-control select { min-width:102px; max-width:106px; width:106px; padding:7px 19px 7px 7px; font-size:11px; }
+  .collection-action-link { font-size:11px; padding:7px 3px; }
+}
+\n\n/* v33 force Sort + utilities into one compact row */\n.collection-summary-left {\n  display:grid !important;\n  grid-template-columns:minmax(0,auto) auto auto auto;\n  align-items:center;\n  justify-content:start;\n  column-gap:5px;\n  width:100%;\n  min-width:0;\n  overflow:visible;\n  white-space:nowrap;\n}\n.collection-file-actions { display:contents; }\n.sort-control {\n  display:flex;\n  align-items:center;\n  gap:3px;\n  min-width:0;\n  font-size:11px;\n}\n.sort-control select {\n  width:96px !important;\n  min-width:0 !important;\n  max-width:96px !important;\n  padding:7px 18px 7px 6px !important;\n  font-size:11px !important;\n}\n.collection-action-link {\n  min-width:0;\n  padding:7px 3px !important;\n  font-size:11px !important;\n}\n@media (max-width:360px) {\n  .collection-summary-left { column-gap:2px; }\n  .sort-control { gap:2px; font-size:10px; }\n  .sort-control select { width:88px !important; max-width:88px !important; font-size:10px !important; padding-right:16px !important; }\n  .collection-action-link { font-size:10px !important; padding-left:2px !important; padding-right:2px !important; }\n}\n
