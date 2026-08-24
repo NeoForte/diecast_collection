@@ -328,3 +328,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added more spacing between the personal profile icon and the brand banner.
 - Increased logo breathing room so the full wheel/tire shows cleanly without feeling clipped.
 - Branding design unchanged; this is a presentation/layout refinement only.
+
+
+## Version 2.4.2
+
+- Cache-busting hotfix for the Pocket 64 header logo.
+- Renamed the banner asset so Safari/service worker must fetch the new centered, uncropped artwork.
+- No auth, database, collection, or form logic changes.
