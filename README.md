@@ -299,3 +299,8 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Existing legacy custom Special Category values are preserved when editing old records.
 - Darkened the Add/Edit Car backdrop and form surfaces so the brick texture is much quieter.
 - Existing collection rows were normalized to uppercase for the matching car-data columns.
+
+
+## Version 2.3.1
+
+- Hotfix: corrected a JavaScript syntax typo in the v2.3 uppercase input listener that prevented app/login initialization.
