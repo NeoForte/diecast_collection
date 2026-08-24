@@ -1387,3 +1387,34 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     padding: 6px 3px !important;
   }
 }
+
+
+/* Pocket 64 v2.4.6 — larger Settings gear + wider Sort control */
+.header-settings-button {
+  font-size: 34px !important;
+  padding: 8px 2px !important;
+  line-height: 1 !important;
+}
+
+.sort-select,
+#sort-select,
+.collection-sort,
+.sort-control {
+  width: min(58vw, 260px) !important;
+  min-width: 190px !important;
+}
+
+@media (max-width: 430px) {
+  .header-settings-button {
+    font-size: 32px !important;
+    padding: 8px 1px !important;
+  }
+
+  .sort-select,
+  #sort-select,
+  .collection-sort,
+  .sort-control {
+    width: min(62vw, 245px) !important;
+    min-width: 185px !important;
+  }
+}

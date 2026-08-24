@@ -364,3 +364,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Increased the gear icon to a normal, easy-to-tap visual size.
 - Logo/header artwork intentionally left unchanged in this patch.
 - No auth, database, collection, or form logic changes.
+
+
+## Version 2.4.6
+
+- Increased the top-right Settings gear size for better visibility and easier tapping.
+- Widened the Sort control to better use the available Collection header space.
+- Logo/header artwork intentionally unchanged.
+- No auth, database, collection-data, or form behavior changes.
