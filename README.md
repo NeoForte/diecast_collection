@@ -304,3 +304,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 ## Version 2.3.1
 
 - Hotfix: corrected a JavaScript syntax typo in the v2.3 uppercase input listener that prevented app/login initialization.
+
+
+## Version 2.3.2
+
+- Hotfix: restored the missing `function` keyword on `populateYearOptions`.
+- This fixes the runtime startup failure that prevented the login UI from initializing.
+- No Supabase schema or collection-data changes in this hotfix.
