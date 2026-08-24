@@ -355,3 +355,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Moved Refresh into Settings.
 - Moved Sign Out into Settings under Account.
 - No database or collection-data changes.
+
+
+## Version 2.4.5
+
+- Simplified the top-right Settings control.
+- Removed the circular background, border, and button chrome.
+- Increased the gear icon to a normal, easy-to-tap visual size.
+- Logo/header artwork intentionally left unchanged in this patch.
+- No auth, database, collection, or form logic changes.
