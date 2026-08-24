@@ -1109,3 +1109,37 @@ html[data-theme="light"] .settings-mini-button {
     margin-top: 6px !important;
   }
 }
+
+
+/* Pocket 64 v2.3 — uppercase garage data + calmer editor backdrop */
+#editor-screen {
+  margin-left: -10px;
+  margin-right: -10px;
+  padding: 0 10px 22px;
+  border-radius: 18px;
+  background: rgba(0,0,0,.58);
+  box-shadow: 0 12px 40px rgba(0,0,0,.18);
+}
+
+/* Car data reads consistently in caps while Notes remains natural case. */
+#car-form input:not([type="number"]),
+#car-form select {
+  text-transform: uppercase;
+}
+#car-form textarea {
+  text-transform: none;
+}
+
+/* Quiet the bricks around the form even more on dark appearance. */
+html:not([data-theme="light"]) #editor-screen .car-form {
+  background: rgba(9,9,10,.985) !important;
+  border-color: rgba(255,255,255,.075) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.26);
+}
+html:not([data-theme="light"]) #editor-screen .photo-picker {
+  background: rgba(8,8,9,.97) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+html[data-theme="light"] #editor-screen {
+  background: rgba(255,255,255,.52);
+}

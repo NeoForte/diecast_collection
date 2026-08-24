@@ -288,3 +288,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Normalized Add/Edit Car paired-field label heights so controls align cleanly on the same row.
 - Added a restrained electric-blue accent to the Pocket 64 banner.
 - Preserved the v2.1.1 login/auth hotfix and persistent private-photo cache.
+
+
+## Version 2.3
+
+- Add/Edit Car free-text collection fields now uppercase while typing and save uppercase to the database.
+- Notes remain normal mixed case.
+- Special Category displays in uppercase without changing its internal styling values.
+- Removed the Type your own / Custom Special Category input for new cars.
+- Existing legacy custom Special Category values are preserved when editing old records.
+- Darkened the Add/Edit Car backdrop and form surfaces so the brick texture is much quieter.
+- Existing collection rows were normalized to uppercase for the matching car-data columns.

@@ -8,7 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.2'
+const APP_VERSION = '2.3'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -81,8 +81,6 @@ const modelSuggestions = $('model-suggestions')
 const duplicateWarningText = $('duplicate-warning-text')
 const duplicateIncreaseBtn = $('duplicate-increase-btn')
 const duplicateAnywayBtn = $('duplicate-anyway-btn')
-const customSpecialLabel = $('custom-special-label')
-const customSpecial = $('custom-special')
 const customColorLabel = $('custom-color-label')
 const customColor = $('custom-color')
 const customCheckbox = $('is-custom')
@@ -123,11 +121,6 @@ function syncBrandCustomField() {
   if (!isOther) $('custom-brand').value = ''
 }
 
-function syncSpecialCustomField() {
-  const isOther = $('special-status').value === 'Other'
-  customSpecialLabel.classList.toggle('hidden', !isOther)
-  if (!isOther) customSpecial.value = ''
-}
 
 function syncColorCustomField() {
   const isOther = $('color').value === 'Other'
@@ -179,18 +172,25 @@ function setYearValue(value) {
 
 function setSpecialValue(value) {
   const raw = String(value ?? '').trim()
+  const select = $('special-status')
+  for (const option of [...select.options]) {
+    if (option.dataset.legacyCustom === 'true') option.remove()
+  }
   const preset = SPECIAL_STATUSES.find((status) => status.toLowerCase() === raw.toLowerCase())
   if (!raw) {
-    $('special-status').value = ''
-    customSpecial.value = ''
+    select.value = ''
   } else if (preset) {
-    $('special-status').value = preset
-    customSpecial.value = ''
+    select.value = preset
   } else {
-    $('special-status').value = 'Other'
-    customSpecial.value = raw
+    // Preserve old custom special-category values when editing, without offering
+    // a new free-text Custom Special Category field.
+    const option = document.createElement('option')
+    option.value = raw
+    option.textContent = raw.toUpperCase()
+    option.dataset.legacyCustom = 'true'
+    select.appendChild(option)
+    select.value = raw
   }
-  syncSpecialCustomField()
 }
 
 function setColorValue(value) {
@@ -1348,7 +1348,7 @@ async function uploadPhoto(carId, file) {
 function canonicalBrand(value) {
   const raw = value.trim()
   const preset = BRAND_PRESETS.find((brand) => brand.toLowerCase() === raw.toLowerCase())
-  return preset ?? raw
+  return (preset ?? raw).toUpperCase()
 }
 
 function editorPayload() {
@@ -1362,20 +1362,18 @@ function editorPayload() {
   const colorChoice = $('color').value
   const customColorRaw = customColor.value.trim()
   const colorRaw = colorChoice === 'Other' ? customColorRaw : colorChoice
-  const specialChoice = $('special-status').value
-  const customSpecialRaw = customSpecial.value.trim()
-  const specialRaw = specialChoice === 'Other' ? customSpecialRaw : specialChoice
+  const specialRaw = $('special-status').value
   return {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
     is_custom: Boolean(customCheckbox.checked),
-    model: $('model').value.trim() || null,
-    model_year: yearRaw || null,
-    color: colorRaw || null,
+    model: $('model').value.trim().toUpperCase() || null,
+    model_year: yearRaw ? String(yearRaw).toUpperCase() : null,
+    color: colorRaw ? String(colorRaw).toUpperCase() : null,
     hotwheels_toy_number: $('hotwheels-toy-number').value.trim().toUpperCase() || null,
-    series_collection: $('series').value.trim() || null,
-    general_number: $('general-number').value.trim() || null,
-    series_collection_number: $('series-collection-number').value.trim() || null,
+    series_collection: $('series').value.trim().toUpperCase() || null,
+    general_number: $('general-number').value.trim().toUpperCase() || null,
+    series_collection_number: $('series-collection-number').value.trim().toUpperCase() || null,
     quantity: qtyRaw === '' ? null : Math.max(1, Math.floor(Number(qtyRaw) || 1)),
     special_status: specialRaw || null,
     notes: $('notes').value.trim() || null,
@@ -1483,7 +1481,34 @@ async function deleteCar() {
   }
 }
 
-function populateYearOptions() {
+function const UPPERCASE_EDITOR_INPUT_IDS = [
+  'custom-brand',
+  'model',
+  'custom-color',
+  'hotwheels-toy-number',
+  'series',
+  'general-number',
+  'series-collection-number',
+]
+
+function uppercaseEditorInput(event) {
+  const input = event.currentTarget
+  const start = input.selectionStart
+  const end = input.selectionEnd
+  const upper = input.value.toUpperCase()
+  if (input.value === upper) return
+  input.value = upper
+  if (typeof input.setSelectionRange === 'function' && start !== null && end !== null) {
+    input.setSelectionRange(start, end)
+  }
+}
+
+for (const id of UPPERCASE_EDITOR_INPUT_IDS) {
+  const input = $(id)
+  if (input) input.addEventListener('input', uppercaseEditorInput)
+}
+
+populateYearOptions() {
   const select = $('model-year')
   const fragment = document.createDocumentFragment()
   for (let year = 2028; year >= 2000; year -= 1) {
@@ -1715,16 +1740,6 @@ $('share-button').addEventListener('click', shareCurrentCar)
 $('quantity-minus').addEventListener('click', () => stepQuantity(-1))
 $('quantity-plus').addEventListener('click', () => stepQuantity(1))
 $('quantity').addEventListener('change', normalizeQuantityInput)
-$('hotwheels-toy-number').addEventListener('input', (event) => {
-  const input = event.currentTarget
-  const start = input.selectionStart
-  const end = input.selectionEnd
-  const upper = input.value.toUpperCase()
-  if (input.value !== upper) {
-    input.value = upper
-    if (start !== null && end !== null) input.setSelectionRange(start, end)
-  }
-})
 deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
 $('backup-reminder-now').addEventListener('click', exportBackup)
@@ -1764,7 +1779,6 @@ duplicateAnywayBtn.addEventListener('click', () => {
   hideDuplicateWarning()
 })
 $('diecast-brand').addEventListener('change', syncBrandCustomField)
-$('special-status').addEventListener('change', syncSpecialCustomField)
 $('color').addEventListener('change', syncColorCustomField)
 $('model-year').addEventListener('change', syncYearCustomField)
 $('more-details-toggle').addEventListener('click', () => {
