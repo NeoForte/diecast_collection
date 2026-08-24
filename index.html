@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=2.1.1" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.2" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=2.1.1" />
+  <link rel="stylesheet" href="styles.css?v=2.2" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -48,7 +48,6 @@
           <button id="collection-nav" class="nav-button active" type="button">Collection</button>
           <button id="social-nav" class="nav-button" type="button">Social</button>
           <button id="stats-nav" class="nav-button" type="button">Stats</button>
-          <button id="quick-add-button" class="nav-button" type="button">⚡ Add</button>
         </nav>
 
         <section id="collection-screen" class="screen active">
@@ -79,12 +78,13 @@
                   <option value="special-first">Special First</option>
                 </select>
               </label>
-              <div class="collection-file-actions">
-                <button id="backup-button" class="text-button collection-action-link" type="button">Export</button>
-                <button id="restore-button" class="text-button collection-action-link" type="button">Restore</button>
-                <button id="settings-button" class="text-button collection-action-link" type="button">Settings</button>
-                <button id="refresh-button" class="text-button collection-action-link" type="button">Refresh</button>
-                <input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" />
+              <div class="collection-home-actions">
+                <button id="settings-button" class="collection-tool-card" type="button" aria-label="Open settings">
+                  <span class="collection-tool-icon">⚙︎</span><strong>Settings</strong>
+                </button>
+                <button id="refresh-button" class="collection-tool-card" type="button" aria-label="Refresh collection">
+                  <span class="collection-tool-icon">↻</span><strong>Refresh</strong>
+                </button>
               </div>
             </div>
           </div>
@@ -137,19 +137,23 @@
               </div>
               <span class="settings-action">Change</span>
             </button>
-            <div class="settings-card">
+            <div class="settings-card settings-backup-card">
               <div class="settings-copy">
-                <strong>Backup</strong>
+                <strong>Backup &amp; Restore</strong>
                 <span id="last-backup-text">No backup recorded on this device yet.</span>
               </div>
-              <span class="settings-action">Manual</span>
+              <div class="settings-inline-actions">
+                <button id="backup-button" class="settings-mini-button" type="button">Export</button>
+                <button id="restore-button" class="settings-mini-button" type="button">Restore</button>
+              </div>
+              <input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" />
             </div>
             <div class="settings-card">
               <div class="settings-copy">
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 2.1.1</span>
+              <span class="version-badge">Version 2.2</span>
             </div>
           </div>
         </section>
@@ -306,7 +310,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=2.1.1"></script>
-  <script type="module" src="app.js?v=2.1.1"></script>
+  <script src="jszip.min.js?v=2.2"></script>
+  <script type="module" src="app.js?v=2.2"></script>
 </body>
 </html>

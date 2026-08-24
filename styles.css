@@ -889,3 +889,223 @@ html[data-theme="light"] .car-form textarea:focus {
   padding:5px;
 }
 html[data-theme="light"] .backup-reminder { background:rgba(37,99,235,.06); border-color:rgba(37,99,235,.18); }
+
+
+/* Pocket 64 v2.2 — collection cleanup, editor alignment, compact toolbar */
+.main-nav {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+/* Slightly slimmer collection search row while preserving comfortable tap targets. */
+.toolbar {
+  gap: 8px !important;
+}
+.toolbar input {
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 9px 12px !important;
+  border-radius: 12px !important;
+}
+.add-button {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 25px !important;
+}
+
+/* Sort + two intentional utility buttons. */
+.collection-summary-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  white-space: normal !important;
+}
+.collection-summary-left .sort-control {
+  flex: 0 0 auto !important;
+}
+.collection-summary-left .sort-control select {
+  width: 104px !important;
+  min-width: 104px !important;
+  max-width: 104px !important;
+  height: 40px !important;
+  padding: 6px 20px 6px 8px !important;
+  font-size: 11px !important;
+}
+.collection-home-actions {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.collection-tool-card {
+  min-width: 0;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(96,165,250,.30);
+  border-radius: 11px;
+  background: rgba(59,130,246,.075);
+  color: var(--p64-blue);
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 850;
+}
+.collection-tool-card:active {
+  background: rgba(59,130,246,.14);
+  transform: translateY(1px);
+}
+.collection-tool-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+html[data-theme="light"] .collection-tool-card {
+  background: rgba(37,99,235,.055);
+  border-color: rgba(37,99,235,.20);
+  color: #2563eb;
+}
+
+@media (max-width: 370px) {
+  .collection-summary-left { gap: 5px !important; }
+  .collection-summary-left .sort-control { gap: 2px !important; font-size: 10px !important; }
+  .collection-summary-left .sort-control select {
+    width: 92px !important;
+    min-width: 92px !important;
+    max-width: 92px !important;
+    font-size: 10px !important;
+    padding-right: 17px !important;
+  }
+  .collection-home-actions { gap: 5px; }
+  .collection-tool-card { gap: 3px; padding: 0 5px; font-size: 10px; }
+  .collection-tool-icon { font-size: 13px; }
+}
+
+/* Backup controls now live where they belong: Settings. */
+.settings-backup-card {
+  flex-wrap: wrap;
+}
+.settings-backup-card .settings-copy {
+  flex: 1 1 190px;
+}
+.settings-inline-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.settings-mini-button {
+  width: auto;
+  min-height: 38px;
+  border: 1px solid rgba(96,165,250,.28);
+  border-radius: 10px;
+  background: rgba(59,130,246,.08);
+  color: var(--p64-blue);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+.settings-mini-button:active {
+  background: rgba(59,130,246,.15);
+}
+html[data-theme="light"] .settings-mini-button {
+  background: rgba(37,99,235,.055);
+  border-color: rgba(37,99,235,.18);
+  color: #2563eb;
+}
+
+/* Editor row normalization: every paired control begins on the same baseline. */
+.car-form .two-col,
+.car-form .number-fields,
+.car-form .quick-core-row {
+  align-items: stretch !important;
+}
+
+.car-form .two-col > label,
+.car-form .number-fields > label,
+.car-form .quick-core-row > label {
+  display: grid !important;
+  grid-template-rows: 32px auto !important;
+  align-content: start !important;
+  gap: 0 !important;
+  min-width: 0 !important;
+}
+
+.car-form .two-col > label > input,
+.car-form .two-col > label > select,
+.car-form .number-fields > label > input,
+.car-form .number-fields > label > select,
+.car-form .quick-core-row > label > input,
+.car-form .quick-core-row > label > select {
+  margin-top: 0 !important;
+}
+
+.car-form .quantity-field {
+  display: grid !important;
+  grid-template-rows: 32px 44px !important;
+  align-content: start !important;
+  min-width: 0 !important;
+}
+.car-form .quantity-field > label {
+  min-height: 32px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  line-height: 1.15 !important;
+  margin: 0 !important;
+}
+.car-form .quantity-control {
+  margin-top: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+}
+
+.car-form .brand-custom-row {
+  align-items: end !important;
+}
+.car-form .brand-field {
+  display: grid !important;
+  grid-template-rows: 32px 44px !important;
+  align-content: start !important;
+}
+.car-form .brand-field > select {
+  margin-top: 0 !important;
+}
+.car-form .custom-toggle {
+  height: 44px !important;
+  min-height: 44px !important;
+  align-self: end !important;
+  padding-bottom: 0 !important;
+}
+
+/* Keep the normalized rows paired on normal phones; only stack on truly narrow screens. */
+@media (max-width: 390px) {
+  .quick-core-row {
+    grid-template-columns: minmax(118px,.9fr) minmax(0,1.1fr) !important;
+  }
+}
+@media (max-width: 330px) {
+  .quick-core-row,
+  .two-col,
+  .number-fields {
+    grid-template-columns: 1fr !important;
+  }
+  .car-form .two-col > label,
+  .car-form .number-fields > label,
+  .car-form .quick-core-row > label,
+  .car-form .quantity-field {
+    grid-template-rows: auto auto !important;
+  }
+  .car-form .two-col > label > input,
+  .car-form .two-col > label > select,
+  .car-form .number-fields > label > input,
+  .car-form .number-fields > label > select,
+  .car-form .quick-core-row > label > input,
+  .car-form .quick-core-row > label > select,
+  .car-form .quantity-control {
+    margin-top: 6px !important;
+  }
+}

@@ -277,3 +277,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added a gentle, dismissible backup reminder for established garages, plus a last-backup date in Settings.
 - Reworked Share to generate a standalone branded Pocket 64 PNG card for the selected car and use the native share sheet when file sharing is supported.
 - Preserved the persistent private-photo cache and all v2.0 behavior.
+
+
+## Version 2.2
+
+- Removed Quick Add from the main navigation.
+- Moved Export and Restore into Settings under Backup & Restore.
+- Replaced the collection utility links with compact Settings and Refresh buttons.
+- Slimmed the Search field and + Add button slightly.
+- Normalized Add/Edit Car paired-field label heights so controls align cleanly on the same row.
+- Added a restrained electric-blue accent to the Pocket 64 banner.
+- Preserved the v2.1.1 login/auth hotfix and persistent private-photo cache.
