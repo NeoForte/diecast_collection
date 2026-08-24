@@ -8,6 +8,30 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
+const APP_VERSION = '2.0'
+const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
+const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)')
+
+function getSavedAppearance() {
+  try { return localStorage.getItem(APPEARANCE_STORAGE_KEY) || 'dark' } catch { return 'dark' }
+}
+
+function applyAppearance(value = getSavedAppearance(), persist = false) {
+  const choice = ['dark', 'light', 'system'].includes(value) ? value : 'dark'
+  const resolved = choice === 'system' ? (systemThemeQuery.matches ? 'light' : 'dark') : choice
+  document.documentElement.dataset.theme = resolved
+  document.documentElement.dataset.appearance = choice
+  const themeMeta = document.querySelector('meta[name="theme-color"]')
+  if (themeMeta) themeMeta.setAttribute('content', resolved === 'light' ? '#f3f4f6' : '#000000')
+  const appearanceSelect = document.getElementById('appearance-select')
+  if (appearanceSelect && appearanceSelect.value !== choice) appearanceSelect.value = choice
+  if (persist) { try { localStorage.setItem(APPEARANCE_STORAGE_KEY, choice) } catch {} }
+}
+
+applyAppearance()
+systemThemeQuery.addEventListener?.('change', () => {
+  if (getSavedAppearance() === 'system') applyAppearance('system')
+})
 
 function specialClassForStatus(status) {
   const map = {
@@ -233,6 +257,8 @@ function showSettings() {
   settingsScreen.classList.add('active')
   mainNav.classList.remove('hidden')
   setActiveNav(null)
+  const appearanceSelect = $('appearance-select')
+  if (appearanceSelect) appearanceSelect.value = getSavedAppearance()
 }
 
 
@@ -1522,6 +1548,8 @@ $('collection-nav').addEventListener('click', showCollection)
 $('social-nav').addEventListener('click', showSocial)
 $('stats-nav').addEventListener('click', showStats)
 $('settings-button').addEventListener('click', showSettings)
+$('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
+$('settings-profile-icon').addEventListener('click', () => $('profile-icon-input').click())
 $('add-button').addEventListener('click', () => showEditor())
 $('quick-add-button').addEventListener('click', () => showEditor(null, { quick: true }))
 $('empty-add-button').addEventListener('click', () => showEditor())

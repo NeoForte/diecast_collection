@@ -610,3 +610,205 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   .collection-action-link { font-size:11px; padding:7px 3px; }
 }
 \n\n/* v33 force Sort + utilities into one compact row */\n.collection-summary-left {\n  display:grid !important;\n  grid-template-columns:minmax(0,auto) auto auto auto;\n  align-items:center;\n  justify-content:start;\n  column-gap:5px;\n  width:100%;\n  min-width:0;\n  overflow:visible;\n  white-space:nowrap;\n}\n.collection-file-actions { display:contents; }\n.sort-control {\n  display:flex;\n  align-items:center;\n  gap:3px;\n  min-width:0;\n  font-size:11px;\n}\n.sort-control select {\n  width:96px !important;\n  min-width:0 !important;\n  max-width:96px !important;\n  padding:7px 18px 7px 6px !important;\n  font-size:11px !important;\n}\n.collection-action-link {\n  min-width:0;\n  padding:7px 3px !important;\n  font-size:11px !important;\n}\n@media (max-width:360px) {\n  .collection-summary-left { column-gap:2px; }\n  .sort-control { gap:2px; font-size:10px; }\n  .sort-control select { width:88px !important; max-width:88px !important; font-size:10px !important; padding-right:16px !important; }\n  .collection-action-link { font-size:10px !important; padding-left:2px !important; padding-right:2px !important; }\n}\n
+
+/* Pocket 64 v2.0 — editor polish + basic settings + appearance */
+:root {
+  --p64-bg: #040404;
+  --p64-overlay: rgba(0,0,0,.52);
+  --p64-surface: #101010;
+  --p64-surface-2: #151515;
+  --p64-surface-3: #181818;
+  --p64-border: #292929;
+  --p64-border-strong: #343434;
+  --p64-text: #f9fafb;
+  --p64-muted: #9ca3af;
+  --p64-label: #d6d6d6;
+  --p64-accent: #fff;
+  --p64-accent-text: #050505;
+  --p64-blue: #60a5fa;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --p64-bg: #f3f4f6;
+  --p64-overlay: rgba(255,255,255,.68);
+  --p64-surface: rgba(255,255,255,.96);
+  --p64-surface-2: #f8fafc;
+  --p64-surface-3: #fff;
+  --p64-border: #d7dce2;
+  --p64-border-strong: #c7cdd5;
+  --p64-text: #111827;
+  --p64-muted: #6b7280;
+  --p64-label: #374151;
+  --p64-accent: #111827;
+  --p64-accent-text: #fff;
+  --p64-blue: #2563eb;
+}
+
+html[data-theme="light"] body {
+  background-color: var(--p64-bg);
+  background-image: linear-gradient(rgba(255,255,255,.82), rgba(255,255,255,.82)), url('black-brick-wall.svg');
+  color: var(--p64-text);
+}
+html[data-theme="light"] .view { background: var(--p64-overlay); }
+html[data-theme="light"] .topbar { background: rgba(248,250,252,.94); border-bottom-color: #d8dde3; }
+html[data-theme="light"] .auth-card,
+html[data-theme="light"] .car-form,
+html[data-theme="light"] .settings-card,
+html[data-theme="light"] .stat-row,
+html[data-theme="light"] .stat-summary-card,
+html[data-theme="light"] .empty-state { background: var(--p64-surface); border-color: var(--p64-border); color: var(--p64-text); }
+html[data-theme="light"] input,
+html[data-theme="light"] textarea,
+html[data-theme="light"] select,
+html[data-theme="light"] .toolbar input,
+html[data-theme="light"] .sort-control select,
+html[data-theme="light"] .more-details-toggle { background: var(--p64-surface-3); color: var(--p64-text); border-color: var(--p64-border-strong); }
+html[data-theme="light"] label,
+html[data-theme="light"] .car-form label,
+html[data-theme="light"] .editor-field-label,
+html[data-theme="light"] .quantity-field > label,
+html[data-theme="light"] .settings-copy strong { color: var(--p64-label); }
+html[data-theme="light"] .muted,
+html[data-theme="light"] .car-sub,
+html[data-theme="light"] .summary-row,
+html[data-theme="light"] .settings-copy span,
+html[data-theme="light"] .eyebrow { color: var(--p64-muted); }
+html[data-theme="light"] .nav-button { background:#fff; border-color:var(--p64-border); color:#596273; }
+html[data-theme="light"] .nav-button.active { background:#111827; border-color:#111827; color:#fff; }
+html[data-theme="light"] .text-button { color:#4b5563; }
+html[data-theme="light"] .text-button.strong { color:#111827; }
+html[data-theme="light"] .collection-action-link,
+html[data-theme="light"] .settings-action { color: var(--p64-blue) !important; }
+html[data-theme="light"] .photo-picker { background:#eef1f4; border-color:var(--p64-border); }
+html[data-theme="light"] #photo-placeholder { color:#6b7280; }
+html[data-theme="light"] .car-card { background:rgba(255,255,255,.96); border-color:var(--p64-border); }
+html[data-theme="light"] .car-title { color:#111827; }
+html[data-theme="light"] .car-photo,
+html[data-theme="light"] .car-photo img { background:#eef1f4; }
+html[data-theme="light"] .quantity-control { border-color:var(--p64-border-strong); background:#fff; }
+html[data-theme="light"] .quantity-step { background:#f3f4f6; color:#111827; border-color:#d7dce2; }
+html[data-theme="light"] .profile-icon-button { background:#fff; border-color:#c7cdd5; color:#111827; }
+html[data-theme="light"] .version-badge { background:#eef2f7; color:#374151; border-color:#d5dbe3; }
+
+/* Editor: make the first row feel like one form, not a checkbox inside a fake field. */
+.brand-custom-row {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:end !important;
+  gap:14px !important;
+  margin-bottom:14px !important;
+}
+.brand-field { margin-bottom:0 !important; }
+.custom-toggle {
+  display:flex !important;
+  grid-template-columns:none !important;
+  align-items:center !important;
+  justify-content:center;
+  gap:7px !important;
+  min-height:44px;
+  margin:0 !important;
+  padding:0 4px 1px !important;
+  color:var(--p64-label) !important;
+  white-space:nowrap;
+  font-size:12px !important;
+  font-weight:800 !important;
+  cursor:pointer;
+}
+.custom-toggle input {
+  appearance:auto !important;
+  -webkit-appearance:checkbox !important;
+  width:20px !important;
+  height:20px !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  accent-color:#60a5fa;
+}
+.custom-toggle span { line-height:1; }
+
+.car-form {
+  background:var(--p64-surface);
+  border-color:var(--p64-border);
+  padding:16px !important;
+}
+.car-form > label,
+.car-form .two-col > label,
+.car-form .number-fields > label,
+.quantity-field { margin-bottom:13px !important; }
+.car-form input,
+.car-form select,
+.car-form textarea {
+  background:var(--p64-surface-3);
+  color:var(--p64-text);
+  border-color:var(--p64-border-strong);
+}
+.car-form label,
+.editor-field-label,
+.quantity-field > label { color:var(--p64-label); }
+.quick-core-row {
+  display:grid;
+  grid-template-columns:minmax(128px,.88fr) minmax(0,1.12fr) !important;
+  align-items:start;
+  gap:10px !important;
+}
+.quantity-control { min-height:44px; }
+.number-fields { gap:10px !important; }
+
+@media (max-width:390px) {
+  .brand-custom-row { gap:9px !important; }
+  .custom-toggle { gap:5px !important; font-size:11px !important; }
+  .custom-toggle input { width:18px !important; height:18px !important; }
+  .quick-core-row { grid-template-columns:1fr !important; }
+  .quantity-field { max-width:none !important; }
+}
+
+/* Basic Settings */
+.settings-heading { padding-bottom:10px; }
+.settings-list { display:grid; gap:10px; padding-bottom:20px; }
+.settings-card {
+  width:100%;
+  min-height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 15px;
+  border:1px solid var(--p64-border);
+  border-radius:15px;
+  background:var(--p64-surface);
+  color:var(--p64-text);
+  text-align:left;
+}
+.settings-button-card { font:inherit; cursor:pointer; }
+.settings-copy { min-width:0; display:grid; gap:4px; }
+.settings-copy strong { color:var(--p64-text); font-size:14px; }
+.settings-copy span { color:var(--p64-muted); font-size:12px; line-height:1.35; }
+.settings-select {
+  flex:0 0 112px;
+  width:112px;
+  min-height:40px;
+  margin:0;
+  padding:8px 28px 8px 10px;
+  background:var(--p64-surface-3);
+  color:var(--p64-text);
+  border:1px solid var(--p64-border-strong);
+  border-radius:10px;
+  font-size:13px;
+  font-weight:700;
+}
+.settings-action { color:var(--p64-blue); font-size:13px; font-weight:800; white-space:nowrap; }
+.version-badge {
+  flex:0 0 auto;
+  padding:7px 9px;
+  border:1px solid #32363d;
+  border-radius:9px;
+  background:#17191d;
+  color:#c7cbd1;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}

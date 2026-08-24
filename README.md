@@ -257,3 +257,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Forces Sort, Export, Restore, and Settings into one compact row on narrow phones.
 - Shortens visible Sort option labels so the dropdown does not push utility links onto another line.
 - Preserves v31/v32 persistent private photo caching and egress optimizations.
+
+
+## Version 2.0
+- Resets the public version numbering to the 2.x series.
+- Polishes the Add/Edit Car form, especially Brand + Custom alignment and narrow-screen spacing.
+- Replaces the boxed Custom checkbox treatment with a clean aligned checkbox.
+- Adds a real basic Settings screen.
+- Adds Dark, Light, and System appearance choices saved on the device.
+- Shows the current Pocket 64 version in Settings.
+- Adds Profile Icon access from Settings.
+- Preserves the persistent private photo cache and all v33 collection behavior.

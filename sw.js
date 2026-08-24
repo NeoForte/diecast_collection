@@ -1,5 +1,5 @@
-const CACHE = 'diecast-app-v33'
-const ASSETS = ['./', './index.html', './styles.css?v=33', './app.js?v=33', './manifest.webmanifest?v=33', './jszip.min.js?v=32', './black-brick-wall.svg', './icon-192.png', './icon-512.png', './pocket64-banner.png']
+const CACHE = 'pocket64-v2.0'
+const ASSETS = ['./', './index.html', './styles.css?v=2.0', './app.js?v=2.0', './manifest.webmanifest?v=2.0', './jszip.min.js?v=2.0', './black-brick-wall.svg', './icon-192.png', './icon-512.png', './pocket64-banner.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)))

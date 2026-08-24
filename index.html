@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=33" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.0" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=33" />
+  <link rel="stylesheet" href="styles.css?v=2.0" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -108,16 +108,38 @@
         </section>
 
         <section id="settings-screen" class="screen">
-          <div class="page-heading">
+          <div class="page-heading settings-heading">
             <div>
               <div class="eyebrow">POCKET 64</div>
               <h2>Settings</h2>
             </div>
           </div>
-          <div class="social-placeholder">
-            <div class="social-placeholder-icon">⚙️</div>
-            <h3>Settings coming soon</h3>
-            <p>This will be the home for your Pocket 64 profile, personal icon, appearance, and other preferences.</p>
+          <div class="settings-list">
+            <div class="settings-card">
+              <div class="settings-copy">
+                <strong>Appearance</strong>
+                <span>Choose how Pocket 64 looks on this device.</span>
+              </div>
+              <select id="appearance-select" class="settings-select" aria-label="Appearance">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="system">System</option>
+              </select>
+            </div>
+            <button id="settings-profile-icon" class="settings-card settings-button-card" type="button">
+              <div class="settings-copy">
+                <strong>Profile Icon</strong>
+                <span>Change your round garage icon.</span>
+              </div>
+              <span class="settings-action">Change</span>
+            </button>
+            <div class="settings-card">
+              <div class="settings-copy">
+                <strong>About</strong>
+                <span>Your diecast collection, in your pocket.</span>
+              </div>
+              <span class="version-badge">Version 2.0</span>
+            </div>
           </div>
         </section>
 
@@ -167,12 +189,10 @@
                 <option value="Other">Type your own…</option>
               </select>
               </label>
-              <div class="custom-field">
-                <span class="editor-field-label">Custom</span>
-                <label class="custom-check-label" for="is-custom">
-                  <input id="is-custom" type="checkbox" />
-                </label>
-              </div>
+              <label class="custom-toggle" for="is-custom">
+                <input id="is-custom" type="checkbox" />
+                <span>Custom</span>
+              </label>
             </div>
             <label id="custom-brand-label" class="hidden">Custom Brand
               <input id="custom-brand" type="text" placeholder="Type brand name" />
@@ -275,7 +295,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=32"></script>
-  <script type="module" src="app.js?v=33"></script>
+  <script src="jszip.min.js?v=2.0"></script>
+  <script type="module" src="app.js?v=2.0"></script>
 </body>
 </html>
