@@ -380,3 +380,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Lowered the Pocket 64 banner slightly so it sits more in line with the profile icon and Settings gear.
 - Kept the logo artwork itself unchanged.
 - No auth, database, collection, or form logic changes.
+
+
+## Version 2.4.8
+
+- Header refinement only.
+- Shrunk the Pocket 64 banner slightly more while preserving the improved lower alignment.
+- No logo artwork changes, and no auth/database/form behavior changes.
