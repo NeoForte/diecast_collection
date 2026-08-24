@@ -387,3 +387,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Header refinement only.
 - Shrunk the Pocket 64 banner slightly more while preserving the improved lower alignment.
 - No logo artwork changes, and no auth/database/form behavior changes.
+
+
+## Version 2.4.9
+
+- Shrunk the centered Pocket 64 banner another step.
+- Slimmed the Search row and Add button vertically to make the Collection header feel lighter.
+- Kept existing alignment, Settings placement, Refresh-in-Settings, and Sign Out-in-Settings behavior.
+- No auth, database, collection-data, or form logic changes.
