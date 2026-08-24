@@ -1,4 +1,4 @@
-# AJ's Garage
+# Pocket 64
 
 Private personal PWA for cataloging diecast cars.
 
@@ -223,3 +223,18 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Normalized input heights, label typography, quantity controls, and responsive spacing.
 - Preserved all v28 lazy-loading and return-from-background refresh fixes.
 - Bumped the PWA cache and asset versions to v29.
+
+
+## v30 Pocket 64 update
+- Renamed the app and installed PWA branding from AJ's Garage to Pocket 64.
+- Added new Pocket 64 app icons and a transparent Pocket 64 header banner.
+- Added a round account icon beside the header brand; tapping it lets each signed-in user upload a private custom icon.
+- Removed the Private Collection header label and removed the collection car-count line from the main page.
+- Moved Refresh beside Sign Out in the header.
+- Moved Export and Restore beside Sort on the left, shortened the labels, and styled them as blue text links.
+- Added a Social navigation box between Collection and Stats; all four navigation boxes share one equal-width row.
+- Added a Social Feed placeholder for future recent-addition/reaction features.
+- Added a native Share button to saved car details so iPhone/Windows can offer installed destinations such as Facebook, Instagram, Messages, Mail, and more.
+- Reworked Brand Stats filtering to use a separate brand filter with a compact removable “×” pill instead of filling the search box.
+- Preserved all v28/v29 lazy-loading, background-return, quantity, backup/restore, and editor cleanup behavior.
+- Bumped the PWA cache and all asset versions to v30.

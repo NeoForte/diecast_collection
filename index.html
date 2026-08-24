@@ -6,19 +6,18 @@
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="AJ's Garage" />
-  <link rel="manifest" href="manifest.webmanifest?v=29" />
+  <meta name="apple-mobile-web-app-title" content="Pocket 64" />
+  <link rel="manifest" href="manifest.webmanifest?v=30" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=29" />
-  <title>AJ's Garage</title>
+  <link rel="stylesheet" href="styles.css?v=30" />
+  <title>Pocket 64</title>
 </head>
 <body>
   <div id="app">
     <section id="auth-view" class="view center-view">
       <div class="auth-card">
-        <div class="app-mark">AJ</div>
-        <h1>AJ's Garage</h1>
-        <p class="muted">Private diecast collection</p>
+        <img class="auth-brand-banner" src="pocket64-banner.png" alt="Pocket 64" />
+        <p class="muted">Your diecast collection, in your pocket.</p>
         <form id="auth-form">
           <label>Email<input id="email" type="email" autocomplete="email" /></label>
           <label>Password<input id="password" type="password" autocomplete="current-password" /></label>
@@ -31,18 +30,26 @@
 
     <section id="main-view" class="view hidden">
       <header class="topbar">
-        <div>
-          <div class="eyebrow">PRIVATE COLLECTION</div>
-          <h1>AJ's Garage</h1>
+        <div class="brand-header">
+          <button id="profile-icon-button" class="profile-icon-button" type="button" aria-label="Change garage icon" title="Change garage icon">
+            <span id="profile-icon-fallback">P64</span>
+            <img id="profile-icon-image" class="hidden" alt="Your garage icon" />
+          </button>
+          <input id="profile-icon-input" class="hidden" type="file" accept="image/*" />
+          <img class="brand-banner" src="pocket64-banner.png" alt="Pocket 64" />
         </div>
-        <button id="logout-btn" class="text-button">Sign out</button>
+        <div class="topbar-actions">
+          <button id="refresh-button" class="text-button">Refresh</button>
+          <button id="logout-btn" class="text-button">Sign out</button>
+        </div>
       </header>
 
       <main>
         <nav id="main-nav" class="main-nav" aria-label="App pages">
           <button id="collection-nav" class="nav-button active" type="button">Collection</button>
+          <button id="social-nav" class="nav-button" type="button">Social</button>
           <button id="stats-nav" class="nav-button" type="button">Stats</button>
-          <button id="quick-add-button" class="nav-button" type="button">⚡ Quick Add</button>
+          <button id="quick-add-button" class="nav-button" type="button">⚡ Add</button>
         </nav>
 
         <section id="collection-screen" class="screen active">
@@ -50,9 +57,11 @@
             <input id="search-input" type="search" placeholder="Search brand, model, year…" />
             <button id="add-button" class="add-button" aria-label="Add car">＋</button>
           </div>
+          <div id="active-filter-row" class="active-filter-row hidden">
+            <button id="active-filter-pill" class="active-filter-pill" type="button" aria-label="Clear brand filter"></button>
+          </div>
           <div class="summary-row">
             <div class="collection-summary-left">
-              <span id="car-count">0 cars</span>
               <label class="sort-control" for="sort-select">
                 <span>Sort</span>
                 <select id="sort-select" aria-label="Sort collection">
@@ -67,12 +76,11 @@
                   <option value="special-first">Special First</option>
                 </select>
               </label>
-            </div>
-            <div class="summary-actions">
-              <button id="backup-button" class="text-button" type="button">Export Backup</button>
-              <button id="restore-button" class="text-button" type="button">Restore Backup</button>
-              <input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" />
-              <button id="refresh-button" class="text-button" type="button">Refresh</button>
+              <div class="collection-file-actions">
+                <button id="backup-button" class="text-button collection-action-link" type="button">Export</button>
+                <button id="restore-button" class="text-button collection-action-link" type="button">Restore</button>
+                <input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" />
+              </div>
             </div>
           </div>
           <div id="cars-grid" class="cars-grid"></div>
@@ -81,6 +89,20 @@
             <h2>No cars yet</h2>
             <p>Add your first diecast car. Every field is optional.</p>
             <button id="empty-add-button">Add Car</button>
+          </div>
+        </section>
+
+        <section id="social-screen" class="screen">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">POCKET 64 COMMUNITY</div>
+              <h2>Social Feed</h2>
+            </div>
+          </div>
+          <div class="social-placeholder">
+            <div class="social-placeholder-icon">🏁</div>
+            <h3>Social is coming later</h3>
+            <p>This is the future home for recent additions and simple collector reactions — without comments or DMs.</p>
           </div>
         </section>
 
@@ -100,7 +122,10 @@
 
         <section id="editor-screen" class="screen">
           <div class="editor-header">
-            <button id="cancel-button" class="text-button">Cancel</button>
+            <div class="editor-header-left">
+              <button id="cancel-button" class="text-button">Cancel</button>
+              <button id="share-button" class="text-button share-button hidden" type="button">Share</button>
+            </div>
             <h2 id="editor-title">Add Car</h2>
             <button id="save-button" class="text-button strong" type="button">Save</button>
           </div>
@@ -235,7 +260,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=29"></script>
-  <script type="module" src="app.js?v=29"></script>
+  <script src="jszip.min.js?v=30"></script>
+  <script type="module" src="app.js?v=30"></script>
 </body>
 </html>

@@ -558,3 +558,40 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   .quantity-field { max-width: 190px; }
   .number-fields { grid-template-columns: 1fr; }
 }
+
+
+/* v30 Pocket 64 branding + navigation cleanup */
+.topbar { gap: 12px; }
+.brand-header { display:flex; align-items:center; gap:10px; min-width:0; }
+.brand-banner { display:block; width:min(260px, 43vw); height:auto; max-height:56px; object-fit:contain; object-position:left center; }
+.auth-brand-banner { display:block; width:min(320px, 82vw); height:auto; margin:0 auto 12px; }
+.topbar-actions { display:flex; align-items:center; gap:2px; flex:0 0 auto; }
+.topbar-actions .text-button { font-size:12px; padding:8px 6px; }
+.profile-icon-button { width:46px; height:46px; flex:0 0 46px; border-radius:50%; overflow:hidden; border:1px solid #50545c; background:#151518; color:#f4f4f5; padding:0; display:grid; place-items:center; box-shadow:inset 0 0 0 2px rgba(255,255,255,.03); }
+.profile-icon-button span { font-size:12px; font-weight:950; letter-spacing:-.04em; }
+.profile-icon-button img { width:100%; height:100%; object-fit:cover; display:block; }
+.profile-icon-button:active { transform:scale(.97); }
+.main-nav { grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+.main-nav .nav-button { padding:10px 4px; font-size:12px; }
+.summary-row { justify-content:flex-start; padding-top:10px; }
+.collection-summary-left { width:100%; justify-content:flex-start; gap:10px; flex-wrap:wrap; }
+.collection-file-actions { display:flex; align-items:center; gap:0; }
+.collection-action-link { color:#60a5fa; font-weight:800; font-size:13px; padding:8px 7px; }
+.collection-action-link:active { color:#93c5fd; }
+.active-filter-row { padding:9px 1px 0; }
+.active-filter-pill { border:1px solid #3b82f6; background:rgba(37,99,235,.12); color:#93c5fd; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:850; }
+.social-placeholder { text-align:center; background:rgba(15,15,15,.94); border:1px solid #292929; border-radius:18px; padding:38px 22px; color:#d4d4d4; }
+.social-placeholder-icon { font-size:38px; margin-bottom:10px; }
+.social-placeholder h3 { margin:0 0 8px; color:#fff; }
+.social-placeholder p { margin:0 auto; max-width:470px; color:#9ca3af; line-height:1.5; }
+.editor-header-left { display:flex; align-items:center; gap:0; justify-self:start; }
+.share-button { color:#60a5fa; font-weight:800; }
+@media (max-width:420px) {
+  .brand-banner { width:42vw; max-height:48px; }
+  .profile-icon-button { width:42px; height:42px; flex-basis:42px; }
+  .topbar-actions .text-button { font-size:11px; padding:7px 4px; }
+  .main-nav .nav-button { font-size:11px; padding:9px 2px; }
+  .sort-control select { min-width:128px; max-width:148px; }
+  .collection-summary-left { gap:6px; }
+  .collection-action-link { font-size:12px; padding:8px 5px; }
+}

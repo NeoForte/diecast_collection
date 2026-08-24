@@ -30,11 +30,11 @@ const authView = $('auth-view')
 const mainView = $('main-view')
 const mainNav = $('main-nav')
 const collectionScreen = $('collection-screen')
+const socialScreen = $('social-screen')
 const statsScreen = $('stats-screen')
 const editorScreen = $('editor-screen')
 const carsGrid = $('cars-grid')
 const emptyState = $('empty-state')
-const carCount = $('car-count')
 const statsTotal = $('stats-total')
 const statsGrandTotal = $('stats-grand-total')
 const brandStats = $('brand-stats')
@@ -70,6 +70,7 @@ let duplicateDismissedModel = ''
 let duplicateCheckTimer = null
 let loadedCarsUserId = null
 let carsLoadPromise = null
+let activeBrandFilter = null
 
 const photoUrlCache = new Map()
 const photoLoadPromises = new Map()
@@ -179,11 +180,13 @@ function setColorValue(value) {
 
 function setActiveNav(active) {
   $('collection-nav').classList.toggle('active', active === 'collection')
+  $('social-nav').classList.toggle('active', active === 'social')
   $('stats-nav').classList.toggle('active', active === 'stats')
 }
 
 function hideScreens() {
   collectionScreen.classList.remove('active')
+  socialScreen.classList.remove('active')
   statsScreen.classList.remove('active')
   editorScreen.classList.remove('active')
 }
@@ -204,6 +207,14 @@ function showCollection() {
   collectionScreen.classList.add('active')
   mainNav.classList.remove('hidden')
   setActiveNav('collection')
+}
+
+
+function showSocial() {
+  hideScreens()
+  socialScreen.classList.add('active')
+  mainNav.classList.remove('hidden')
+  setActiveNav('social')
 }
 
 function showStats() {
@@ -391,6 +402,7 @@ function showEditor(car = null, options = {}) {
   $('more-details-section').classList.toggle('quick-collapsed', quickAddMode)
   $('more-details-toggle').textContent = 'More Details ▾'
   deleteButton.classList.toggle('hidden', !car)
+  $('share-button').classList.toggle('hidden', !car)
   fillEditor(car)
   if (quickAddMode && quickAddKeepBrand) {
     $('diecast-brand').value = quickAddKeepBrand
@@ -495,7 +507,7 @@ function backupFilename(extension = 'zip') {
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
-  return `AJs_Garage_Backup_${year}-${month}-${day}.${extension}`
+  return `Pocket64_Backup_${year}-${month}-${day}.${extension}`
 }
 
 function downloadBlob(blob, filename) {
@@ -564,20 +576,20 @@ async function exportBackup() {
       source_user_id: session.user.id,
       car_count: backupCars.length,
       photo_count: Object.keys(photoMap).length,
-      note: 'Self-contained AJ\'s Garage backup. backup.json contains all current collection fields and the photos folder contains the actual private car images.',
+      note: 'Self-contained Pocket 64 backup. backup.json contains all current collection fields and the photos folder contains the actual private car images.',
       photos: photoMap,
       cars: backupCars,
     }
 
     zip.file('backup.json', JSON.stringify(backup, null, 2))
     zip.file('README.txt', [
-      "AJ's Garage Disaster-Recovery Backup",
+      "Pocket 64 Disaster-Recovery Backup",
       '',
       `Exported: ${backup.exported_at}`,
       `Cars: ${backup.car_count}`,
       `Photos: ${backup.photo_count}`,
       '',
-      'Keep this ZIP file somewhere safe. Do not unzip or modify it before restoring in AJ\'s Garage.',
+      'Keep this ZIP file somewhere safe. Do not unzip or modify it before restoring in Pocket 64.',
       'The backup contains collection data plus the actual stored car images.',
     ].join('\n'))
 
@@ -724,7 +736,7 @@ async function restoreBackupFile(file) {
       : 'This backup has no embedded images. Car data will restore, but image recovery depends on any old Supabase photo paths still existing.'
 
     const approved = window.confirm(
-      `Restore AJ's Garage backup from ${exportedDate}?\n\n` +
+      `Restore Pocket 64 backup from ${exportedDate}?\n\n` +
       `${backup.cars.length} car${backup.cars.length === 1 ? '' : 's'}\n` +
       `${photoNote}\n\n${accountNote}\n` +
       'Current cars that are not in the backup will NOT be deleted.'
@@ -858,14 +870,45 @@ function applySortPreference() {
   sortSelect.value = VALID_SORTS.has(saved) ? saved : 'newest'
 }
 
+function updateActiveFilterPill() {
+  const row = $('active-filter-row')
+  const pill = $('active-filter-pill')
+  if (!activeBrandFilter) {
+    row.classList.add('hidden')
+    pill.textContent = ''
+    return
+  }
+  const label = activeBrandFilter === '__unspecified__' ? 'Unspecified' : activeBrandFilter
+  pill.textContent = `${label} ×`
+  pill.title = `Clear ${label} filter`
+  row.classList.remove('hidden')
+}
+
+function clearBrandFilter() {
+  activeBrandFilter = null
+  updateActiveFilterPill()
+  applySearch()
+}
+
 function applySearch() {
   const q = searchInput.value.trim().toLowerCase()
-  const matches = !q ? cars : cars.filter((car) => {
-    const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
-    if (car.is_custom) values.push('custom')
-    return values.filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
-  })
+  let matches = cars
+  if (activeBrandFilter) {
+    matches = cars.filter((car) => {
+      const brand = String(car.diecast_brand ?? '').trim()
+      if (activeBrandFilter === '__unspecified__') return !brand
+      return brand.toLowerCase() === activeBrandFilter.toLowerCase()
+    })
+  }
+  if (q) {
+    matches = matches.filter((car) => {
+      const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
+      if (car.is_custom) values.push('custom')
+      return values.filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
+    })
+  }
   filteredCars = sortCars(matches)
+  updateActiveFilterPill()
   renderCars()
 }
 
@@ -957,7 +1000,6 @@ function reorderRenderedCardsIfNeeded() {
 
 function renderCars() {
   carsGrid.replaceChildren()
-  carCount.textContent = `${cars.length} ${cars.length === 1 ? 'car' : 'cars'}`
   emptyState.classList.toggle('hidden', cars.length !== 0)
 
   for (const car of filteredCars) {
@@ -1110,16 +1152,10 @@ function renderStats() {
     row.append(name, count)
     row.addEventListener('click', () => {
       const brand = entry.brand
-      searchInput.value = brand === 'Unspecified' ? '' : brand
+      activeBrandFilter = brand === 'Unspecified' ? '__unspecified__' : brand
+      searchInput.value = ''
       showCollection()
-      if (brand === 'Unspecified') {
-        filteredCars = sortCars(cars.filter((car) => !String(car.diecast_brand ?? '').trim()))
-        renderCars()
-      } else {
-        filteredCars = sortCars(cars.filter((car) => String(car.diecast_brand ?? '').trim().toLowerCase() === brand.toLowerCase()))
-        renderCars()
-      }
-      searchInput.focus()
+      applySearch()
     })
     brandStats.append(row)
   }
@@ -1330,17 +1366,84 @@ $('signup-btn').addEventListener('click', async () => {
   authMessage.textContent = error ? error.message : 'Account created. Check your email to confirm it, then sign in.'
 })
 
+
+async function shareCurrentCar() {
+  if (!editingCar) return
+  const title = displayTitle(editingCar)
+  const details = [editingCar.diecast_brand, editingCar.model_year, editingCar.color, editingCar.special_status].filter(Boolean).join(' · ')
+  const text = [`${title} — Pocket 64`, details].filter(Boolean).join('\n')
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: `${title} — Pocket 64`, text, url: APP_URL })
+      return
+    }
+    await navigator.clipboard.writeText(`${text}\n${APP_URL}`)
+    alert('Share text copied to your clipboard.')
+  } catch (err) {
+    if (err?.name !== 'AbortError') {
+      console.error(err)
+      alert('Sharing is not available right now.')
+    }
+  }
+}
+
+async function loadProfileIcon() {
+  if (!session?.user) return
+  const path = `${session.user.id}/profile-icon.jpg`
+  try {
+    const { data, error } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
+    if (error || !data?.signedUrl) return
+    const img = $('profile-icon-image')
+    img.onload = () => {
+      img.classList.remove('hidden')
+      $('profile-icon-fallback').classList.add('hidden')
+    }
+    img.onerror = () => {
+      img.classList.add('hidden')
+      $('profile-icon-fallback').classList.remove('hidden')
+    }
+    img.src = data.signedUrl
+  } catch (err) {
+    console.warn('Profile icon unavailable', err)
+  }
+}
+
+async function saveProfileIcon(file) {
+  if (!session?.user || !file) return
+  const button = $('profile-icon-button')
+  button.disabled = true
+  try {
+    const compressed = await compressImage(file, 512, .84)
+    const path = `${session.user.id}/profile-icon.jpg`
+    const { error } = await supabase.storage.from('car-photos').upload(path, compressed, { contentType: 'image/jpeg', upsert: true })
+    if (error) throw error
+    const { data, error: signedError } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
+    if (signedError) throw signedError
+    $('profile-icon-image').src = `${data.signedUrl}&v=${Date.now()}`
+    $('profile-icon-image').classList.remove('hidden')
+    $('profile-icon-fallback').classList.add('hidden')
+  } catch (err) {
+    console.error(err)
+    alert(`Could not save your icon: ${err.message || err}`)
+  } finally {
+    button.disabled = false
+    $('profile-icon-input').value = ''
+  }
+}
+
 $('logout-btn').addEventListener('click', async () => {
   if (!window.confirm('Are you sure you want to sign out?')) return
   await supabase.auth.signOut()
 })
 $('collection-nav').addEventListener('click', showCollection)
+$('social-nav').addEventListener('click', showSocial)
 $('stats-nav').addEventListener('click', showStats)
 $('add-button').addEventListener('click', () => showEditor())
 $('quick-add-button').addEventListener('click', () => showEditor(null, { quick: true }))
 $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', showCollection)
 $('save-button').addEventListener('click', saveCar)
+$('share-button').addEventListener('click', shareCurrentCar)
 $('quantity-minus').addEventListener('click', () => stepQuantity(-1))
 $('quantity-plus').addEventListener('click', () => stepQuantity(1))
 $('quantity').addEventListener('change', normalizeQuantityInput)
@@ -1362,6 +1465,9 @@ $('restore-input').addEventListener('change', () => {
   if (file) restoreBackupFile(file)
 })
 $('refresh-button').addEventListener('click', loadCars)
+$('active-filter-pill').addEventListener('click', clearBrandFilter)
+$('profile-icon-button').addEventListener('click', () => $('profile-icon-input').click())
+$('profile-icon-input').addEventListener('change', () => saveProfileIcon($('profile-icon-input').files?.[0]))
 searchInput.addEventListener('input', applySearch)
 sortSelect.addEventListener('change', () => {
   try { localStorage.setItem(SORT_STORAGE_KEY, sortSelect.value) } catch {}
@@ -1411,6 +1517,7 @@ supabase.auth.onAuthStateChange((event, newSession) => {
 
   if (session) {
     showMain()
+    setTimeout(() => loadProfileIcon(), 0)
     // Mobile browsers commonly emit TOKEN_REFRESHED after returning from another app.
     // Keep the current collection mounted unless this is actually a different/new user.
     if (loadedCarsUserId !== nextUserId && previousUserId !== nextUserId) {
@@ -1421,6 +1528,10 @@ supabase.auth.onAuthStateChange((event, newSession) => {
     filteredCars = []
     loadedCarsUserId = null
     photoUrlCache.clear()
+    activeBrandFilter = null
+    $('profile-icon-image').removeAttribute('src')
+    $('profile-icon-image').classList.add('hidden')
+    $('profile-icon-fallback').classList.remove('hidden')
     applySearch()
     renderStats()
     showAuth()
@@ -1431,6 +1542,7 @@ const { data: { session: initialSession } } = await supabase.auth.getSession()
 session = initialSession
 if (session) {
   showMain()
+  await loadProfileIcon()
   if (loadedCarsUserId !== session.user.id) await loadCars()
 } else {
   showAuth()
