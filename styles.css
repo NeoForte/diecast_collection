@@ -1214,3 +1214,69 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     max-height: 78px !important;
   }
 }
+
+
+/* Pocket 64 v2.4.3 — correct header selectors + true screen centering */
+.topbar {
+  position: relative !important;
+  min-height: 74px !important;
+  align-items: center !important;
+}
+
+.brand-header {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+}
+
+.brand-header .profile-icon-button {
+  position: relative !important;
+  z-index: 3 !important;
+  margin-right: 0 !important;
+  flex: 0 0 46px !important;
+}
+
+.brand-header .brand-banner {
+  position: absolute !important;
+  z-index: 1 !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(66vw, 360px) !important;
+  max-width: min(66vw, 360px) !important;
+  height: auto !important;
+  max-height: 86px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  margin: 0 !important;
+}
+
+.topbar-actions {
+  position: relative !important;
+  z-index: 3 !important;
+  margin-left: auto !important;
+}
+
+@media (max-width: 430px) {
+  .topbar { min-height: 70px !important; }
+  .brand-header .profile-icon-button {
+    flex-basis: 42px !important;
+    width: 42px !important;
+    height: 42px !important;
+  }
+  .brand-header .brand-banner {
+    width: min(64vw, 300px) !important;
+    max-width: min(64vw, 300px) !important;
+    max-height: 80px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    width: min(60vw, 265px) !important;
+    max-width: min(60vw, 265px) !important;
+    max-height: 74px !important;
+  }
+}

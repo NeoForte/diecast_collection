@@ -335,3 +335,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Cache-busting hotfix for the Pocket 64 header logo.
 - Renamed the banner asset so Safari/service worker must fetch the new centered, uncropped artwork.
 - No auth, database, collection, or form logic changes.
+
+
+## Version 2.4.3
+
+- Fixed the header alignment rules to target the actual Pocket 64 header classes.
+- Centered the Pocket 64 logo against the full screen instead of positioning it beside the personal icon.
+- Preserved full wheel/tire breathing room in the banner asset.
+- Added separation between the centered brand logo and the personal profile icon.
+- No auth, database, form, or collection behavior changes.
