@@ -1526,7 +1526,132 @@ $('signup-btn').addEventListener('click', async () => {
 })
 
 
-function safeShareFilename(value) {\n  return String(value || 'car').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'car'\n}\n\nfunction loadImageFromBlob(blob) {\n  return new Promise((resolve, reject) => {\n    const url = URL.createObjectURL(blob)\n    const img = new Image()\n    img.onload = () => { URL.revokeObjectURL(url); resolve(img) }\n    img.onerror = (err) => { URL.revokeObjectURL(url); reject(err) }\n    img.src = url\n  })\n}\n\nfunction canvasToBlob(canvas, type = 'image/png', quality) {\n  return new Promise((resolve) => canvas.toBlob(resolve, type, quality))\n}\n\nfunction drawCoverImage(ctx, img, x, y, w, h) {\n  const scale = Math.max(w / img.width, h / img.height)\n  const sw = w / scale\n  const sh = h / scale\n  const sx = Math.max(0, (img.width - sw) / 2)\n  const sy = Math.max(0, (img.height - sh) / 2)\n  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h)\n}\n\nfunction fitCanvasText(ctx, text, maxWidth, startSize, minSize = 34, weight = 800) {\n  let size = startSize\n  while (size > minSize) {\n    ctx.font = `${weight} ${size}px system-ui, -apple-system, sans-serif`\n    if (ctx.measureText(text).width <= maxWidth) break\n    size -= 2\n  }\n  return size\n}\n\nasync function createCarShareCard(car) {\n  const canvas = document.createElement('canvas')\n  canvas.width = 1080\n  canvas.height = 1350\n  const ctx = canvas.getContext('2d')\n  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)\n  gradient.addColorStop(0, '#171717')\n  gradient.addColorStop(1, '#050505')\n  ctx.fillStyle = gradient\n  ctx.fillRect(0, 0, canvas.width, canvas.height)\n\n  const photoX = 54, photoY = 54, photoW = 972, photoH = 820\n  ctx.save()\n  ctx.beginPath()\n  ctx.roundRect(photoX, photoY, photoW, photoH, 32)\n  ctx.clip()\n  ctx.fillStyle = '#111'\n  ctx.fillRect(photoX, photoY, photoW, photoH)\n  if (car.photo_path) {\n    const blob = await getPrivatePhotoBlob(car.photo_path)\n    if (blob) {\n      try { drawCoverImage(ctx, await loadImageFromBlob(blob), photoX, photoY, photoW, photoH) } catch {}\n    }\n  }\n  ctx.restore()\n\n  const title = displayTitle(car)\n  ctx.fillStyle = '#fff'\n  const titleSize = fitCanvasText(ctx, title, 950, 70, 42, 850)\n  ctx.font = `850 ${titleSize}px system-ui, -apple-system, sans-serif`\n  ctx.fillText(title, 64, 978)\n\n  const meta = [car.diecast_brand, car.model_year, car.color].filter(Boolean).join('  •  ')\n  ctx.fillStyle = '#b8bec7'\n  ctx.font = '500 34px system-ui, -apple-system, sans-serif'\n  if (meta) ctx.fillText(meta, 66, 1040)\n\n  const extra = [car.special_status, car.series_collection, car.hotwheels_toy_number ? `Toy # ${car.hotwheels_toy_number}` : null].filter(Boolean).join('  •  ')\n  ctx.fillStyle = '#8d96a2'\n  ctx.font = '500 28px system-ui, -apple-system, sans-serif'\n  if (extra) {\n    const max = 940\n    let shown = extra\n    while (shown.length > 8 && ctx.measureText(shown).width > max) shown = shown.slice(0, -2)\n    if (shown !== extra) shown = `${shown.trim()}…`\n    ctx.fillText(shown, 66, 1095)\n  }\n\n  ctx.strokeStyle = 'rgba(255,255,255,.12)'\n  ctx.lineWidth = 2\n  ctx.beginPath(); ctx.moveTo(64, 1150); ctx.lineTo(1016, 1150); ctx.stroke()\n  ctx.fillStyle = '#fff'\n  ctx.font = '850 44px system-ui, -apple-system, sans-serif'\n  ctx.fillText('POCKET 64', 66, 1230)\n  ctx.fillStyle = '#7f8791'\n  ctx.font = '500 24px system-ui, -apple-system, sans-serif'\n  ctx.fillText('Your collection. In your pocket.', 66, 1273)\n\n  const blob = await canvasToBlob(canvas, 'image/png')\n  if (!blob) throw new Error('Could not create share image.')\n  return new File([blob], `${safeShareFilename(title)}-Pocket64.png`, { type: 'image/png' })\n}\n\nasync function shareCurrentCar() {\n  if (!editingCar) return\n  const button = $('share-button')\n  const original = button.textContent\n  button.disabled = true\n  button.textContent = 'Preparing…'\n  try {\n    const file = await createCarShareCard(editingCar)\n    const shareData = { files: [file], title: `${displayTitle(editingCar)} — Pocket 64`, text: 'Shared from Pocket 64' }\n    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {\n      await navigator.share(shareData)\n      return\n    }\n    downloadBlob(file, file.name)\n    alert('Share card saved as an image. You can share it from Photos or Files.')\n  } catch (err) {\n    if (err?.name !== 'AbortError') {\n      console.error(err)\n      alert(`Could not create the share card: ${err.message || err}`)\n    }\n  } finally {\n    button.disabled = false\n    button.textContent = original\n  }\n}\n
+function safeShareFilename(value) {
+  return String(value || 'car').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'car'
+}
+
+function loadImageFromBlob(blob) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob)
+    const img = new Image()
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img) }
+    img.onerror = (err) => { URL.revokeObjectURL(url); reject(err) }
+    img.src = url
+  })
+}
+
+function canvasToBlob(canvas, type = 'image/png', quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality))
+}
+
+function drawCoverImage(ctx, img, x, y, w, h) {
+  const scale = Math.max(w / img.width, h / img.height)
+  const sw = w / scale
+  const sh = h / scale
+  const sx = Math.max(0, (img.width - sw) / 2)
+  const sy = Math.max(0, (img.height - sh) / 2)
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h)
+}
+
+function fitCanvasText(ctx, text, maxWidth, startSize, minSize = 34, weight = 800) {
+  let size = startSize
+  while (size > minSize) {
+    ctx.font = `${weight} ${size}px system-ui, -apple-system, sans-serif`
+    if (ctx.measureText(text).width <= maxWidth) break
+    size -= 2
+  }
+  return size
+}
+
+async function createCarShareCard(car) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1080
+  canvas.height = 1350
+  const ctx = canvas.getContext('2d')
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
+  gradient.addColorStop(0, '#171717')
+  gradient.addColorStop(1, '#050505')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  const photoX = 54, photoY = 54, photoW = 972, photoH = 820
+  ctx.save()
+  ctx.beginPath()
+  ctx.roundRect(photoX, photoY, photoW, photoH, 32)
+  ctx.clip()
+  ctx.fillStyle = '#111'
+  ctx.fillRect(photoX, photoY, photoW, photoH)
+  if (car.photo_path) {
+    const blob = await getPrivatePhotoBlob(car.photo_path)
+    if (blob) {
+      try { drawCoverImage(ctx, await loadImageFromBlob(blob), photoX, photoY, photoW, photoH) } catch {}
+    }
+  }
+  ctx.restore()
+
+  const title = displayTitle(car)
+  ctx.fillStyle = '#fff'
+  const titleSize = fitCanvasText(ctx, title, 950, 70, 42, 850)
+  ctx.font = `850 ${titleSize}px system-ui, -apple-system, sans-serif`
+  ctx.fillText(title, 64, 978)
+
+  const meta = [car.diecast_brand, car.model_year, car.color].filter(Boolean).join('  •  ')
+  ctx.fillStyle = '#b8bec7'
+  ctx.font = '500 34px system-ui, -apple-system, sans-serif'
+  if (meta) ctx.fillText(meta, 66, 1040)
+
+  const extra = [car.special_status, car.series_collection, car.hotwheels_toy_number ? `Toy # ${car.hotwheels_toy_number}` : null].filter(Boolean).join('  •  ')
+  ctx.fillStyle = '#8d96a2'
+  ctx.font = '500 28px system-ui, -apple-system, sans-serif'
+  if (extra) {
+    const max = 940
+    let shown = extra
+    while (shown.length > 8 && ctx.measureText(shown).width > max) shown = shown.slice(0, -2)
+    if (shown !== extra) shown = `${shown.trim()}…`
+    ctx.fillText(shown, 66, 1095)
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,.12)'
+  ctx.lineWidth = 2
+  ctx.beginPath(); ctx.moveTo(64, 1150); ctx.lineTo(1016, 1150); ctx.stroke()
+  ctx.fillStyle = '#fff'
+  ctx.font = '850 44px system-ui, -apple-system, sans-serif'
+  ctx.fillText('POCKET 64', 66, 1230)
+  ctx.fillStyle = '#7f8791'
+  ctx.font = '500 24px system-ui, -apple-system, sans-serif'
+  ctx.fillText('Your collection. In your pocket.', 66, 1273)
+
+  const blob = await canvasToBlob(canvas, 'image/png')
+  if (!blob) throw new Error('Could not create share image.')
+  return new File([blob], `${safeShareFilename(title)}-Pocket64.png`, { type: 'image/png' })
+}
+
+async function shareCurrentCar() {
+  if (!editingCar) return
+  const button = $('share-button')
+  const original = button.textContent
+  button.disabled = true
+  button.textContent = 'Preparing…'
+  try {
+    const file = await createCarShareCard(editingCar)
+    const shareData = { files: [file], title: `${displayTitle(editingCar)} — Pocket 64`, text: 'Shared from Pocket 64' }
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      await navigator.share(shareData)
+      return
+    }
+    downloadBlob(file, file.name)
+    alert('Share card saved as an image. You can share it from Photos or Files.')
+  } catch (err) {
+    if (err?.name !== 'AbortError') {
+      console.error(err)
+      alert(`Could not create the share card: ${err.message || err}`)
+    }
+  } finally {
+    button.disabled = false
+    button.textContent = original
+  }
+}
+
 async function loadProfileIcon() {
   if (!session?.user) return
   const path = `${session.user.id}/profile-icon.jpg`

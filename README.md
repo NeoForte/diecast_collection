@@ -270,7 +270,7 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Preserves the persistent private photo cache and all v33 collection behavior.
 
 
-## Version 2.1
+## Version 2.1.1
 
 - Moved Refresh beside Settings in the compact collection utility row.
 - Softened Add/Edit Car field outlines and made the focused field the visual emphasis.
