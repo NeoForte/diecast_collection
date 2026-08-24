@@ -1418,3 +1418,47 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     min-width: 185px !important;
   }
 }
+
+
+/* Pocket 64 v2.4.7 — lower the logo into the true visual center line */
+.topbar {
+  min-height: 72px !important;
+  align-items: center !important;
+}
+
+.brand-header {
+  align-items: center !important;
+}
+
+.brand-header .profile-icon-button,
+.topbar-actions {
+  align-self: center !important;
+}
+
+.brand-header .brand-banner {
+  top: calc(50% + 5px) !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(48vw, 245px) !important;
+  max-width: min(48vw, 245px) !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+
+@media (max-width: 430px) {
+  .topbar {
+    min-height: 70px !important;
+  }
+  .brand-header .brand-banner {
+    top: calc(50% + 4px) !important;
+    width: min(45vw, 222px) !important;
+    max-width: min(45vw, 222px) !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    top: calc(50% + 3px) !important;
+    width: min(42vw, 200px) !important;
+    max-width: min(42vw, 200px) !important;
+  }
+}

@@ -372,3 +372,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Widened the Sort control to better use the available Collection header space.
 - Logo/header artwork intentionally unchanged.
 - No auth, database, collection-data, or form behavior changes.
+
+
+## Version 2.4.7
+
+- Header alignment refinement only.
+- Lowered the Pocket 64 banner slightly so it sits more in line with the profile icon and Settings gear.
+- Kept the logo artwork itself unchanged.
+- No auth, database, collection, or form logic changes.
