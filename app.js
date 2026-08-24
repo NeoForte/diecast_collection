@@ -33,6 +33,7 @@ const collectionScreen = $('collection-screen')
 const socialScreen = $('social-screen')
 const statsScreen = $('stats-screen')
 const editorScreen = $('editor-screen')
+const settingsScreen = $('settings-screen')
 const carsGrid = $('cars-grid')
 const emptyState = $('empty-state')
 const statsTotal = $('stats-total')
@@ -72,6 +73,7 @@ let loadedCarsUserId = null
 let carsLoadPromise = null
 let activeBrandFilter = null
 
+const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v1'
 const photoUrlCache = new Map()
 const photoLoadPromises = new Map()
 const photoObserver = 'IntersectionObserver' in window
@@ -83,7 +85,7 @@ const photoObserver = 'IntersectionObserver' in window
         const path = img.dataset.privatePhotoPath
         if (path) loadPrivatePhoto(path, img)
       }
-    }, { rootMargin: '500px 0px' })
+    }, { rootMargin: '180px 0px' })
   : null
 
 function syncBrandCustomField() {
@@ -188,6 +190,7 @@ function hideScreens() {
   collectionScreen.classList.remove('active')
   socialScreen.classList.remove('active')
   statsScreen.classList.remove('active')
+  settingsScreen.classList.remove('active')
   editorScreen.classList.remove('active')
 }
 
@@ -223,6 +226,13 @@ function showStats() {
   mainNav.classList.remove('hidden')
   setActiveNav('stats')
   renderStats()
+}
+
+function showSettings() {
+  hideScreens()
+  settingsScreen.classList.add('active')
+  mainNav.classList.remove('hidden')
+  setActiveNav(null)
 }
 
 
@@ -442,22 +452,91 @@ function setPhotoPreview(src) {
   }
 }
 
+function privatePhotoCacheName() {
+  const userKey = session?.user?.id || 'signed-out'
+  return `${PRIVATE_PHOTO_CACHE_PREFIX}-${userKey}`
+}
+
+function privatePhotoCacheRequest(path) {
+  const cacheUrl = new URL(`./__p64_photo_cache__/${encodeURIComponent(path)}`, window.location.href)
+  return new Request(cacheUrl.href, { method: 'GET' })
+}
+
+async function readCachedPrivatePhoto(path) {
+  if (!('caches' in window)) return null
+  try {
+    const cache = await caches.open(privatePhotoCacheName())
+    return await cache.match(privatePhotoCacheRequest(path))
+  } catch (err) {
+    console.warn('Photo cache read failed', err)
+    return null
+  }
+}
+
+async function cachePrivatePhotoResponse(path, response) {
+  if (!('caches' in window)) return
+  try {
+    const cache = await caches.open(privatePhotoCacheName())
+    await cache.put(privatePhotoCacheRequest(path), response)
+  } catch (err) {
+    console.warn('Photo cache write failed', err)
+  }
+}
+
+async function getPrivatePhotoBlob(path) {
+  const cachedResponse = await readCachedPrivatePhoto(path)
+  if (cachedResponse) return cachedResponse.blob()
+
+  const { data, error } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
+  if (error || !data?.signedUrl) return null
+
+  const response = await fetch(data.signedUrl, { cache: 'force-cache' })
+  if (!response.ok) return null
+  const responseForCache = response.clone()
+  const blob = await response.blob()
+  await cachePrivatePhotoResponse(path, responseForCache)
+  return blob
+}
+
 async function getPrivatePhotoUrl(path) {
   const cached = photoUrlCache.get(path)
-  const now = Date.now()
-  if (cached && cached.expiresAt > now + 60_000) return cached.url
+  if (cached?.url) return cached.url
 
   if (photoLoadPromises.has(path)) return photoLoadPromises.get(path)
 
   const promise = (async () => {
-    const { data, error } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
-    if (error || !data?.signedUrl) return null
-    photoUrlCache.set(path, { url: data.signedUrl, expiresAt: now + 55 * 60_000 })
-    return data.signedUrl
+    const blob = await getPrivatePhotoBlob(path)
+    if (!blob) return null
+    const url = URL.createObjectURL(blob)
+    photoUrlCache.set(path, { url })
+    return url
   })().finally(() => photoLoadPromises.delete(path))
 
   photoLoadPromises.set(path, promise)
   return promise
+}
+
+async function invalidatePrivatePhotoCache(path) {
+  if (!path) return
+  const cached = photoUrlCache.get(path)
+  if (cached?.url?.startsWith('blob:')) URL.revokeObjectURL(cached.url)
+  photoUrlCache.delete(path)
+  photoLoadPromises.delete(path)
+  if (!('caches' in window)) return
+  try {
+    const cache = await caches.open(privatePhotoCacheName())
+    await cache.delete(privatePhotoCacheRequest(path))
+  } catch (err) {
+    console.warn('Photo cache invalidation failed', err)
+  }
+}
+
+function clearPrivatePhotoMemoryCache() {
+  for (const cached of photoUrlCache.values()) {
+    if (cached?.url?.startsWith('blob:')) URL.revokeObjectURL(cached.url)
+  }
+  photoUrlCache.clear()
+  photoLoadPromises.clear()
 }
 
 async function loadPrivatePhoto(path, imgEl, placeholderEl = null) {
@@ -552,8 +631,8 @@ async function exportBackup() {
     for (let index = 0; index < photoCars.length; index += 1) {
       const car = photoCars[index]
       button.textContent = `Photos ${index + 1}/${photoCars.length}`
-      const { data, error } = await supabase.storage.from('car-photos').download(car.photo_path)
-      if (error || !data) {
+      const data = await getPrivatePhotoBlob(car.photo_path)
+      if (!data) {
         failures.push(car.model || car.id)
         continue
       }
@@ -783,6 +862,7 @@ async function restoreBackupFile(file) {
           upsert: true,
         })
         if (uploadError) throw uploadError
+        await invalidatePrivatePhotoCache(targetPath)
         const { error: updateError } = await supabase
           .from('cars')
           .update({ photo_path: targetPath, updated_at: item.payload.updated_at })
@@ -1184,6 +1264,7 @@ async function uploadPhoto(carId, file) {
     upsert: true,
   })
   if (error) throw error
+  await invalidatePrivatePhotoCache(path)
   return path
 }
 
@@ -1309,6 +1390,7 @@ async function deleteCar() {
   try {
     if (editingCar.photo_path) {
       await supabase.storage.from('car-photos').remove([editingCar.photo_path])
+      await invalidatePrivatePhotoCache(editingCar.photo_path)
     }
     const { error } = await supabase
       .from('cars')
@@ -1391,8 +1473,8 @@ async function loadProfileIcon() {
   if (!session?.user) return
   const path = `${session.user.id}/profile-icon.jpg`
   try {
-    const { data, error } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
-    if (error || !data?.signedUrl) return
+    const signedUrl = await getPrivatePhotoUrl(path)
+    if (!signedUrl) return
     const img = $('profile-icon-image')
     img.onload = () => {
       img.classList.remove('hidden')
@@ -1402,7 +1484,7 @@ async function loadProfileIcon() {
       img.classList.add('hidden')
       $('profile-icon-fallback').classList.remove('hidden')
     }
-    img.src = data.signedUrl
+    img.src = signedUrl
   } catch (err) {
     console.warn('Profile icon unavailable', err)
   }
@@ -1417,9 +1499,10 @@ async function saveProfileIcon(file) {
     const path = `${session.user.id}/profile-icon.jpg`
     const { error } = await supabase.storage.from('car-photos').upload(path, compressed, { contentType: 'image/jpeg', upsert: true })
     if (error) throw error
-    const { data, error: signedError } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
-    if (signedError) throw signedError
-    $('profile-icon-image').src = `${data.signedUrl}&v=${Date.now()}`
+    await invalidatePrivatePhotoCache(path)
+    const localUrl = await getPrivatePhotoUrl(path)
+    if (!localUrl) throw new Error('Could not reload saved icon')
+    $('profile-icon-image').src = localUrl
     $('profile-icon-image').classList.remove('hidden')
     $('profile-icon-fallback').classList.add('hidden')
   } catch (err) {
@@ -1438,6 +1521,7 @@ $('logout-btn').addEventListener('click', async () => {
 $('collection-nav').addEventListener('click', showCollection)
 $('social-nav').addEventListener('click', showSocial)
 $('stats-nav').addEventListener('click', showStats)
+$('settings-button').addEventListener('click', showSettings)
 $('add-button').addEventListener('click', () => showEditor())
 $('quick-add-button').addEventListener('click', () => showEditor(null, { quick: true }))
 $('empty-add-button').addEventListener('click', () => showEditor())
@@ -1527,7 +1611,7 @@ supabase.auth.onAuthStateChange((event, newSession) => {
     cars = []
     filteredCars = []
     loadedCarsUserId = null
-    photoUrlCache.clear()
+    clearPrivatePhotoMemoryCache()
     activeBrandFilter = null
     $('profile-icon-image').removeAttribute('src')
     $('profile-icon-image').classList.add('hidden')

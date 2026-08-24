@@ -238,3 +238,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Reworked Brand Stats filtering to use a separate brand filter with a compact removable “×” pill instead of filling the search box.
 - Preserved all v28/v29 lazy-loading, background-return, quantity, backup/restore, and editor cleanup behavior.
 - Bumped the PWA cache and all asset versions to v30.
+
+## v31
+- Added **Settings** next to Restore; it opens a simple “Settings coming soon” placeholder.
+- Added a persistent, per-account on-device cache for private car photos so already-loaded photos can be reused without repeatedly downloading them from Supabase.
+- Reduced photo preloading distance so images are fetched closer to when they actually enter view.
+- Export now reuses locally cached photo blobs when available instead of automatically downloading every photo from Supabase again.
+- Replaced photos and restored photos invalidate their cached copy so the updated image is shown.
+- Service worker upgrades preserve the private photo cache between Pocket 64 releases.
