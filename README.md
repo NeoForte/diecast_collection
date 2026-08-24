@@ -206,3 +206,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Restore now includes Color, Toy Number, and Custom status.
 - Backup/restore remains compatible with older fields and embedded photos.
 - Current schema fields are preserved during same-account or throwaway-account restore testing.
+
+
+## v27
+- Fixed main Collection card quantity +/- updates so they no longer rebuild the entire grid or reload every car photo.
+- Quantity value and top-right quantity badge now update in place after the Supabase save completes.
+- Quantity High-Low / Low-High sorting still reorders existing card DOM nodes without remounting images.
+- Bumped PWA cache and asset versions to v27.

@@ -847,13 +847,61 @@ async function updateCardQuantity(car, delta, controls) {
 
     car.quantity = nextQty
     car.updated_at = new Date().toISOString()
-    applySearch()
+    updateRenderedCardQuantity(car, controls)
+    reorderRenderedCardsIfNeeded()
     renderStats()
   } catch (error) {
     console.error(error)
     controls?.classList.remove('saving')
     buttons.forEach((button) => { button.disabled = false })
     window.alert(error.message || 'Could not update quantity.')
+  }
+}
+
+function updateRenderedCardQuantity(car, controls) {
+  const qty = Math.max(1, Number(car.quantity) || 1)
+  const card = controls?.closest('.car-card') || carsGrid.querySelector(`[data-car-id="${car.id}"]`)
+  if (!card) return
+
+  const qtyValue = controls?.querySelector('.card-quantity-value') || card.querySelector('.card-quantity-value')
+  if (qtyValue) {
+    qtyValue.textContent = String(qty)
+    qtyValue.setAttribute('aria-label', `Quantity ${qty}`)
+  }
+
+  const quantityControls = controls || card.querySelector('.card-quantity-control')
+  const quantityButtons = quantityControls?.querySelectorAll('button') || []
+  if (quantityButtons[0]) quantityButtons[0].disabled = qty <= 1
+  if (quantityButtons[1]) quantityButtons[1].disabled = false
+  quantityControls?.classList.remove('saving')
+
+  const photoBox = card.querySelector('.car-photo')
+  let badge = photoBox?.querySelector('.quantity-badge')
+  if (qty > 1) {
+    if (!badge && photoBox) {
+      badge = document.createElement('div')
+      badge.className = 'quantity-badge'
+      const badgeStack = photoBox.querySelector('.badge-stack')
+      if (badgeStack) photoBox.insertBefore(badge, badgeStack)
+      else photoBox.append(badge)
+    }
+    if (badge) badge.textContent = String(qty)
+  } else {
+    badge?.remove()
+  }
+}
+
+function reorderRenderedCardsIfNeeded() {
+  const mode = VALID_SORTS.has(sortSelect?.value) ? sortSelect.value : 'newest'
+  if (mode !== 'qty-high' && mode !== 'qty-low') return
+
+  filteredCars = sortCars(filteredCars)
+  const cardsById = new Map(
+    [...carsGrid.querySelectorAll('.car-card[data-car-id]')].map((card) => [card.dataset.carId, card])
+  )
+  for (const car of filteredCars) {
+    const card = cardsById.get(String(car.id))
+    if (card) carsGrid.append(card)
   }
 }
 
@@ -865,6 +913,7 @@ function renderCars() {
   for (const car of filteredCars) {
     const card = document.createElement('article')
     card.className = 'car-card'
+    card.dataset.carId = String(car.id)
     card.tabIndex = 0
     const specialStatus = SPECIAL_STATUSES.includes(car.special_status) ? car.special_status : ''
     if (specialStatus) {
