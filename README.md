@@ -483,3 +483,13 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Squared up Model Year and Color into equal side-by-side sections.
 - Matched control heights, spacing, and widths across those paired fields.
 - No auth, database, collection-data, or form-save logic changes.
+
+
+## Version 2.6.2
+
+- Stretched Sort to use the full remaining row width right up to Settings.
+- Increased Settings text and gear size.
+- Made Quantity + Special Category a true equal-width pair.
+- Kept Model Year + Color as a true equal-width pair with matching control geometry.
+- Tightened label spacing throughout Add/Edit Car so labels sit directly above their assigned controls.
+- No auth, database, collection-data, or save logic changes.

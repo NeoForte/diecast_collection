@@ -2320,3 +2320,167 @@ html[data-theme="light"] .quantity-display {
     gap: 6px !important;
   }
 }
+
+
+/* Pocket 64 v2.6.2 — final row proportions + tighter Add Car labels */
+
+/* Sort should fill every bit of room up to Settings. */
+#sort-settings-row.sort-settings-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 3fr) minmax(155px, 1fr) !important;
+  gap: 6px !important;
+  width: 100% !important;
+}
+
+#sort-settings-row .sort-settings-sort,
+#sort-settings-row .collection-summary-left,
+#sort-settings-row .sort-control,
+#sort-settings-row #sort-select {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#sort-settings-row #settings-row-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  gap: 9px !important;
+  padding: 0 12px !important;
+}
+
+#sort-settings-row #settings-row-button .collection-tool-icon {
+  font-size: 21px !important;
+  line-height: 1 !important;
+}
+
+/* Quantity + Special Category: truly identical outer boxes. */
+.quick-core-row.quantity-special-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 7px !important;
+  align-items: start !important;
+}
+
+.quick-core-row.quantity-special-row > .quantity-field,
+.quick-core-row.quantity-special-row > label,
+.year-color-row > label {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 0 5px 0 !important;
+  display: grid !important;
+  grid-template-rows: 14px 38px !important;
+  gap: 1px !important;
+  box-sizing: border-box !important;
+}
+
+.quick-core-row.quantity-special-row .quantity-field > label {
+  height: 14px !important;
+  min-height: 14px !important;
+  line-height: 14px !important;
+  margin: 0 !important;
+}
+
+.quick-core-row.quantity-special-row .quantity-control,
+.quick-core-row.quantity-special-row #special-status,
+.year-color-row #model-year,
+.year-color-row #color {
+  width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+}
+
+/* Model Year + Color: identical geometry. */
+.year-color-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 7px !important;
+  align-items: start !important;
+}
+
+/* Make every Add/Edit label hug its own field. */
+#car-form > label,
+#car-form .brand-field,
+#car-form .model-field,
+#car-form .two-col > label,
+#car-form .number-fields > label,
+#car-form .quick-core-row > label,
+#car-form .quantity-field {
+  gap: 1px !important;
+  margin-bottom: 5px !important;
+}
+
+#car-form label {
+  line-height: 1 !important;
+}
+
+#car-form label > input,
+#car-form label > select,
+#car-form label > textarea {
+  margin-top: 1px !important;
+}
+
+#car-form .two-col > label,
+#car-form .number-fields > label,
+#car-form .year-color-row > label {
+  grid-template-rows: 14px 38px !important;
+}
+
+#car-form .brand-field {
+  grid-template-rows: 14px 38px !important;
+}
+
+#car-form .brand-custom-row {
+  margin-bottom: 5px !important;
+}
+
+#car-form #custom-brand-label,
+#car-form #custom-year-label,
+#car-form #custom-color-label {
+  margin-top: 0 !important;
+}
+
+/* Keep labels compact but readable. */
+#car-form label,
+#car-form .quantity-field > label {
+  font-size: 11px !important;
+}
+
+/* Mobile keeps the same symmetry. */
+@media (max-width: 430px) {
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 2.6fr) minmax(150px, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  #sort-settings-row #settings-row-button {
+    font-size: 16px !important;
+  }
+
+  #sort-settings-row #settings-row-button .collection-tool-icon {
+    font-size: 20px !important;
+  }
+
+  .quick-core-row.quantity-special-row,
+  .year-color-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 2.35fr) minmax(142px, 1fr) !important;
+  }
+
+  #sort-settings-row #settings-row-button {
+    font-size: 15px !important;
+  }
+}
