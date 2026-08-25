@@ -1683,3 +1683,30 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     max-height: 64px !important;
   }
 }
+
+
+/* Pocket 64 v2.5.5 — two more size steps */
+.brand-header .brand-banner {
+  top: calc(50% + 5px) !important;
+  width: min(80vw, 410px) !important;
+  max-width: min(80vw, 410px) !important;
+  max-height: 84px !important;
+}
+
+@media (max-width: 430px) {
+  .brand-header .brand-banner {
+    top: calc(50% + 4px) !important;
+    width: min(74vw, 375px) !important;
+    max-width: min(74vw, 375px) !important;
+    max-height: 78px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    top: calc(50% + 3px) !important;
+    width: min(69vw, 335px) !important;
+    max-width: min(69vw, 335px) !important;
+    max-height: 72px !important;
+  }
+}
