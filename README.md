@@ -447,3 +447,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added a Settings box beside Sort on the Collection utility row.
 - Preserved the current logo size and vertical alignment.
 - No auth, database, collection-data, or form logic changes.
+
+
+## Version 2.5.8
+
+- Increased the right-aligned Pocket 64 logo by two more size steps.
+- Rebuilt the Collection row so Sort and Settings stay on the same line.
+- Sort now uses roughly twice the width of Settings.
+- No auth, database, collection-data, or form logic changes.

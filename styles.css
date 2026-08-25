@@ -1833,3 +1833,89 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     font-size: 13px !important;
   }
 }
+
+
+/* Pocket 64 v2.5.8 — bigger right logo + locked sort/settings row */
+.brand-header .brand-banner {
+  right: 8px !important;
+  top: calc(50% + 5px) !important;
+  width: min(100vw, 520px) !important;
+  max-width: min(100vw, 520px) !important;
+  max-height: 104px !important;
+}
+
+#sort-settings-row.sort-settings-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 2fr) minmax(110px, 1fr) !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+#sort-settings-row .sort-settings-sort,
+#sort-settings-row .sort-settings-button-wrap {
+  min-width: 0 !important;
+}
+
+#sort-settings-row .sort-settings-sort > div {
+  width: 100% !important;
+}
+
+#sort-settings-row .sort-settings-sort label {
+  display: block !important;
+  margin-bottom: 4px !important;
+}
+
+#sort-settings-row .sort-settings-sort #sort-select {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+#sort-settings-row .sort-settings-button-wrap {
+  display: flex !important;
+  align-items: flex-end !important;
+}
+
+#sort-settings-row #settings-row-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 0 12px !important;
+}
+
+@media (max-width: 430px) {
+  .brand-header .brand-banner {
+    right: 4px !important;
+    width: min(94vw, 480px) !important;
+    max-width: min(94vw, 480px) !important;
+    max-height: 96px !important;
+  }
+
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 2fr) minmax(100px, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    right: 2px !important;
+    width: min(88vw, 435px) !important;
+    max-width: min(88vw, 435px) !important;
+    max-height: 88px !important;
+  }
+
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 2fr) minmax(92px, 1fr) !important;
+  }
+
+  #sort-settings-row #settings-row-button {
+    font-size: 13px !important;
+    padding: 0 8px !important;
+  }
+}

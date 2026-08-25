@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=2.5.7" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.5.8" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=2.5.7" />
+  <link rel="stylesheet" href="styles.css?v=2.5.8" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -62,7 +62,10 @@
             <div class="backup-reminder-actions"><button id="backup-reminder-now" type="button">Export</button><button id="backup-reminder-later" type="button">Later</button></div>
           </div>
           <div class="summary-row">
-            <div class="collection-summary-left">
+            
+              <div id="sort-settings-row" class="sort-settings-row">
+                <div class="sort-settings-sort">
+                  <div class="collection-summary-left">
               <label class="sort-control" for="sort-select">
                 <span>Sort</span>
                 <select id="sort-select" aria-label="Sort collection">
@@ -79,9 +82,13 @@
               </label>
 
             </div>
-              <button id="settings-row-button" class="collection-tool-card settings-row-button" type="button" aria-label="Open Settings">
+                </div>
+                <div class="sort-settings-button-wrap">
+                  <button id="settings-row-button" class="collection-tool-card settings-row-button" type="button" aria-label="Open Settings">
                 <span class="collection-tool-icon">⚙︎</span><strong>Settings</strong>
               </button>
+                </div>
+              </div>
           </div>
           <div id="cars-grid" class="cars-grid"></div>
           <div id="empty-state" class="empty-state hidden">
@@ -162,7 +169,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 2.5.7</span>
+              <span class="version-badge">Version 2.5.8</span>
             </div>
           </div>
         </section>
@@ -315,7 +322,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=2.5.7"></script>
-  <script type="module" src="app.js?v=2.5.7"></script>
+  <script src="jszip.min.js?v=2.5.8"></script>
+  <script type="module" src="app.js?v=2.5.8"></script>
 </body>
 </html>
