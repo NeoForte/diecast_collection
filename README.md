@@ -395,3 +395,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Slimmed the Search row and Add button vertically to make the Collection header feel lighter.
 - Kept existing alignment, Settings placement, Refresh-in-Settings, and Sign Out-in-Settings behavior.
 - No auth, database, collection-data, or form logic changes.
+
+
+## Version 2.5
+
+- Replaced the top header logo with a new rectangular Concept 2 wordmark built specifically for the app bar.
+- New header design uses a smaller silver POCKET, larger metallic-blue 64, and only a subtle automotive accent.
+- App behavior from v2.4.9 is otherwise unchanged.
+- No auth, database, collection-data, or form logic changes.

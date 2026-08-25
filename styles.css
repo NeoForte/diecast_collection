@@ -1551,3 +1551,28 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     max-width: min(34vw, 162px) !important;
   }
 }
+
+
+/* Pocket 64 v2.5 — rectangular Concept 2 header wordmark */
+.brand-header .brand-banner {
+  width: min(48vw, 228px) !important;
+  max-width: min(48vw, 228px) !important;
+  top: calc(50% + 2px) !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+
+@media (max-width: 430px) {
+  .brand-header .brand-banner {
+    width: min(45vw, 210px) !important;
+    max-width: min(45vw, 210px) !important;
+    top: calc(50% + 2px) !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    width: min(42vw, 188px) !important;
+    max-width: min(42vw, 188px) !important;
+  }
+}
