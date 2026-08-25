@@ -397,9 +397,8 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - No auth, database, collection-data, or form logic changes.
 
 
-## Version 2.5
+## Version 2.5.1
 
-- Replaced the top header logo with a new rectangular Concept 2 wordmark built specifically for the app bar.
-- New header design uses a smaller silver POCKET, larger metallic-blue 64, and only a subtle automotive accent.
-- App behavior from v2.4.9 is otherwise unchanged.
-- No auth, database, collection-data, or form logic changes.
+- Replaced the header artwork with the new Speedline Pocket 64 wordmark.
+- Uses the stable v2.4.9 app/layout behavior as the base.
+- Header logo only: no auth, database, collection-data, settings, or form logic changes.

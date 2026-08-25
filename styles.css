@@ -1553,26 +1553,30 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
 }
 
 
-/* Pocket 64 v2.5 — rectangular Concept 2 header wordmark */
+/* Pocket 64 v2.5.1 — Speedline header wordmark */
 .brand-header .brand-banner {
-  width: min(48vw, 228px) !important;
-  max-width: min(48vw, 228px) !important;
+  width: min(52vw, 250px) !important;
+  max-width: min(52vw, 250px) !important;
   top: calc(50% + 2px) !important;
+  transform: translate(-50%, -50%) !important;
+  height: auto !important;
+  max-height: 54px !important;
   object-fit: contain !important;
   object-position: center center !important;
 }
 
 @media (max-width: 430px) {
   .brand-header .brand-banner {
-    width: min(45vw, 210px) !important;
-    max-width: min(45vw, 210px) !important;
-    top: calc(50% + 2px) !important;
+    width: min(49vw, 228px) !important;
+    max-width: min(49vw, 228px) !important;
+    max-height: 50px !important;
   }
 }
 
 @media (max-width: 370px) {
   .brand-header .brand-banner {
-    width: min(42vw, 188px) !important;
-    max-width: min(42vw, 188px) !important;
+    width: min(46vw, 205px) !important;
+    max-width: min(46vw, 205px) !important;
+    max-height: 46px !important;
   }
 }
