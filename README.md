@@ -500,3 +500,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Restored and locked the approved Pocket 64 logo vertical position.
 - Moved the logo back down without changing its size or right alignment.
 - No Add Car, Sort/Settings, auth, database, or collection behavior changes.
+
+
+## Version 2.6.4
+
+- Increased the personal profile icon size slightly.
+- Aligned the profile icon more closely with the Pocket 64 logo line.
+- Removed the visible SORT label while keeping the sort control accessible.
+- Renamed the Social navigation label to Feed.
+- No auth, database, collection-data, or form logic changes.
