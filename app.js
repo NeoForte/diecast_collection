@@ -8,7 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.5.9'
+const APP_VERSION = '2.6'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -507,7 +507,8 @@ function fillEditor(car) {
   $('series').value = car?.series_collection ?? ''
   $('general-number').value = car?.general_number ?? ''
   $('series-collection-number').value = car?.series_collection_number ?? ''
-  $('quantity').value = car?.quantity ?? ''
+  $('quantity').value = String(car?.quantity ?? 1)
+  syncQuantityDisplay()
   setSpecialValue(car?.special_status ?? '')
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
@@ -1374,28 +1375,29 @@ function editorPayload() {
     series_collection: $('series').value.trim().toUpperCase() || null,
     general_number: $('general-number').value.trim().toUpperCase() || null,
     series_collection_number: $('series-collection-number').value.trim().toUpperCase() || null,
-    quantity: qtyRaw === '' ? null : Math.max(1, Math.floor(Number(qtyRaw) || 1)),
+    quantity: Math.max(1, Math.floor(Number(qtyRaw) || 1)),
     special_status: specialRaw || null,
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }
 }
 
+function syncQuantityDisplay() {
+  const input = $('quantity')
+  const display = $('quantity-display')
+  if (!input || !display) return
+  const parsed = Number(input.value)
+  const qty = Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1
+  input.value = String(qty)
+  display.textContent = `QTY ${qty}`
+}
+
 function stepQuantity(delta) {
   const input = $('quantity')
   const parsed = Number(input.value)
-  if (!Number.isFinite(parsed) || parsed < 1) {
-    input.value = '1'
-    return
-  }
-  input.value = String(Math.max(1, Math.floor(parsed) + delta))
-}
-
-function normalizeQuantityInput() {
-  const input = $('quantity')
-  if (input.value === '') return
-  const parsed = Number(input.value)
-  input.value = String(Number.isFinite(parsed) ? Math.max(1, Math.floor(parsed)) : 1)
+  const current = Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1
+  input.value = String(Math.max(1, current + delta))
+  syncQuantityDisplay()
 }
 
 async function saveCar() {
@@ -1739,7 +1741,6 @@ $('save-button').addEventListener('click', saveCar)
 $('share-button').addEventListener('click', shareCurrentCar)
 $('quantity-minus').addEventListener('click', () => stepQuantity(-1))
 $('quantity-plus').addEventListener('click', () => stepQuantity(1))
-$('quantity').addEventListener('change', normalizeQuantityInput)
 deleteButton.addEventListener('click', deleteCar)
 $('backup-button').addEventListener('click', exportBackup)
 $('backup-reminder-now').addEventListener('click', exportBackup)

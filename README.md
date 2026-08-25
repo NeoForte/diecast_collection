@@ -463,3 +463,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Made the Sort box longer by widening the Sort/Settings row ratio.
 - Increased the Settings button text and icon size for readability.
 - No auth, database, collection-data, or form logic changes.
+
+
+## Version 2.6
+
+- Locked the current Pocket 64 logo in place.
+- Widened the Settings box beside Sort.
+- Replaced the editable Quantity field with a non-editable QTY display controlled only by minus/plus.
+- Tightened label-to-field spacing throughout Add/Edit Car.
+- Reduced form padding, row gaps, field heights, photo area height, and Notes height to reduce scrolling.
+- Enlarged and moved dropdown arrows farther right.
+- No auth, RLS, storage, database schema, or collection ownership behavior changes.

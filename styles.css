@@ -1987,3 +1987,217 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     font-size: 16px !important;
   }
 }
+
+
+/* Pocket 64 v2.6 — compact Add/Edit form */
+
+/* Collection row: give Settings roughly twice its old width while staying beside Sort. */
+#sort-settings-row.sort-settings-row {
+  grid-template-columns: minmax(0, 1.55fr) minmax(175px, 1fr) !important;
+}
+#sort-settings-row #settings-row-button {
+  font-size: 15px !important;
+  min-width: 0 !important;
+}
+
+/* Tighten the editor shell itself. */
+#editor-screen {
+  padding-bottom: 12px !important;
+}
+.editor-header {
+  margin-top: 2px !important;
+  margin-bottom: 8px !important;
+}
+.photo-picker {
+  margin-bottom: 8px !important;
+  border-radius: 14px !important;
+  aspect-ratio: 16 / 8.2 !important;
+}
+.car-form {
+  padding: 10px !important;
+  border-radius: 14px !important;
+}
+
+/* Labels should nearly touch their controls. */
+.car-form > label,
+.car-form .two-col > label,
+.car-form .number-fields > label,
+.car-form .quick-core-row > label,
+.car-form .brand-field,
+.car-form .quantity-field {
+  margin-bottom: 7px !important;
+}
+
+.car-form label,
+.car-form .editor-field-label,
+.car-form .quantity-field > label {
+  font-size: 11px !important;
+  line-height: 1.05 !important;
+}
+
+.car-form > label,
+.car-form .two-col > label,
+.car-form .number-fields > label,
+.car-form .quick-core-row > label,
+.car-form .brand-field,
+.car-form .quantity-field {
+  gap: 2px !important;
+}
+
+/* Remove the old tall label rows from v2.2. */
+.car-form .two-col > label,
+.car-form .number-fields > label,
+.car-form .quick-core-row > label {
+  grid-template-rows: 16px auto !important;
+}
+
+.car-form .brand-field {
+  grid-template-rows: 16px 38px !important;
+}
+
+.car-form .quantity-field {
+  grid-template-rows: 16px 38px !important;
+}
+
+.car-form .quantity-field > label {
+  min-height: 16px !important;
+  height: 16px !important;
+  align-items: center !important;
+}
+
+/* Compact input heights. */
+.car-form input:not([type="hidden"]),
+.car-form select {
+  min-height: 38px !important;
+  height: 38px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+}
+
+.car-form textarea {
+  min-height: 64px !important;
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+}
+
+/* Tight paired rows. */
+.quick-core-row,
+.two-col,
+.number-fields {
+  gap: 7px !important;
+}
+
+/* Quantity is now read-only and controlled only by - / +. */
+.car-form .quantity-control {
+  height: 38px !important;
+  min-height: 38px !important;
+  grid-template-columns: 40px minmax(68px, 1fr) 40px !important;
+  gap: 5px !important;
+}
+
+.car-form .quantity-step {
+  width: 40px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+  font-size: 25px !important;
+}
+
+.quantity-display {
+  height: 38px !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  background: rgba(255,255,255,.045);
+  color: var(--p64-text);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: .15px;
+  font-variant-numeric: tabular-nums;
+}
+html[data-theme="light"] .quantity-display {
+  background: rgba(255,255,255,.78);
+  border-color: rgba(15,23,42,.13);
+}
+
+/* Bigger, farther-right dropdown chevrons. */
+#car-form select {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding-right: 34px !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 15px) calc(50% - 2px),
+    calc(100% - 9px) calc(50% - 2px) !important;
+  background-size: 7px 7px, 7px 7px !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Custom checkbox row also tighter. */
+.brand-custom-row {
+  gap: 7px !important;
+  margin-bottom: 7px !important;
+}
+.custom-toggle {
+  height: 38px !important;
+  min-height: 38px !important;
+  font-size: 11px !important;
+}
+
+/* Notes are the largest remaining field; make it compact by default. */
+#notes {
+  min-height: 58px !important;
+  height: 58px !important;
+  resize: vertical !important;
+}
+
+/* Make the whole form feel denser on phones. */
+@media (max-width: 430px) {
+  .car-form {
+    padding: 9px !important;
+  }
+
+  .car-form > label,
+  .car-form .two-col > label,
+  .car-form .number-fields > label,
+  .car-form .quick-core-row > label,
+  .car-form .brand-field,
+  .car-form .quantity-field {
+    margin-bottom: 6px !important;
+  }
+
+  .photo-picker {
+    aspect-ratio: 16 / 7.7 !important;
+    margin-bottom: 7px !important;
+  }
+
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 1.35fr) minmax(165px, 1fr) !important;
+  }
+}
+
+@media (max-width: 370px) {
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 1.2fr) minmax(150px, 1fr) !important;
+    gap: 7px !important;
+  }
+
+  #sort-settings-row #settings-row-button {
+    font-size: 14px !important;
+  }
+
+  .car-form .quantity-control {
+    grid-template-columns: 38px minmax(62px, 1fr) 38px !important;
+  }
+
+  .car-form .quantity-step {
+    width: 38px !important;
+  }
+}
