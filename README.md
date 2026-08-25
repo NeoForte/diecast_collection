@@ -431,3 +431,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Increased the Speedline Pocket 64 header logo by two more size steps.
 - Preserved the existing successful alignment.
 - No auth, database, collection-data, settings, or form logic changes.
+
+
+## Version 2.5.6
+
+- Increased the Speedline Pocket 64 header logo by three additional size steps.
+- Preserved the existing alignment.
+- No auth, database, collection-data, settings, or form logic changes.
