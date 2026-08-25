@@ -1656,3 +1656,30 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     max-height: 58px !important;
   }
 }
+
+
+/* Pocket 64 v2.5.4 — two-step larger speedline header logo */
+.brand-header .brand-banner {
+  top: calc(50% + 5px) !important;
+  width: min(72vw, 370px) !important;
+  max-width: min(72vw, 370px) !important;
+  max-height: 76px !important;
+}
+
+@media (max-width: 430px) {
+  .brand-header .brand-banner {
+    top: calc(50% + 4px) !important;
+    width: min(67vw, 340px) !important;
+    max-width: min(67vw, 340px) !important;
+    max-height: 70px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    top: calc(50% + 3px) !important;
+    width: min(63vw, 305px) !important;
+    max-width: min(63vw, 305px) !important;
+    max-height: 64px !important;
+  }
+}
