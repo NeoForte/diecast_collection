@@ -474,3 +474,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Reduced form padding, row gaps, field heights, photo area height, and Notes height to reduce scrolling.
 - Enlarged and moved dropdown arrows farther right.
 - No auth, RLS, storage, database schema, or collection ownership behavior changes.
+
+
+## Version 2.6.1
+
+- Fixed the Sort/Settings row so Sort receives visibly more horizontal space.
+- Squared up Quantity and Special Category into equal side-by-side sections.
+- Squared up Model Year and Color into equal side-by-side sections.
+- Matched control heights, spacing, and widths across those paired fields.
+- No auth, database, collection-data, or form-save logic changes.

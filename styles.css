@@ -2201,3 +2201,122 @@ html[data-theme="light"] .quantity-display {
     width: 38px !important;
   }
 }
+
+
+/* Pocket 64 v2.6.1 — Sort width + equal paired Add Car fields */
+
+/* Force Sort to visually dominate the row.
+   The prior ratio was being constrained by inherited widths on the child controls. */
+#sort-settings-row.sort-settings-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 2.25fr) minmax(150px, 1fr) !important;
+  gap: 9px !important;
+  width: 100% !important;
+}
+
+#sort-settings-row .sort-settings-sort,
+#sort-settings-row .sort-settings-button-wrap,
+#sort-settings-row .sort-settings-sort > div {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+#sort-settings-row #sort-select {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#sort-settings-row #settings-row-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Equal, squared paired sections in Add/Edit Car */
+.quantity-special-row,
+.year-color-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+}
+
+.quantity-special-row > *,
+.year-color-row > * {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Make the visible control boxes match dimensions exactly. */
+.quantity-special-row .quantity-control,
+.quantity-special-row select,
+.year-color-row input,
+.year-color-row select {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+}
+
+/* Square up the quantity section so it visually matches Special Category. */
+.quantity-special-row .quantity-control {
+  grid-template-columns: 38px minmax(0, 1fr) 38px !important;
+  gap: 4px !important;
+}
+
+.quantity-special-row .quantity-step,
+.quantity-special-row .quantity-display {
+  height: 38px !important;
+  min-height: 38px !important;
+  border-radius: 8px !important;
+}
+
+.quantity-special-row .quantity-step {
+  width: 38px !important;
+}
+
+/* Match label geometry between paired fields. */
+.quantity-special-row > label,
+.quantity-special-row .quantity-field,
+.year-color-row > label {
+  display: grid !important;
+  grid-template-rows: 16px 38px !important;
+  gap: 2px !important;
+  margin-bottom: 7px !important;
+}
+
+.quantity-special-row .quantity-field > label {
+  min-height: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+}
+
+/* Mobile: keep pairs equal, don't let one side collapse. */
+@media (max-width: 430px) {
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 2fr) minmax(145px, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .quantity-special-row,
+  .year-color-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 7px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 1.85fr) minmax(138px, 1fr) !important;
+  }
+
+  .quantity-special-row,
+  .year-color-row {
+    gap: 6px !important;
+  }
+}
