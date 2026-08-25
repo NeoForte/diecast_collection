@@ -402,3 +402,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Replaced the header artwork with the new Speedline Pocket 64 wordmark.
 - Uses the stable v2.4.9 app/layout behavior as the base.
 - Header logo only: no auth, database, collection-data, settings, or form logic changes.
+
+
+## Version 2.5.2
+
+- Enlarged the Speedline Pocket 64 header logo.
+- Lowered the logo slightly so it sits more in line with the profile icon and Settings gear.
+- Tuned the centered header presentation while preserving the same v2.5.1 logo artwork.
+- No auth, database, collection-data, settings, or form logic changes.
