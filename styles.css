@@ -1919,3 +1919,71 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     padding: 0 8px !important;
   }
 }
+
+
+/* Pocket 64 v2.5.9 — longer Sort, larger Settings text, bigger right logo */
+.brand-header .brand-banner {
+  right: 8px !important;
+  top: calc(50% + 5px) !important;
+  width: min(108vw, 580px) !important;
+  max-width: min(108vw, 580px) !important;
+  max-height: 116px !important;
+}
+
+#sort-settings-row.sort-settings-row {
+  grid-template-columns: minmax(0, 2.7fr) minmax(116px, 0.9fr) !important;
+  gap: 10px !important;
+}
+
+#sort-settings-row #settings-row-button {
+  min-height: 42px !important;
+  height: 42px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1px !important;
+  gap: 8px !important;
+}
+
+#sort-settings-row #settings-row-button .collection-tool-icon {
+  font-size: 17px !important;
+}
+
+@media (max-width: 430px) {
+  .brand-header .brand-banner {
+    right: 4px !important;
+    width: min(101vw, 535px) !important;
+    max-width: min(101vw, 535px) !important;
+    max-height: 108px !important;
+  }
+
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 2.55fr) minmax(108px, 0.95fr) !important;
+    gap: 8px !important;
+  }
+
+  #sort-settings-row #settings-row-button {
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    right: 2px !important;
+    width: min(95vw, 490px) !important;
+    max-width: min(95vw, 490px) !important;
+    max-height: 98px !important;
+  }
+
+  #sort-settings-row.sort-settings-row {
+    grid-template-columns: minmax(0, 2.45fr) minmax(100px, 1fr) !important;
+  }
+
+  #sort-settings-row #settings-row-button {
+    font-size: 13.5px !important;
+    padding: 0 10px !important;
+  }
+
+  #sort-settings-row #settings-row-button .collection-tool-icon {
+    font-size: 16px !important;
+  }
+}

@@ -455,3 +455,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Rebuilt the Collection row so Sort and Settings stay on the same line.
 - Sort now uses roughly twice the width of Settings.
 - No auth, database, collection-data, or form logic changes.
+
+
+## Version 2.5.9
+
+- Increased the right-aligned Pocket 64 logo by two more size steps.
+- Made the Sort box longer by widening the Sort/Settings row ratio.
+- Increased the Settings button text and icon size for readability.
+- No auth, database, collection-data, or form logic changes.
