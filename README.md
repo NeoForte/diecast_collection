@@ -493,3 +493,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Kept Model Year + Color as a true equal-width pair with matching control geometry.
 - Tightened label spacing throughout Add/Edit Car so labels sit directly above their assigned controls.
 - No auth, database, collection-data, or save logic changes.
+
+
+## Version 2.6.3
+
+- Restored and locked the approved Pocket 64 logo vertical position.
+- Moved the logo back down without changing its size or right alignment.
+- No Add Car, Sort/Settings, auth, database, or collection behavior changes.
