@@ -1737,3 +1737,99 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     max-height: 80px !important;
   }
 }
+
+
+/* Pocket 64 v2.5.7 — logo right + Settings beside Sort */
+.topbar {
+  position: relative !important;
+}
+
+.brand-header {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.brand-header .profile-icon-button {
+  position: relative !important;
+  z-index: 3 !important;
+  flex: 0 0 auto !important;
+}
+
+.brand-header .brand-banner {
+  position: absolute !important;
+  left: auto !important;
+  right: 8px !important;
+  top: calc(50% + 5px) !important;
+  transform: translateY(-50%) !important;
+  width: min(72vw, 370px) !important;
+  max-width: min(72vw, 370px) !important;
+  max-height: 76px !important;
+  object-fit: contain !important;
+  object-position: right center !important;
+  margin: 0 !important;
+}
+
+.topbar-actions {
+  display: none !important;
+}
+
+.collection-home-actions,
+.collection-toolbar,
+.sort-row,
+.collection-sort-row {
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+}
+
+#sort-select,
+.sort-select,
+.collection-sort,
+.sort-control {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+.settings-row-button {
+  flex: 0 0 auto !important;
+  min-width: 112px !important;
+  width: 112px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 0 12px !important;
+  min-height: 42px !important;
+}
+
+@media (max-width: 430px) {
+  .brand-header .brand-banner {
+    right: 4px !important;
+    width: min(69vw, 340px) !important;
+    max-width: min(69vw, 340px) !important;
+    max-height: 70px !important;
+  }
+
+  .settings-row-button {
+    min-width: 104px !important;
+    width: 104px !important;
+    padding: 0 9px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-header .brand-banner {
+    right: 2px !important;
+    width: min(65vw, 305px) !important;
+    max-width: min(65vw, 305px) !important;
+    max-height: 64px !important;
+  }
+
+  .settings-row-button {
+    min-width: 96px !important;
+    width: 96px !important;
+    font-size: 13px !important;
+  }
+}

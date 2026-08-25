@@ -438,3 +438,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Increased the Speedline Pocket 64 header logo by three additional size steps.
 - Preserved the existing alignment.
 - No auth, database, collection-data, settings, or form logic changes.
+
+
+## Version 2.5.7
+
+- Moved the Pocket 64 header logo to the far right.
+- Removed the Settings gear from the top bar.
+- Added a Settings box beside Sort on the Collection utility row.
+- Preserved the current logo size and vertical alignment.
+- No auth, database, collection-data, or form logic changes.
