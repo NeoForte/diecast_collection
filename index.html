@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=2.7.5" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.7.6" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=2.7.5" />
+  <link rel="stylesheet" href="styles.css?v=2.7.6" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -55,18 +55,21 @@
             <div class="toolbar">
               <input id="search-input" type="search" placeholder="Search brand, model, year…" />
             </div>
-            <button id="add-button" class="add-button garage-add-button" aria-label="Add car">
-              <span class="garage-add-art" aria-hidden="true">
-                <svg viewBox="0 0 120 96" focusable="false">
-                  <path class="garage-roof" d="M18 42 60 14l42 28"/>
-                  <path class="garage-shell" d="M26 40v42h68V40"/>
-                  <path class="garage-door" d="M38 48h44v34H38z"/>
-                  <path class="garage-door-line" d="M38 59h44M38 70h44"/>
-                  <path class="garage-car" d="M44 70h32l-4-9H48l-4 9Zm4 0v6m24-6v6"/>
+            <button id="add-button" class="add-button premium-add-button" aria-label="Add car">
+              <span class="premium-add-sheen" aria-hidden="true"></span>
+              <span class="premium-add-orb" aria-hidden="true">+</span>
+              <span class="premium-add-kicker">NEW ENTRY</span>
+              <span class="premium-add-visual" aria-hidden="true">
+                <svg viewBox="0 0 140 64" focusable="false">
+                  <path class="pab-car-top" d="M22 39c4-8 13-16 28-18h30c16 1 24 9 31 18"/>
+                  <path class="pab-car-bottom" d="M28 39h84c4 0 7 3 9 9H18c2-6 6-9 10-9Z"/>
+                  <circle class="pab-wheel" cx="40" cy="48" r="7"/>
+                  <circle class="pab-wheel" cx="100" cy="48" r="7"/>
+                  <path class="pab-window" d="M56 24h21c8 0 14 4 18 12H46c3-7 5-12 10-12Z"/>
+                  <path class="pab-strike" d="M18 54h104"/>
                 </svg>
-                <span class="garage-add-badge">+</span>
               </span>
-              <span class="garage-add-label">ADD CAR</span>
+              <span class="premium-add-title">ADD CAR</span>
             </button>
             <div class="summary-row">
               <div id="sort-settings-row" class="sort-settings-row">
@@ -176,7 +179,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 2.7.5</span>
+              <span class="version-badge">Version 2.7.6</span>
             </div>
           </div>
         </section>
@@ -330,7 +333,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=2.7.5"></script>
-  <script type="module" src="app.js?v=2.7.5"></script>
+  <script src="jszip.min.js?v=2.7.6"></script>
+  <script type="module" src="app.js?v=2.7.6"></script>
 </body>
 </html>

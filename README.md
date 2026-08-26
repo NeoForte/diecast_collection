@@ -557,3 +557,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Removed the wheel START button completely.
 - Added a larger garage-style Add Car control with a clean garage graphic and gold + badge.
 - Search/Sort proportions and top navigation remain unchanged.
+
+
+## Version 2.7.6
+- Restored visible dropdown chevrons on the Sort select.
+- Replaced the garage Add Car button with a premium action panel.
+- New Add Car control uses a sleek car silhouette, gold plus orb, metallic dark styling, and stronger visual impact.
