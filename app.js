@@ -8,7 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.7.0'
+const APP_VERSION = '2.7.1'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -342,107 +342,47 @@ function hideModelSuggestions() {
   modelSuggestions.replaceChildren()
 }
 
-async function renderModelSuggestions() {
+function renderModelSuggestions() {
   const input = $('model')
   const q = input.value.trim()
   if (!q) {
     hideModelSuggestions()
     return
   }
-
-  const localMatches = matchingModelCars(q)
-  if (localMatches.length) {
-    modelSuggestions.replaceChildren()
-    for (const car of localMatches) {
-      const option = document.createElement('button')
-      option.type = 'button'
-      option.className = 'model-suggestion'
-      option.setAttribute('role', 'option')
-
-      const thumb = document.createElement('div')
-      thumb.className = 'model-suggestion-thumb'
-      thumb.textContent = '🚗'
-      if (car.photo_path) {
-        const img = document.createElement('img')
-        img.alt = ''
-        thumb.replaceChildren(img)
-        loadPrivatePhoto(car.photo_path, img)
-      }
-
-      const text = document.createElement('span')
-      text.className = 'model-suggestion-text'
-      const title = document.createElement('span')
-      title.className = 'model-suggestion-title'
-      title.textContent = car.model || 'Untitled Car'
-      const meta = document.createElement('span')
-      meta.className = 'model-suggestion-meta'
-      const qty = Math.max(1, Number(car.quantity) || 1)
-      meta.textContent = [car.diecast_brand, car.model_year, car.color, car.hotwheels_toy_number, car.is_custom ? 'CUSTOM' : null, `Qty ${qty}`].filter(Boolean).join(' · ')
-
-      text.append(title, meta)
-      option.append(thumb, text)
-      option.addEventListener('mousedown', (event) => event.preventDefault())
-      option.addEventListener('click', (event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        input.value = car.model || ''
-        hideModelSuggestions()
-        duplicateDismissedModel = ''
-        checkDuplicateModel()
-        input.focus()
-      })
-      modelSuggestions.append(option)
-    }
-    modelSuggestions.classList.remove('hidden')
-    return
-  }
-
-  // 2025 catalog test: only search after 2 characters and only for signed-in users.
-  if (!session || q.length < 2) {
-    hideModelSuggestions()
-    return
-  }
-
-  const requestValue = q
-  const { data: catalogMatches, error } = await supabase
-    .from('catalog_cars')
-    .select('brand,release_year,collector_number,collector_number_display,toy_number,model_name,series,series_number,color,special_status')
-    .eq('release_year', 2025)
-    .ilike('model_name', `%${q}%`)
-    .order('collector_number', { ascending: true })
-    .limit(8)
-
-  // Ignore stale results if the user kept typing while the request was in flight.
-  if ($('model').value.trim() !== requestValue) return
-  if (error || !catalogMatches?.length) {
+  const matches = matchingModelCars(q)
+  if (!matches.length) {
     hideModelSuggestions()
     return
   }
 
   modelSuggestions.replaceChildren()
-  for (const car of catalogMatches) {
+  for (const car of matches) {
     const option = document.createElement('button')
     option.type = 'button'
-    option.className = 'model-suggestion catalog-suggestion'
+    option.className = 'model-suggestion'
     option.setAttribute('role', 'option')
 
     const thumb = document.createElement('div')
-    thumb.className = 'model-suggestion-thumb catalog-suggestion-thumb'
-    thumb.textContent = '64'
+    thumb.className = 'model-suggestion-thumb'
+    thumb.textContent = '🚗'
+    if (car.photo_path) {
+      const img = document.createElement('img')
+      img.alt = ''
+      thumb.replaceChildren(img)
+      loadPrivatePhoto(car.photo_path, img)
+    }
 
     const text = document.createElement('span')
     text.className = 'model-suggestion-text'
+
     const title = document.createElement('span')
     title.className = 'model-suggestion-title'
-    title.textContent = car.model_name || 'Untitled Car'
+    title.textContent = car.model || 'Untitled Car'
+
     const meta = document.createElement('span')
     meta.className = 'model-suggestion-meta'
-    meta.textContent = [
-      car.release_year,
-      car.brand,
-      car.collector_number_display,
-      'CATALOG'
-    ].filter(Boolean).join(' · ')
+    const qty = Math.max(1, Number(car.quantity) || 1)
+    meta.textContent = [car.diecast_brand, car.model_year, car.color, car.hotwheels_toy_number, car.is_custom ? 'CUSTOM' : null, `Qty ${qty}`].filter(Boolean).join(' · ')
 
     text.append(title, meta)
     option.append(thumb, text)
@@ -450,17 +390,7 @@ async function renderModelSuggestions() {
     option.addEventListener('click', (event) => {
       event.preventDefault()
       event.stopPropagation()
-
-      input.value = car.model_name || ''
-      setBrandValue(car.brand || 'Hot Wheels')
-      setYearValue(car.release_year ? String(car.release_year) : '')
-      $('general-number').value = car.collector_number_display || ''
-      $('hotwheels-toy-number').value = car.toy_number || ''
-      $('series').value = car.series || ''
-      $('series-collection-number').value = car.series_number || ''
-      if (car.color) setColorValue(car.color)
-      if (car.special_status) setSpecialValue(car.special_status)
-
+      input.value = car.model || ''
       hideModelSuggestions()
       duplicateDismissedModel = ''
       checkDuplicateModel()
@@ -1834,11 +1764,11 @@ sortSelect.addEventListener('change', () => {
 })
 $('model').addEventListener('input', () => {
   duplicateDismissedModel = ''
-  renderModelSuggestions().catch((err) => console.warn('Catalog suggestion lookup failed', err))
+  renderModelSuggestions()
   clearTimeout(duplicateCheckTimer)
   duplicateCheckTimer = setTimeout(checkDuplicateModel, 280)
 })
-$('model').addEventListener('focus', () => renderModelSuggestions().catch((err) => console.warn('Catalog suggestion lookup failed', err)))
+$('model').addEventListener('focus', renderModelSuggestions)
 $('model').addEventListener('blur', () => {
   clearTimeout(duplicateCheckTimer)
   setTimeout(hideModelSuggestions, 120)

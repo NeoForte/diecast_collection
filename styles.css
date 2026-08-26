@@ -2611,12 +2611,3 @@ html[data-theme="light"] .quantity-display {
     0 14px 34px rgba(0, 0, 0, .34);
 }
 
-.catalog-suggestion-thumb {
-  color: #d6b148;
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: -1px;
-}
-.catalog-suggestion .model-suggestion-meta {
-  color: #d8c27a;
-}

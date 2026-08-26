@@ -519,3 +519,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Existing garage-model autocomplete still takes priority.
 - Selecting a catalog result prefills Model, Brand, Release Year, and General Number, plus any catalog fields available later.
 - No personal car rows are modified by catalog lookup.
+
+
+## Version 2.7.1
+- Removed all 2025 Hot Wheels catalog search/autofill code.
+- Model autocomplete once again searches only the user's own collection.
+- Release Year wording retained.
+- Showcase wording and metallic-gold border retained.
+- No personal collection schema, auth, storage, photo cache, or layout changes.
