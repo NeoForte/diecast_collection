@@ -509,3 +509,13 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Removed the visible SORT label while keeping the sort control accessible.
 - Renamed the Social navigation label to Feed.
 - No auth, database, collection-data, or form logic changes.
+
+
+## Version 2.7.0
+- Model Year label renamed to Release Year (same underlying database field).
+- Feed renamed to Showcase; placeholder retained for future use.
+- Showcase placeholder gets a restrained metallic-gold border/glow.
+- Added read-only 2025 Hot Wheels catalog lookup to Add Car model autocomplete.
+- Existing garage-model autocomplete still takes priority.
+- Selecting a catalog result prefills Model, Brand, Release Year, and General Number, plus any catalog fields available later.
+- No personal car rows are modified by catalog lookup.
