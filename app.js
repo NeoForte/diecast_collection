@@ -8,7 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.7.8'
+const APP_VERSION = '2.8.0'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -99,6 +99,8 @@ let duplicateCheckTimer = null
 let loadedCarsUserId = null
 let carsLoadPromise = null
 let activeBrandFilter = null
+let catalogSuggestionRequest = 0
+let duplicateScanGroups = []
 
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v1'
 const photoUrlCache = new Map()
@@ -308,6 +310,7 @@ function showSettings() {
   const appearanceSelect = $('appearance-select')
   if (appearanceSelect) appearanceSelect.value = getSavedAppearance()
   updateBackupStatus()
+  hideDuplicateScanResults()
 }
 
 
@@ -342,21 +345,43 @@ function hideModelSuggestions() {
   modelSuggestions.replaceChildren()
 }
 
-function renderModelSuggestions() {
+async function renderModelSuggestions() {
   const input = $('model')
   const q = input.value.trim()
+  const requestId = ++catalogSuggestionRequest
   if (!q) {
     hideModelSuggestions()
     return
   }
-  const matches = matchingModelCars(q)
-  if (!matches.length) {
+
+  const garageMatches = matchingModelCars(q)
+  const brandChoice = $('diecast-brand').value
+  const brandName = brandChoice === 'Other' ? $('custom-brand').value.trim() : brandChoice
+  const allowCatalog = !brandName || brandName.toLowerCase() === 'hot wheels'
+  let catalogMatches = []
+
+  if (allowCatalog && session?.user) {
+    const safeQuery = q.replace(/[%_]/g, '')
+    if (safeQuery) {
+      const { data, error } = await supabase
+        .from('catalog_cars')
+        .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status')
+        .ilike('model', `%${safeQuery}%`)
+        .order('model', { ascending: true })
+        .limit(10)
+      if (!error && Array.isArray(data)) catalogMatches = data
+    }
+  }
+
+  if (requestId !== catalogSuggestionRequest || input.value.trim() !== q) return
+  if (!garageMatches.length && !catalogMatches.length) {
     hideModelSuggestions()
     return
   }
 
   modelSuggestions.replaceChildren()
-  for (const car of matches) {
+
+  for (const car of garageMatches.slice(0, 5)) {
     const option = document.createElement('button')
     option.type = 'button'
     option.className = 'model-suggestion'
@@ -374,16 +399,13 @@ function renderModelSuggestions() {
 
     const text = document.createElement('span')
     text.className = 'model-suggestion-text'
-
     const title = document.createElement('span')
     title.className = 'model-suggestion-title'
     title.textContent = car.model || 'Untitled Car'
-
     const meta = document.createElement('span')
     meta.className = 'model-suggestion-meta'
     const qty = Math.max(1, Number(car.quantity) || 1)
-    meta.textContent = [car.diecast_brand, car.model_year, car.color, car.hotwheels_toy_number, car.is_custom ? 'CUSTOM' : null, `Qty ${qty}`].filter(Boolean).join(' · ')
-
+    meta.textContent = ['YOUR GARAGE', car.diecast_brand, car.model_year, car.color, car.hotwheels_toy_number, `Qty ${qty}`].filter(Boolean).join(' · ')
     text.append(title, meta)
     option.append(thumb, text)
     option.addEventListener('mousedown', (event) => event.preventDefault())
@@ -398,6 +420,50 @@ function renderModelSuggestions() {
     })
     modelSuggestions.append(option)
   }
+
+  for (const car of catalogMatches) {
+    const option = document.createElement('button')
+    option.type = 'button'
+    option.className = 'model-suggestion catalog-model-suggestion'
+    option.setAttribute('role', 'option')
+
+    const thumb = document.createElement('div')
+    thumb.className = 'model-suggestion-thumb catalog-suggestion-thumb'
+    thumb.textContent = 'CAT'
+
+    const text = document.createElement('span')
+    text.className = 'model-suggestion-text'
+    const title = document.createElement('span')
+    title.className = 'model-suggestion-title'
+    title.textContent = car.model || 'Untitled Car'
+    const meta = document.createElement('span')
+    meta.className = 'model-suggestion-meta'
+    meta.textContent = [car.model_year, car.series_collection, car.general_number, car.hotwheels_toy_number, car.special_status].filter(Boolean).join(' · ')
+    text.append(title, meta)
+    option.append(thumb, text)
+
+    option.addEventListener('mousedown', (event) => event.preventDefault())
+    option.addEventListener('click', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setBrandValue(car.diecast_brand || 'Hot Wheels')
+      input.value = car.model || ''
+      setYearValue(car.model_year || '')
+      $('hotwheels-toy-number').value = String(car.hotwheels_toy_number || '').toUpperCase()
+      $('series').value = String(car.series_collection || '').toUpperCase()
+      $('general-number').value = String(car.general_number || '').toUpperCase()
+      $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
+      setSpecialValue(car.special_status || '')
+      // Color intentionally stays blank because it is not in the imported catalog.
+      setColorValue('')
+      hideModelSuggestions()
+      duplicateDismissedModel = ''
+      checkDuplicateModel()
+      input.focus()
+    })
+    modelSuggestions.append(option)
+  }
+
   modelSuggestions.classList.remove('hidden')
 }
 
@@ -1483,6 +1549,161 @@ async function deleteCar() {
   }
 }
 
+
+function exactDuplicateKey(car) {
+  const fields = [
+    car.diecast_brand,
+    car.model,
+    car.model_year,
+    car.color,
+    car.hotwheels_toy_number,
+    car.series_collection,
+    car.general_number,
+    car.series_collection_number,
+    car.special_status,
+    car.is_custom ? '1' : '0',
+  ]
+  return fields.map((value) => String(value ?? '').trim().toUpperCase()).join('\u241F')
+}
+
+function findExactDuplicateGroups() {
+  const grouped = new Map()
+  for (const car of cars) {
+    const key = exactDuplicateKey(car)
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key).push(car)
+  }
+  return [...grouped.values()].filter((group) => group.length > 1)
+}
+
+function hideDuplicateScanResults() {
+  const host = $('duplicate-scan-results')
+  if (!host) return
+  host.classList.add('hidden')
+  host.replaceChildren()
+}
+
+function renderDuplicateScanResults() {
+  const host = $('duplicate-scan-results')
+  if (!host) return
+  host.replaceChildren()
+  duplicateScanGroups = findExactDuplicateGroups()
+  host.classList.remove('hidden')
+
+  if (!duplicateScanGroups.length) {
+    const msg = document.createElement('div')
+    msg.className = 'duplicate-scan-empty'
+    msg.textContent = 'No exact duplicates found ✓'
+    host.append(msg)
+    return
+  }
+
+  const intro = document.createElement('div')
+  intro.className = 'duplicate-scan-intro'
+  intro.textContent = `${duplicateScanGroups.length} exact duplicate group${duplicateScanGroups.length === 1 ? '' : 's'} found. Choose which copy/photo to keep, then combine.`
+  host.append(intro)
+
+  duplicateScanGroups.forEach((group, groupIndex) => {
+    const card = document.createElement('div')
+    card.className = 'duplicate-scan-group'
+
+    const heading = document.createElement('strong')
+    const totalQty = group.reduce((sum, car) => sum + Math.max(1, Number(car.quantity) || 1), 0)
+    heading.textContent = `${group[0].model || 'UNTITLED'} · ${group.length} entries · QTY ${totalQty}`
+    card.append(heading)
+
+    const meta = document.createElement('div')
+    meta.className = 'duplicate-scan-meta'
+    meta.textContent = [group[0].diecast_brand, group[0].model_year, group[0].series_collection, group[0].hotwheels_toy_number].filter(Boolean).join(' · ')
+    card.append(meta)
+
+    const choices = document.createElement('div')
+    choices.className = 'duplicate-photo-choices'
+    group.forEach((car, carIndex) => {
+      const label = document.createElement('label')
+      label.className = 'duplicate-photo-choice'
+      const radio = document.createElement('input')
+      radio.type = 'radio'
+      radio.name = `duplicate-keeper-${groupIndex}`
+      radio.value = car.id
+      if (carIndex === 0) radio.checked = true
+
+      const preview = document.createElement('div')
+      preview.className = 'duplicate-photo-preview'
+      if (car.photo_path) {
+        const img = document.createElement('img')
+        img.alt = ''
+        preview.append(img)
+        loadPrivatePhoto(car.photo_path, img)
+      } else {
+        preview.textContent = 'NO PHOTO'
+      }
+
+      const copy = document.createElement('span')
+      const qty = Math.max(1, Number(car.quantity) || 1)
+      copy.textContent = `Keep this copy · Qty ${qty}${car.photo_path ? ' · photo' : ''}`
+      label.append(radio, preview, copy)
+      choices.append(label)
+    })
+    card.append(choices)
+
+    const merge = document.createElement('button')
+    merge.type = 'button'
+    merge.className = 'settings-mini-button duplicate-merge-button'
+    merge.textContent = 'Combine This Group'
+    merge.addEventListener('click', () => mergeExactDuplicateGroup(groupIndex, card))
+    card.append(merge)
+    host.append(card)
+  })
+}
+
+async function mergeExactDuplicateGroup(groupIndex, card) {
+  const group = duplicateScanGroups[groupIndex]
+  if (!group?.length || !session?.user) return
+  const selected = card.querySelector(`input[name="duplicate-keeper-${groupIndex}"]:checked`)
+  const keeper = group.find((car) => String(car.id) === selected?.value) || group[0]
+  const removeCars = group.filter((car) => car.id !== keeper.id)
+  const totalQty = group.reduce((sum, car) => sum + Math.max(1, Number(car.quantity) || 1), 0)
+  if (!confirm(`Combine ${group.length} exact entries of ${keeper.model} into one QTY ${totalQty}?`)) return
+
+  const button = card.querySelector('.duplicate-merge-button')
+  button.disabled = true
+  button.textContent = 'Combining…'
+  try {
+    const { error: updateError } = await supabase
+      .from('cars')
+      .update({ quantity: totalQty, updated_at: new Date().toISOString() })
+      .eq('id', keeper.id)
+      .eq('user_id', session.user.id)
+    if (updateError) throw updateError
+
+    const photoPaths = removeCars.map((car) => car.photo_path).filter(Boolean)
+    if (photoPaths.length) {
+      const { error: storageError } = await supabase.storage.from('car-photos').remove(photoPaths)
+      if (storageError) console.warn('Could not remove one or more duplicate photos:', storageError)
+      for (const path of photoPaths) await invalidatePrivatePhotoCache(path)
+    }
+
+    const removeIds = removeCars.map((car) => car.id)
+    if (removeIds.length) {
+      const { error: deleteError } = await supabase
+        .from('cars')
+        .delete()
+        .in('id', removeIds)
+        .eq('user_id', session.user.id)
+      if (deleteError) throw deleteError
+    }
+
+    await loadCars()
+    renderDuplicateScanResults()
+  } catch (error) {
+    console.error(error)
+    alert(error.message || 'Could not combine duplicates.')
+    button.disabled = false
+    button.textContent = 'Combine This Group'
+  }
+}
+
 const UPPERCASE_EDITOR_INPUT_IDS = [
   'custom-brand',
   'model',
@@ -1754,6 +1975,7 @@ $('restore-input').addEventListener('change', () => {
   if (file) restoreBackupFile(file)
 })
 $('refresh-button').addEventListener('click', loadCars)
+$('duplicate-scan-button').addEventListener('click', renderDuplicateScanResults)
 $('active-filter-pill').addEventListener('click', clearBrandFilter)
 $('profile-icon-button').addEventListener('click', () => $('profile-icon-input').click())
 $('profile-icon-input').addEventListener('change', () => saveProfileIcon($('profile-icon-input').files?.[0]))

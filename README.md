@@ -575,3 +575,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Replaced the CSS-drawn Add Car vehicle with the approved realistic metallic-blue sports car render.
 - Car uses a transparent PNG asset and is sized specifically for the Add Car action panel.
 - Preserved the premium dark panel, gold plus orb, Sort arrows, and existing behavior.
+
+
+## Version 2.8.0
+- Test catalog autocomplete for Hot Wheels with read-only Supabase catalog rows.
+- Selecting a catalog result autofills brand, model, release year, toy number, series, general number, series number, and TH/STH when available.
+- Color remains blank by design.
+- Added Settings → Find Exact Duplicates with review-first photo selection and quantity merging.
+- Added mobile 16px editor form text to stop Safari auto-zoom without changing field geometry.

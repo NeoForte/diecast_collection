@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=2.7.8" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.8.0" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=2.7.8" />
+  <link rel="stylesheet" href="styles.css?v=2.8.0" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -149,6 +149,14 @@
               </div>
               <button id="refresh-button" class="settings-mini-button" type="button">Refresh</button>
             </div>
+            <div class="settings-card settings-duplicate-card">
+              <div class="settings-copy">
+                <strong>Find Exact Duplicates</strong>
+                <span>Compare saved car data. Photos and Notes are ignored.</span>
+              </div>
+              <button id="duplicate-scan-button" class="settings-mini-button" type="button">Scan</button>
+              <div id="duplicate-scan-results" class="duplicate-scan-results hidden"></div>
+            </div>
             <div class="settings-card settings-backup-card">
               <div class="settings-copy">
                 <strong>Backup &amp; Restore</strong>
@@ -172,7 +180,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 2.7.8</span>
+              <span class="version-badge">Version 2.8.0</span>
             </div>
           </div>
         </section>
@@ -233,7 +241,7 @@
             </label>
             <label class="model-field">Model
               <input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" aria-autocomplete="list" aria-controls="model-suggestions" />
-              <div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars already in your garage"></div>
+              <div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars in your garage and catalog"></div>
             </label>
             <div id="duplicate-warning" class="duplicate-warning hidden" role="status" aria-live="polite">
               <div id="duplicate-warning-text"></div>
@@ -326,7 +334,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=2.7.8"></script>
-  <script type="module" src="app.js?v=2.7.8"></script>
+  <script src="jszip.min.js?v=2.8.0"></script>
+  <script type="module" src="app.js?v=2.8.0"></script>
 </body>
 </html>
