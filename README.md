@@ -563,3 +563,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Restored visible dropdown chevrons on the Sort select.
 - Replaced the garage Add Car button with a premium action panel.
 - New Add Car control uses a sleek car silhouette, gold plus orb, metallic dark styling, and stronger visual impact.
+
+
+## Version 2.7.7
+- Refined the Add Car button graphic.
+- Replaced the abstract car drawing with a cleaner, more realistic Porsche-like 3/4 front sports-car silhouette.
+- Preserved the premium dark panel, gold plus orb, and overall button styling.

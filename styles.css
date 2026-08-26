@@ -3331,3 +3331,76 @@ html[data-theme="light"] .quantity-display {
     letter-spacing: .14em;
   }
 }
+
+
+/* v2.7.7 — refined Add Car sports-car silhouette */
+.premium-add-visual {
+  width: 118px !important;
+  height: 46px !important;
+  margin-top: 1px;
+}
+
+.pab-body,
+.pab-lower,
+.pab-hood,
+.pab-roof,
+.pab-side,
+.pab-window,
+.pab-windshield,
+.pab-headlight,
+.pab-ground {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pab-body,
+.pab-lower {
+  stroke: #e7edf7;
+  stroke-width: 3.8;
+  opacity: .98;
+}
+
+.pab-hood,
+.pab-roof,
+.pab-side {
+  stroke: #cfd9e8;
+  stroke-width: 2.8;
+  opacity: .92;
+}
+
+.pab-window,
+.pab-windshield {
+  stroke: #79aef9;
+  stroke-width: 2.6;
+  opacity: .95;
+}
+
+.pab-headlight {
+  stroke: #f0ca79;
+  stroke-width: 2.5;
+  opacity: .96;
+}
+
+.pab-wheel {
+  fill: #0d1016;
+  stroke: #d5aa51;
+  stroke-width: 3;
+}
+
+.pab-wheel-inner {
+  fill: #aeb7c4;
+  opacity: .9;
+}
+
+.pab-ground {
+  stroke: rgba(92, 143, 235, .55);
+  stroke-width: 2.2;
+}
+
+@media (max-width: 420px) {
+  .premium-add-visual {
+    width: 112px !important;
+    height: 44px !important;
+  }
+}
