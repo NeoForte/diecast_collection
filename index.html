@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=2.7.1" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.7.2" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=2.7.1" />
+  <link rel="stylesheet" href="styles.css?v=2.7.2" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -44,9 +44,10 @@
 
       <main>
         <nav id="main-nav" class="main-nav" aria-label="App pages">
-          <button id="collection-nav" class="nav-button active" type="button">Collection</button>
-          <button id="social-nav" class="nav-button showcase-nav" type="button">Showcase</button>
+          <button id="collection-nav" class="nav-button active" type="button">Home</button>
+          <button id="social-nav" class="nav-button showcase-nav" type="button"><span>Showcase</span><svg class="showcase-trophy" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v3h3v2c0 3-2 5-5 5h-.2A6.1 6.1 0 0 1 13 16.7V19h4v2H7v-2h4v-2.3A6.1 6.1 0 0 1 9.2 14H9C6 14 4 12 4 9V7h3V4Zm0 5H6v.2C6 10.8 7 12 8.4 12c-.8-.8-1.3-1.8-1.4-3Zm10 0c-.1 1.2-.6 2.2-1.4 3C17 12 18 10.8 18 9.2V9h-1Z"/></svg></button>
           <button id="stats-nav" class="nav-button" type="button">Stats</button>
+          <button id="settings-row-button" class="nav-button" type="button" aria-label="Open Settings">Settings</button>
         </nav>
 
         <section id="collection-screen" class="screen active">
@@ -82,11 +83,6 @@
               </label>
 
             </div>
-                </div>
-                <div class="sort-settings-button-wrap">
-                  <button id="settings-row-button" class="collection-tool-card settings-row-button" type="button" aria-label="Open Settings">
-                <span class="collection-tool-icon">⚙︎</span><strong>Settings</strong>
-              </button>
                 </div>
               </div>
           </div>
@@ -169,7 +165,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 2.7.1</span>
+              <span class="version-badge">Version 2.7.2</span>
             </div>
           </div>
         </section>
@@ -323,7 +319,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=2.7.1"></script>
-  <script type="module" src="app.js?v=2.7.1"></script>
+  <script src="jszip.min.js?v=2.7.2"></script>
+  <script type="module" src="app.js?v=2.7.2"></script>
 </body>
 </html>

@@ -527,3 +527,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Release Year wording retained.
 - Showcase wording and metallic-gold border retained.
 - No personal collection schema, auth, storage, photo cache, or layout changes.
+
+
+## Version 2.7.2
+- Top navigation changed to Home / Showcase / Stats / Settings.
+- Existing Collection screen is now labeled Home; functionality is unchanged.
+- Showcase gets a tiny metallic-gold trophy icon.
+- Existing Settings button moved from the Sort row into top navigation; same settings behavior/ID retained.
+- Sort now spans the full row beneath the collection toolbar.
+- Release Year, Showcase styling, logo/header, Add Car layout, auth, database, and photo cache remain unchanged.
