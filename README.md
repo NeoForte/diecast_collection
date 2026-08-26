@@ -543,3 +543,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Search and Sort now stack on the left with matching width and height.
 - Added a premium right-side START / ADD CAR button spanning both rows.
 - Existing top navigation, Showcase, Release Year, logo/header, auth, photo cache, and collection behavior are unchanged.
+
+
+## Version 2.7.4
+- Fixed Sort vertical alignment so Search and Sort sit level in the left stack.
+- Replaced the rectangular START / ADD CAR control with a round wheel-inspired START button.
+- New button uses a black tire, metallic gold rim, subtle spoke detail, and centered START label.
+- Removed the previous outer placement ring/halo look.
