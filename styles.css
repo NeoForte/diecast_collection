@@ -2657,3 +2657,168 @@ html[data-theme="light"] .quantity-display {
   max-width: none !important;
   min-width: 0 !important;
 }
+
+
+/* v2.7.3 — search/sort stack with premium start-add control */
+.collection-controls-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(118px, 1fr);
+  grid-template-rows: 48px 48px;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 8px;
+}
+
+.collection-controls-grid .toolbar {
+  grid-column: 1;
+  grid-row: 1;
+  display: block !important;
+  min-width: 0;
+}
+
+.collection-controls-grid .summary-row {
+  grid-column: 1;
+  grid-row: 2;
+  display: block !important;
+  min-width: 0;
+  margin: 0 !important;
+}
+
+.collection-controls-grid #sort-settings-row {
+  width: 100%;
+  display: block !important;
+}
+
+.collection-controls-grid .sort-settings-sort,
+.collection-controls-grid .collection-summary-left,
+.collection-controls-grid .sort-control,
+.collection-controls-grid #sort-select {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+.collection-controls-grid #search-input,
+.collection-controls-grid #sort-select {
+  width: 100% !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, rgba(22,22,22,.98), rgba(13,13,13,.98)) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 4px 18px rgba(0,0,0,.24) !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  color: #f5f5f5 !important;
+}
+
+.collection-controls-grid #search-input::placeholder {
+  color: #8e97a5;
+}
+
+.collection-controls-grid #sort-select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #b0b7c4 50%),
+    linear-gradient(135deg, #b0b7c4 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% - 3px),
+    calc(100% - 14px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 34px !important;
+}
+
+.start-add-button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  position: relative;
+  overflow: hidden;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 106px;
+  border: 1px solid rgba(141, 186, 255, .18) !important;
+  border-radius: 20px !important;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(38, 86, 164, .34) 0%, rgba(17, 28, 48, .55) 35%, rgba(10, 10, 12, .98) 72%),
+    linear-gradient(180deg, rgba(32,32,36,.98), rgba(8,8,9,.98)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 0 0 1px rgba(255,255,255,.02),
+    0 10px 24px rgba(0,0,0,.34),
+    0 0 0 1px rgba(77, 127, 218, .08) !important;
+  color: #f8fbff !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 10px !important;
+  transition: transform .14s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.start-add-button:hover,
+.start-add-button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(141, 186, 255, .30) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    0 12px 26px rgba(0,0,0,.38),
+    0 0 0 1px rgba(89, 147, 255, .14),
+    0 0 22px rgba(65, 123, 231, .18) !important;
+}
+
+.start-add-ring {
+  position: absolute;
+  inset: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(165, 194, 255, .18);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    0 0 0 1px rgba(70, 120, 214, .08),
+    0 0 18px rgba(41, 102, 218, .18);
+  pointer-events: none;
+}
+
+.start-add-ring::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.05);
+  box-shadow: inset 0 0 24px rgba(45, 99, 194, .14);
+}
+
+.start-add-core {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.start-add-kicker {
+  font-size: 10px;
+  letter-spacing: .22em;
+  font-weight: 800;
+  color: #87a9e8;
+  text-transform: uppercase;
+}
+
+.start-add-title {
+  font-size: 22px;
+  letter-spacing: .14em;
+  font-weight: 900;
+  color: #f4f8ff;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255,255,255,.04), 0 0 16px rgba(69,126,226,.12);
+}
+
+@media (max-width: 420px) {
+  .collection-controls-grid {
+    grid-template-columns: minmax(0, 1.72fr) minmax(108px, 1fr);
+  }
+  .start-add-title { font-size: 20px; }
+  .start-add-ring { inset: 13px; }
+}

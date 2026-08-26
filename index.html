@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=2.7.2" />
+  <link rel="manifest" href="manifest.webmanifest?v=2.7.3" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=2.7.2" />
+  <link rel="stylesheet" href="styles.css?v=2.7.3" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -51,9 +51,38 @@
         </nav>
 
         <section id="collection-screen" class="screen active">
-          <div class="toolbar">
-            <input id="search-input" type="search" placeholder="Search brand, model, year…" />
-            <button id="add-button" class="add-button" aria-label="Add car">＋</button>
+          <div class="collection-controls-grid">
+            <div class="toolbar">
+              <input id="search-input" type="search" placeholder="Search brand, model, year…" />
+            </div>
+            <button id="add-button" class="add-button start-add-button" aria-label="Add car">
+              <span class="start-add-ring"></span>
+              <span class="start-add-core">
+                <span class="start-add-kicker">ADD CAR</span>
+                <span class="start-add-title">START</span>
+              </span>
+            </button>
+            <div class="summary-row">
+              <div id="sort-settings-row" class="sort-settings-row">
+                <div class="sort-settings-sort">
+                  <div class="collection-summary-left">
+                    <label class="sort-control" for="sort-select">
+                      <select id="sort-select" aria-label="Sort collection">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="brand-az">Brand A–Z</option>
+                        <option value="brand-za">Brand Z–A</option>
+                        <option value="model-az">Model A–Z</option>
+                        <option value="model-za">Model Z–A</option>
+                        <option value="qty-high">Qty High–Low</option>
+                        <option value="qty-low">Qty Low–High</option>
+                        <option value="special-first">Special First</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div id="active-filter-row" class="active-filter-row hidden">
             <button id="active-filter-pill" class="active-filter-pill" type="button" aria-label="Clear brand filter"></button>
@@ -61,30 +90,6 @@
           <div id="backup-reminder" class="backup-reminder hidden" role="status">
             <div><strong>Protect your garage</strong><span id="backup-reminder-copy">It has been a while since your last backup.</span></div>
             <div class="backup-reminder-actions"><button id="backup-reminder-now" type="button">Export</button><button id="backup-reminder-later" type="button">Later</button></div>
-          </div>
-          <div class="summary-row">
-            
-              <div id="sort-settings-row" class="sort-settings-row">
-                <div class="sort-settings-sort">
-                  <div class="collection-summary-left">
-              <label class="sort-control" for="sort-select">
-                
-                <select id="sort-select" aria-label="Sort collection">
-                  <option value="newest">Newest</option>
-                  <option value="oldest">Oldest</option>
-                  <option value="brand-az">Brand A–Z</option>
-                  <option value="brand-za">Brand Z–A</option>
-                  <option value="model-az">Model A–Z</option>
-                  <option value="model-za">Model Z–A</option>
-                  <option value="qty-high">Qty High–Low</option>
-                  <option value="qty-low">Qty Low–High</option>
-                  <option value="special-first">Special First</option>
-                </select>
-              </label>
-
-            </div>
-                </div>
-              </div>
           </div>
           <div id="cars-grid" class="cars-grid"></div>
           <div id="empty-state" class="empty-state hidden">
@@ -165,7 +170,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 2.7.2</span>
+              <span class="version-badge">Version 2.7.3</span>
             </div>
           </div>
         </section>
@@ -319,7 +324,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=2.7.2"></script>
-  <script type="module" src="app.js?v=2.7.2"></script>
+  <script src="jszip.min.js?v=2.7.3"></script>
+  <script type="module" src="app.js?v=2.7.3"></script>
 </body>
 </html>

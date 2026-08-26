@@ -536,3 +536,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Existing Settings button moved from the Sort row into top navigation; same settings behavior/ID retained.
 - Sort now spans the full row beneath the collection toolbar.
 - Release Year, Showcase styling, logo/header, Add Car layout, auth, database, and photo cache remain unchanged.
+
+
+## Version 2.7.3
+- Rebuilt the main collection controls into a two-column grid.
+- Search and Sort now stack on the left with matching width and height.
+- Added a premium right-side START / ADD CAR button spanning both rows.
+- Existing top navigation, Showcase, Release Year, logo/header, auth, photo cache, and collection behavior are unchanged.
