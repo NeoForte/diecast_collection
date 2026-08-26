@@ -550,3 +550,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Replaced the rectangular START / ADD CAR control with a round wheel-inspired START button.
 - New button uses a black tire, metallic gold rim, subtle spoke detail, and centered START label.
 - Removed the previous outer placement ring/halo look.
+
+
+## Version 2.7.5
+- Hard-fixed Sort vertical position by removing inherited summary-row padding.
+- Removed the wheel START button completely.
+- Added a larger garage-style Add Car control with a clean garage graphic and gold + badge.
+- Search/Sort proportions and top navigation remain unchanged.

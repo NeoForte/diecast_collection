@@ -2998,3 +2998,165 @@ html[data-theme="light"] .quantity-display {
     letter-spacing: .10em;
   }
 }
+
+
+/* v2.7.5 — hard fix for Sort position + garage Add Car control */
+
+/* The old .summary-row rule carries padding; this was the reason Sort stayed low. */
+.collection-controls-grid .summary-row {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+}
+
+.collection-controls-grid #sort-settings-row,
+.collection-controls-grid .sort-settings-sort,
+.collection-controls-grid .collection-summary-left,
+.collection-controls-grid .sort-control {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+}
+
+.collection-controls-grid #sort-select {
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  line-height: normal !important;
+  align-self: flex-start !important;
+}
+
+/* Replace wheel/start visual entirely. */
+.garage-add-button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 100% !important;
+  height: 106px !important;
+  min-height: 106px !important;
+  padding: 8px 8px 7px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(126, 166, 233, .20) !important;
+  background:
+    linear-gradient(180deg, rgba(20,23,29,.98), rgba(9,11,15,.98)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 10px 24px rgba(0,0,0,.30),
+    0 0 18px rgba(57, 105, 190, .06) !important;
+  color: #eef4ff !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.garage-add-button:hover,
+.garage-add-button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(126, 166, 233, .34) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 12px 28px rgba(0,0,0,.34),
+    0 0 20px rgba(57, 105, 190, .10) !important;
+}
+
+.garage-add-art {
+  position: relative;
+  width: 92px;
+  height: 72px;
+  display: block;
+}
+
+.garage-add-art svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.garage-roof,
+.garage-shell,
+.garage-door,
+.garage-door-line,
+.garage-car {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.garage-roof {
+  stroke: #d2ad55;
+  stroke-width: 5;
+}
+
+.garage-shell {
+  stroke: rgba(219, 225, 235, .88);
+  stroke-width: 4;
+}
+
+.garage-door {
+  stroke: rgba(219, 225, 235, .64);
+  stroke-width: 3;
+}
+
+.garage-door-line {
+  stroke: rgba(219, 225, 235, .22);
+  stroke-width: 2;
+}
+
+.garage-car {
+  stroke: #75a7ef;
+  stroke-width: 3;
+}
+
+.garage-add-badge {
+  position: absolute;
+  right: 2px;
+  top: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 900;
+  color: #0a0b0d;
+  background: linear-gradient(180deg, #f0cf78, #bf8e2f);
+  border: 1px solid rgba(255, 238, 180, .55);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    0 3px 8px rgba(0,0,0,.32);
+}
+
+.garage-add-label {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: #dce8fb;
+  text-transform: uppercase;
+}
+
+@media (max-width: 420px) {
+  .garage-add-art {
+    width: 86px;
+    height: 68px;
+  }
+  .garage-add-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+  }
+  .garage-add-label {
+    font-size: 10px;
+  }
+}
