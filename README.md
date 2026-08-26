@@ -569,3 +569,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Refined the Add Car button graphic.
 - Replaced the abstract car drawing with a cleaner, more realistic Porsche-like 3/4 front sports-car silhouette.
 - Preserved the premium dark panel, gold plus orb, and overall button styling.
+
+
+## Version 2.7.8
+- Replaced the CSS-drawn Add Car vehicle with the approved realistic metallic-blue sports car render.
+- Car uses a transparent PNG asset and is sized specifically for the Add Car action panel.
+- Preserved the premium dark panel, gold plus orb, Sort arrows, and existing behavior.

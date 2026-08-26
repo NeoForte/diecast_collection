@@ -3404,3 +3404,71 @@ html[data-theme="light"] .quantity-display {
     height: 44px !important;
   }
 }
+
+
+/* v2.7.8 — real-car Add Car hero */
+.premium-add-button {
+  padding: 8px 8px 7px !important;
+  gap: 0 !important;
+}
+
+.premium-add-kicker {
+  font-size: 8px !important;
+  letter-spacing: .18em !important;
+  margin-top: 0 !important;
+  color: #8eb2ee !important;
+}
+
+.premium-add-photo {
+  position: relative;
+  z-index: 1;
+  width: 116px !important;
+  height: 58px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  overflow: visible !important;
+}
+
+.premium-add-photo img {
+  display: block;
+  width: 116px;
+  max-width: 116px;
+  height: auto;
+  max-height: 58px;
+  object-fit: contain;
+  object-position: center;
+  filter:
+    drop-shadow(0 5px 8px rgba(0,0,0,.42))
+    drop-shadow(0 0 8px rgba(55,114,220,.10));
+  transform: translateY(1px);
+}
+
+.premium-add-title {
+  font-size: 12px !important;
+  letter-spacing: .15em !important;
+  margin-top: -1px !important;
+}
+
+.premium-add-orb {
+  width: 25px !important;
+  height: 25px !important;
+  font-size: 19px !important;
+  top: 7px !important;
+  right: 7px !important;
+}
+
+@media (max-width: 420px) {
+  .premium-add-photo,
+  .premium-add-photo img {
+    width: 108px !important;
+    max-width: 108px !important;
+  }
+  .premium-add-photo {
+    height: 55px !important;
+  }
+  .premium-add-photo img {
+    max-height: 55px !important;
+  }
+}
