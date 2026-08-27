@@ -589,3 +589,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Removed the redundant Find Exact Duplicates card from Settings.
 - Existing Add Car/save-time duplicate protection remains unchanged.
 - Catalog search/autofill behavior remains unchanged.
+
+
+## Version 2.8.2
+- Full-catalog deployment build for the 2020–2026 Hot Wheels catalog.
+- Version/cache bump only; keeps the working catalog search/autofill behavior from v2.8.1.
+- Keeps save-time duplicate protection while leaving the redundant Settings duplicate scanner removed.
+- Preserves auth, owner-scoped garage data, private photo storage, and persistent private-photo caching.
