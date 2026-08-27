@@ -8,7 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.8.2'
+const APP_VERSION = '2.8.3'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -78,6 +78,7 @@ const photoPlaceholder = $('photo-placeholder')
 const photoInput = $('photo-input')
 const duplicateWarning = $('duplicate-warning')
 const modelSuggestions = $('model-suggestions')
+const toyNumberSuggestions = $('toy-number-suggestions')
 const duplicateWarningText = $('duplicate-warning-text')
 const duplicateIncreaseBtn = $('duplicate-increase-btn')
 const duplicateAnywayBtn = $('duplicate-anyway-btn')
@@ -446,25 +447,112 @@ async function renderModelSuggestions() {
     option.addEventListener('click', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      setBrandValue(car.diecast_brand || 'Hot Wheels')
-      input.value = car.model || ''
-      setYearValue(car.model_year || '')
-      $('hotwheels-toy-number').value = String(car.hotwheels_toy_number || '').toUpperCase()
-      $('series').value = String(car.series_collection || '').toUpperCase()
-      $('general-number').value = String(car.general_number || '').toUpperCase()
-      $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
-      setSpecialValue(car.special_status || '')
-      // Color intentionally stays blank because it is not in the imported catalog.
-      setColorValue('')
-      hideModelSuggestions()
-      duplicateDismissedModel = ''
-      checkDuplicateModel()
-      input.focus()
+      applyCatalogCarToEditor(car, input)
     })
     modelSuggestions.append(option)
   }
 
   modelSuggestions.classList.remove('hidden')
+}
+
+
+function hideToyNumberSuggestions() {
+  toyNumberSuggestions.classList.add('hidden')
+  toyNumberSuggestions.replaceChildren()
+}
+
+function applyCatalogCarToEditor(car, focusTarget = null) {
+  setBrandValue(car.diecast_brand || 'Hot Wheels')
+  $('model').value = car.model || ''
+  setYearValue(car.model_year || '')
+  $('hotwheels-toy-number').value = String(car.hotwheels_toy_number || '').toUpperCase()
+  $('series').value = String(car.series_collection || '').toUpperCase()
+  $('general-number').value = String(car.general_number || '').toUpperCase()
+  $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
+  setSpecialValue(car.special_status || '')
+  // Color intentionally stays blank because it is not in the imported catalog.
+  setColorValue('')
+  hideModelSuggestions()
+  hideToyNumberSuggestions()
+  duplicateDismissedModel = ''
+  checkDuplicateModel()
+  if (focusTarget) focusTarget.focus()
+}
+
+async function renderToyNumberSuggestions() {
+  const input = $('hotwheels-toy-number')
+  const q = input.value.trim().toUpperCase()
+  if (!q || !session?.user) {
+    hideToyNumberSuggestions()
+    return
+  }
+
+  const brandChoice = $('diecast-brand').value
+  const brandName = brandChoice === 'Other' ? $('custom-brand').value.trim() : brandChoice
+  const allowCatalog = !brandName || brandName.toLowerCase() === 'hot wheels'
+  if (!allowCatalog) {
+    hideToyNumberSuggestions()
+    return
+  }
+
+  const safeQuery = q.replace(/[%_]/g, '')
+  if (!safeQuery) {
+    hideToyNumberSuggestions()
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('catalog_cars')
+    .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status')
+    .ilike('hotwheels_toy_number', `%${safeQuery}%`)
+    .limit(12)
+
+  if (error || !Array.isArray(data) || !data.length || input.value.trim().toUpperCase() !== q) {
+    hideToyNumberSuggestions()
+    return
+  }
+
+  data.sort((a, b) => {
+    const an = String(a.hotwheels_toy_number || '').toUpperCase()
+    const bn = String(b.hotwheels_toy_number || '').toUpperCase()
+    const ae = an === q ? 0 : an.startsWith(q) ? 1 : 2
+    const be = bn === q ? 0 : bn.startsWith(q) ? 1 : 2
+    if (ae !== be) return ae - be
+    return an.localeCompare(bn, undefined, { numeric: true, sensitivity: 'base' })
+  })
+
+  toyNumberSuggestions.replaceChildren()
+  for (const car of data.slice(0, 10)) {
+    const option = document.createElement('button')
+    option.type = 'button'
+    option.className = 'model-suggestion catalog-model-suggestion'
+    option.setAttribute('role', 'option')
+
+    const thumb = document.createElement('div')
+    thumb.className = 'model-suggestion-thumb catalog-suggestion-thumb'
+    thumb.textContent = 'CAT'
+
+    const text = document.createElement('span')
+    text.className = 'model-suggestion-text'
+    const title = document.createElement('span')
+    title.className = 'model-suggestion-title'
+    title.textContent = `${car.hotwheels_toy_number || '—'} · ${car.model || 'Untitled Car'}`
+    const meta = document.createElement('span')
+    meta.className = 'model-suggestion-meta'
+    meta.textContent = [car.model_year, car.series_collection, car.general_number, car.special_status].filter(Boolean).join(' · ')
+    text.append(title, meta)
+    option.append(thumb, text)
+
+    option.addEventListener('mousedown', (event) => event.preventDefault())
+    option.addEventListener('click', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      applyCatalogCarToEditor(car, input)
+    })
+    toyNumberSuggestions.append(option)
+  }
+
+  toyNumberSuggestions.classList.remove('hidden')
 }
 
 function hideDuplicateWarning() {
@@ -1994,6 +2082,11 @@ $('model').addEventListener('blur', () => {
   clearTimeout(duplicateCheckTimer)
   setTimeout(hideModelSuggestions, 120)
   checkDuplicateModel()
+})
+$('hotwheels-toy-number').addEventListener('input', renderToyNumberSuggestions)
+$('hotwheels-toy-number').addEventListener('focus', renderToyNumberSuggestions)
+$('hotwheels-toy-number').addEventListener('blur', () => {
+  setTimeout(hideToyNumberSuggestions, 120)
 })
 duplicateIncreaseBtn.addEventListener('click', increaseDuplicateQuantity)
 duplicateAnywayBtn.addEventListener('click', () => {

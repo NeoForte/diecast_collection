@@ -596,3 +596,7 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Version/cache bump only; keeps the working catalog search/autofill behavior from v2.8.1.
 - Keeps save-time duplicate protection while leaving the redundant Settings duplicate scanner removed.
 - Preserves auth, owner-scoped garage data, private photo storage, and persistent private-photo caching.
+
+
+## Version 2.8.3
+- Added Toy Number catalog lookup/autofill in Add Car. Typing a catalog Toy Number now shows matching catalog releases and selecting one fills the same fields as Model search.
