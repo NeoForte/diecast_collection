@@ -1,4 +1,4 @@
--- Pocket 64 v2.9.0
+-- Pocket 64 v2.9.1
 -- Run this later in Supabase SQL Editor when you are ready to activate Favorites + Multipacks.
 
 alter table public.cars

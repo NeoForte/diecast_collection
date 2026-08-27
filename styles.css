@@ -3569,23 +3569,18 @@ html[data-theme="light"] .quantity-display {
 }
 
 
-/* v2.9.0 — favorites, multipacks, and stats cleanup */
+/* v2.9.1 — favorites layout refinement */
 .entry-flag-stack {
   display:flex;
   flex-direction:column;
   align-items:flex-end;
   justify-content:flex-end;
-  gap:7px;
+  gap:4px;
   margin-bottom:14px;
 }
 .entry-flag-stack .custom-toggle { margin:0; }
 .favorite-toggle { color:#cfe2ff; }
 .favorite-toggle input { accent-color:#4a8df6; }
-.favorite-star {
-  display:inline-block;
-  color:#64a7ff;
-  text-shadow:0 0 5px rgba(86,157,255,.85), 0 0 12px rgba(43,108,224,.55);
-}
 .favorite-card-badge {
   width:24px;
   height:24px;

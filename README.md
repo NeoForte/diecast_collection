@@ -609,3 +609,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Favorites UI, card badge, and clickable Favorites stat are ready.
 - Multipack category and common pack-size picker are ready; Total Cars uses quantity x pack size.
 - Favorites and pack-size persistence activate automatically after DATABASE-UPDATE-LATER.sql is applied. Until then, those controls stay safely hidden/disabled so the existing database keeps working.
+
+
+## v2.9.1
+- Refined Favorite placement on Add/Edit Car: Favorite now sits directly above Custom in the existing flag stack without a decorative blue star beside the Favorite label.
+- The shiny metallic-blue star remains reserved for the collection-card Favorite badge.
+- Existing cars are fully eligible to become Favorites once the database update is applied; existing rows default to not-favorite and can be marked Favorite from Edit Car.
+- No database migration is required until Favorites/Multipacks are activated with DATABASE-UPDATE-LATER.sql.
