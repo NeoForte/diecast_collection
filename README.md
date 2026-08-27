@@ -1,4 +1,4 @@
-Pocket 64 v2.9.2
+Pocket 64 v2.9.3
 
 Changes: Favorite control removed from Add/Edit Car. Favorite is now a hollow star on the top-right of each collection card; tapping toggles a metallic-blue filled star. Quantity photo badge moved to bottom-right.
 
