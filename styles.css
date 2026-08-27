@@ -3567,3 +3567,66 @@ html[data-theme="light"] .quantity-display {
     font-size: 16px !important;
   }
 }
+
+
+/* v2.9.0 — favorites, multipacks, and stats cleanup */
+.entry-flag-stack {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:flex-end;
+  gap:7px;
+  margin-bottom:14px;
+}
+.entry-flag-stack .custom-toggle { margin:0; }
+.favorite-toggle { color:#cfe2ff; }
+.favorite-toggle input { accent-color:#4a8df6; }
+.favorite-star {
+  display:inline-block;
+  color:#64a7ff;
+  text-shadow:0 0 5px rgba(86,157,255,.85), 0 0 12px rgba(43,108,224,.55);
+}
+.favorite-card-badge {
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  color:#9dcbff;
+  font-size:15px;
+  line-height:1;
+  border:1px solid rgba(109,173,255,.82);
+  background:radial-gradient(circle at 35% 25%, rgba(197,226,255,.95) 0 8%, rgba(76,145,244,.92) 26%, rgba(21,68,151,.96) 68%, rgba(7,23,56,.98) 100%);
+  box-shadow:0 0 8px rgba(67,137,243,.62), inset 0 1px 1px rgba(255,255,255,.45);
+  text-shadow:0 1px 1px rgba(0,0,0,.55);
+}
+.multipack-fields {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:-4px;
+  margin-bottom:15px;
+  padding:12px;
+  border:1px solid rgba(94,151,239,.24);
+  border-radius:12px;
+  background:rgba(32,73,137,.08);
+}
+.multipack-fields.hidden { display:none; }
+.special-multipack { border-color:rgba(88,151,245,.82) !important; }
+.stat-summary-button {
+  width:100%;
+  color:inherit;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.stat-summary-button:hover,
+.stat-summary-button:active { border-color:#4f78b8; background:rgba(36,76,136,.18); }
+.stats-overview:has(#favorites-stat:not(.hidden)) { grid-template-columns:repeat(3,1fr); }
+@media (max-width:560px) {
+  .stats-overview:has(#favorites-stat:not(.hidden)) { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .stats-overview:has(#favorites-stat:not(.hidden)) .stat-summary-card { padding:11px 9px; }
+  .stats-overview:has(#favorites-stat:not(.hidden)) .stat-summary-card span { font-size:10px; }
+  .stats-overview:has(#favorites-stat:not(.hidden)) .stat-summary-card strong { font-size:24px; }
+  .multipack-fields { grid-template-columns:1fr; gap:0; }
+}

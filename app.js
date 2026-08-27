@@ -6,9 +6,9 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
-const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited']
+const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Multipack']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.8.3'
+const APP_VERSION = '2.9.0'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -50,6 +50,7 @@ function specialClassForStatus(status) {
     'Chase': 'special-chase',
     'Rare': 'special-rare',
     'Limited': 'special-limited',
+    'Multipack': 'special-multipack',
   }
   return map[status] || ''
 }
@@ -85,6 +86,15 @@ const duplicateAnywayBtn = $('duplicate-anyway-btn')
 const customColorLabel = $('custom-color-label')
 const customColor = $('custom-color')
 const customCheckbox = $('is-custom')
+const favoriteCheckbox = $('is-favorite')
+const favoriteToggle = $('favorite-toggle')
+const favoritesStat = $('favorites-stat')
+const statsFavorites = $('stats-favorites')
+const multipackFields = $('multipack-fields')
+const packSizeSelect = $('pack-size')
+const customPackSizeLabel = $('custom-pack-size-label')
+const customPackSize = $('custom-pack-size')
+const multipackOption = $('multipack-option')
 
 let session = null
 let cars = []
@@ -102,6 +112,7 @@ let carsLoadPromise = null
 let activeBrandFilter = null
 let catalogSuggestionRequest = 0
 let duplicateScanGroups = []
+let collectionExtrasSupported = false
 
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v1'
 const photoUrlCache = new Map()
@@ -122,6 +133,41 @@ function syncBrandCustomField() {
   const isOther = $('diecast-brand').value === 'Other'
   $('custom-brand-label').classList.toggle('hidden', !isOther)
   if (!isOther) $('custom-brand').value = ''
+}
+
+function syncMultipackFields() {
+  const isMultipack = collectionExtrasSupported && $('special-status').value === 'Multipack'
+  multipackFields?.classList.toggle('hidden', !isMultipack)
+  const isOther = isMultipack && packSizeSelect?.value === 'other'
+  customPackSizeLabel?.classList.toggle('hidden', !isOther)
+  if (!isOther && customPackSize) customPackSize.value = ''
+}
+
+function normalizedPackSize(car) {
+  if (car?.special_status !== 'Multipack') return 1
+  const size = Math.floor(Number(car?.pack_size) || 0)
+  return size >= 2 ? size : 1
+}
+
+function totalCarsFor(car) {
+  const qty = Math.max(1, Number(car?.quantity) || 1)
+  return qty * normalizedPackSize(car)
+}
+
+async function detectCollectionExtrasSupport() {
+  if (!session?.user) return false
+  const { error } = await supabase
+    .from('cars')
+    .select('is_favorite,pack_size')
+    .eq('user_id', session.user.id)
+    .limit(1)
+  collectionExtrasSupported = !error
+  if (error) console.info('Favorites and multipacks are staged until the Pocket 64 database update is applied.')
+  favoriteToggle?.classList.toggle('hidden', !collectionExtrasSupported)
+  favoritesStat?.classList.toggle('hidden', !collectionExtrasSupported)
+  if (multipackOption) multipackOption.disabled = !collectionExtrasSupported
+  syncMultipackFields()
+  return collectionExtrasSupported
 }
 
 
@@ -653,6 +699,7 @@ function showEditor(car = null, options = {}) {
 function fillEditor(car) {
   setBrandValue(car?.diecast_brand ?? '')
   customCheckbox.checked = Boolean(car?.is_custom)
+  if (favoriteCheckbox) favoriteCheckbox.checked = Boolean(car?.is_favorite)
   $('model').value = car?.model ?? ''
   hideModelSuggestions()
   setYearValue(car?.model_year ?? '')
@@ -664,6 +711,13 @@ function fillEditor(car) {
   $('quantity').value = String(car?.quantity ?? 1)
   syncQuantityDisplay()
   setSpecialValue(car?.special_status ?? '')
+  if (packSizeSelect) {
+    const packSize = Math.floor(Number(car?.pack_size) || 5)
+    const common = ['5','8','10','20','3','2','50','60']
+    packSizeSelect.value = common.includes(String(packSize)) ? String(packSize) : 'other'
+    customPackSize.value = packSizeSelect.value === 'other' ? String(packSize) : ''
+  }
+  syncMultipackFields()
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
   setPhotoPreview(null)
@@ -791,6 +845,7 @@ async function loadCars() {
   if (carsLoadPromise) return carsLoadPromise
 
   carsLoadPromise = (async () => {
+    await detectCollectionExtrasSupport()
     const { data, error } = await supabase
       .from('cars')
       .select('*')
@@ -980,7 +1035,7 @@ function validateBackup(backup) {
 
 function restorePayload(car, targetId, initialPhotoPath) {
   const now = new Date().toISOString()
-  return {
+  const payload = {
     id: targetId,
     user_id: session.user.id,
     photo_path: initialPhotoPath,
@@ -1002,6 +1057,12 @@ function restorePayload(car, targetId, initialPhotoPath) {
     hotwheels_toy_number: nullableText(car.hotwheels_toy_number),
     is_custom: restoreBoolean(car.is_custom),
   }
+  if (collectionExtrasSupported) {
+    payload.is_favorite = restoreBoolean(car.is_favorite)
+    const packSize = Number(car.pack_size)
+    payload.pack_size = Number.isFinite(packSize) && packSize >= 2 ? Math.floor(packSize) : null
+  }
+  return payload
 }
 
 async function upsertRestoreRows(rows) {
@@ -1190,7 +1251,7 @@ function updateActiveFilterPill() {
     pill.textContent = ''
     return
   }
-  const label = activeBrandFilter === '__unspecified__' ? 'Unspecified' : activeBrandFilter
+  const label = activeBrandFilter === '__none__' ? 'None' : activeBrandFilter === '__favorites__' ? 'Favorites' : activeBrandFilter
   pill.textContent = `${label} ×`
   pill.title = `Clear ${label} filter`
   row.classList.remove('hidden')
@@ -1208,7 +1269,8 @@ function applySearch() {
   if (activeBrandFilter) {
     matches = cars.filter((car) => {
       const brand = String(car.diecast_brand ?? '').trim()
-      if (activeBrandFilter === '__unspecified__') return !brand
+      if (activeBrandFilter === '__favorites__') return Boolean(car.is_favorite)
+      if (activeBrandFilter === '__none__') return !brand || brand.toLowerCase() === 'none'
       return brand.toLowerCase() === activeBrandFilter.toLowerCase()
     })
   }
@@ -1216,6 +1278,7 @@ function applySearch() {
     matches = matches.filter((car) => {
       const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
       if (car.is_custom) values.push('custom')
+      if (car.is_favorite) values.push('favorite')
       return values.filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
     })
   }
@@ -1358,6 +1421,14 @@ function renderCars() {
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
       badgeStack.append(specialBadge)
     }
+    if (car.is_favorite) {
+      const favoriteBadge = document.createElement('div')
+      favoriteBadge.className = 'favorite-card-badge'
+      favoriteBadge.textContent = '★'
+      favoriteBadge.setAttribute('aria-label', 'Favorite')
+      favoriteBadge.title = 'Favorite'
+      badgeStack.append(favoriteBadge)
+    }
     if (car.is_custom) {
       const customBadge = document.createElement('div')
       customBadge.className = 'special-badge custom-badge'
@@ -1407,8 +1478,10 @@ function renderCars() {
 
 function renderStats() {
   statsTotal.textContent = String(cars.length)
-  const grandTotal = cars.reduce((sum, car) => sum + Math.max(1, Number(car.quantity) || 1), 0)
+  const grandTotal = cars.reduce((sum, car) => sum + totalCarsFor(car), 0)
   statsGrandTotal.textContent = String(grandTotal)
+  if (statsFavorites) statsFavorites.textContent = String(cars.filter((car) => car.is_favorite).length)
+  favoritesStat?.classList.toggle('hidden', !collectionExtrasSupported)
   brandStats.replaceChildren()
 
   const counts = new Map()
@@ -1420,24 +1493,21 @@ function renderStats() {
     displayNames.set(key, brand)
   }
 
-  let unspecified = 0
   for (const car of cars) {
     const raw = String(car.diecast_brand ?? '').trim()
-    if (!raw) {
-      unspecified += 1
-      continue
-    }
-    const key = raw.toLowerCase()
+    const key = raw ? raw.toLowerCase() : 'none'
     counts.set(key, (counts.get(key) ?? 0) + 1)
-    if (!displayNames.has(key)) displayNames.set(key, raw)
+    if (!displayNames.has(key)) displayNames.set(key, raw || 'None')
   }
 
-  const entries = [...counts.entries()].map(([key, count]) => ({
-    key,
-    brand: displayNames.get(key) ?? key,
-    count,
-    presetIndex: BRAND_PRESETS.findIndex((name) => name.toLowerCase() === key),
-  }))
+  const entries = [...counts.entries()]
+    .filter(([key, count]) => key !== 'none' || count > 0)
+    .map(([key, count]) => ({
+      key,
+      brand: displayNames.get(key) ?? key,
+      count,
+      presetIndex: BRAND_PRESETS.findIndex((name) => name.toLowerCase() === key),
+    }))
 
   entries.sort((a, b) => {
     const aPreset = a.presetIndex >= 0
@@ -1447,8 +1517,6 @@ function renderStats() {
     if (bPreset) return 1
     return a.brand.localeCompare(b.brand)
   })
-
-  if (unspecified > 0) entries.push({ brand: 'Unspecified', count: unspecified })
 
   for (const entry of entries) {
     const row = document.createElement('button')
@@ -1463,8 +1531,7 @@ function renderStats() {
     count.textContent = String(entry.count)
     row.append(name, count)
     row.addEventListener('click', () => {
-      const brand = entry.brand
-      activeBrandFilter = brand === 'Unspecified' ? '__unspecified__' : brand
+      activeBrandFilter = entry.key === 'none' ? '__none__' : entry.brand
       searchInput.value = ''
       showCollection()
       applySearch()
@@ -1518,7 +1585,7 @@ function editorPayload() {
   const customColorRaw = customColor.value.trim()
   const colorRaw = colorChoice === 'Other' ? customColorRaw : colorChoice
   const specialRaw = $('special-status').value
-  return {
+  const payload = {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
     is_custom: Boolean(customCheckbox.checked),
@@ -1534,6 +1601,16 @@ function editorPayload() {
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }
+  if (collectionExtrasSupported) {
+    payload.is_favorite = Boolean(favoriteCheckbox?.checked)
+    if (specialRaw === 'Multipack') {
+      const chosen = packSizeSelect?.value === 'other' ? customPackSize?.value : packSizeSelect?.value
+      payload.pack_size = Math.max(2, Math.floor(Number(chosen) || 5))
+    } else {
+      payload.pack_size = null
+    }
+  }
+  return payload
 }
 
 function syncQuantityDisplay() {
@@ -1616,7 +1693,7 @@ async function saveCar() {
 }
 
 async function deleteCar() {
-  if (!editingCar || !confirm('Delete this car from your collection?')) return
+  if (!editingCar || !confirm('Are you sure you want to delete this vehicle?')) return
   editorMessage.textContent = 'Deleting…'
   try {
     if (editingCar.photo_path) {
@@ -1649,6 +1726,7 @@ function exactDuplicateKey(car) {
     car.general_number,
     car.series_collection_number,
     car.special_status,
+    car.pack_size,
     car.is_custom ? '1' : '0',
   ]
   return fields.map((value) => String(value ?? '').trim().toUpperCase()).join('\u241F')
@@ -1835,6 +1913,15 @@ function populateYearOptions() {
   select.append(fragment)
 }
 
+
+$('special-status').addEventListener('change', syncMultipackFields)
+packSizeSelect?.addEventListener('change', syncMultipackFields)
+favoritesStat?.addEventListener('click', () => {
+  activeBrandFilter = '__favorites__'
+  searchInput.value = ''
+  showCollection()
+  applySearch()
+})
 $('auth-form').addEventListener('submit', async (e) => {
   e.preventDefault()
   authMessage.textContent = 'Signing in…'

@@ -600,3 +600,12 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 
 ## Version 2.8.3
 - Added Toy Number catalog lookup/autofill in Add Car. Typing a catalog Toy Number now shows matching catalog releases and selecting one fills the same fields as Model search.
+
+
+## v2.9.0
+- Renamed Unique Cars to Unique Items.
+- None only appears in Brand Stats when blank/None-brand items exist; blank brands count as None.
+- Delete now asks for confirmation with the requested wording.
+- Favorites UI, card badge, and clickable Favorites stat are ready.
+- Multipack category and common pack-size picker are ready; Total Cars uses quantity x pack size.
+- Favorites and pack-size persistence activate automatically after DATABASE-UPDATE-LATER.sql is applied. Until then, those controls stay safely hidden/disabled so the existing database keeps working.
