@@ -583,3 +583,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Color remains blank by design.
 - Added Settings → Find Exact Duplicates with review-first photo selection and quantity merging.
 - Added mobile 16px editor form text to stop Safari auto-zoom without changing field geometry.
+
+
+## Version 2.8.1
+- Removed the redundant Find Exact Duplicates card from Settings.
+- Existing Add Car/save-time duplicate protection remains unchanged.
+- Catalog search/autofill behavior remains unchanged.
