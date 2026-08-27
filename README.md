@@ -620,4 +620,3 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - The shiny metallic-blue star remains reserved for the collection-card Favorite badge.
 - Existing cars are fully eligible to become Favorites once the database update is applied; existing rows default to not-favorite and can be marked Favorite from Edit Car.
 - No database migration is required until Favorites/Multipacks are activated with DATABASE-UPDATE-LATER.sql.
-deployment refresh
