@@ -86,8 +86,6 @@ const duplicateAnywayBtn = $('duplicate-anyway-btn')
 const customColorLabel = $('custom-color-label')
 const customColor = $('custom-color')
 const customCheckbox = $('is-custom')
-const favoriteCheckbox = $('is-favorite')
-const favoriteToggle = $('favorite-toggle')
 const favoritesStat = $('favorites-stat')
 const statsFavorites = $('stats-favorites')
 const multipackFields = $('multipack-fields')
@@ -163,7 +161,6 @@ async function detectCollectionExtrasSupport() {
     .limit(1)
   collectionExtrasSupported = !error
   if (error) console.info('Favorites and multipacks are staged until the Pocket 64 database update is applied.')
-  favoriteToggle?.classList.toggle('hidden', !collectionExtrasSupported)
   favoritesStat?.classList.toggle('hidden', !collectionExtrasSupported)
   if (multipackOption) multipackOption.disabled = !collectionExtrasSupported
   syncMultipackFields()
@@ -699,7 +696,6 @@ function showEditor(car = null, options = {}) {
 function fillEditor(car) {
   setBrandValue(car?.diecast_brand ?? '')
   customCheckbox.checked = Boolean(car?.is_custom)
-  if (favoriteCheckbox) favoriteCheckbox.checked = Boolean(car?.is_favorite)
   $('model').value = car?.model ?? ''
   hideModelSuggestions()
   setYearValue(car?.model_year ?? '')
@@ -1421,14 +1417,6 @@ function renderCars() {
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
       badgeStack.append(specialBadge)
     }
-    if (car.is_favorite) {
-      const favoriteBadge = document.createElement('div')
-      favoriteBadge.className = 'favorite-card-badge'
-      favoriteBadge.textContent = '★'
-      favoriteBadge.setAttribute('aria-label', 'Favorite')
-      favoriteBadge.title = 'Favorite'
-      badgeStack.append(favoriteBadge)
-    }
     if (car.is_custom) {
       const customBadge = document.createElement('div')
       customBadge.className = 'special-badge custom-badge'
@@ -1436,6 +1424,46 @@ function renderCars() {
       badgeStack.append(customBadge)
     }
     if (badgeStack.childElementCount) photoBox.append(badgeStack)
+
+    if (collectionExtrasSupported) {
+      const favoriteButton = document.createElement('button')
+      favoriteButton.type = 'button'
+      favoriteButton.className = `favorite-card-toggle${car.is_favorite ? ' is-favorite' : ''}`
+      favoriteButton.textContent = car.is_favorite ? '★' : '☆'
+      favoriteButton.setAttribute('aria-label', car.is_favorite ? 'Remove from favorites' : 'Add to favorites')
+      favoriteButton.title = car.is_favorite ? 'Remove from favorites' : 'Add to favorites'
+      favoriteButton.addEventListener('click', async (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        if (favoriteButton.disabled) return
+        const nextValue = !Boolean(car.is_favorite)
+        favoriteButton.disabled = true
+        try {
+          const { error } = await supabase
+            .from('cars')
+            .update({ is_favorite: nextValue, updated_at: new Date().toISOString() })
+            .eq('id', car.id)
+            .eq('user_id', session.user.id)
+          if (error) throw error
+          car.is_favorite = nextValue
+          favoriteButton.classList.toggle('is-favorite', nextValue)
+          favoriteButton.textContent = nextValue ? '★' : '☆'
+          favoriteButton.setAttribute('aria-label', nextValue ? 'Remove from favorites' : 'Add to favorites')
+          favoriteButton.title = nextValue ? 'Remove from favorites' : 'Add to favorites'
+          renderStats()
+          if (activeBrandFilter === '__favorites__' && !nextValue) {
+            applyFiltersAndRender()
+          }
+        } catch (error) {
+          console.error(error)
+          window.alert(error.message || 'Could not update favorite.')
+        } finally {
+          favoriteButton.disabled = false
+        }
+      })
+      favoriteButton.addEventListener('keydown', (event) => event.stopPropagation())
+      photoBox.append(favoriteButton)
+    }
 
     const qtyControls = document.createElement('div')
     qtyControls.className = 'card-quantity-control'
@@ -1602,7 +1630,6 @@ function editorPayload() {
     updated_at: new Date().toISOString(),
   }
   if (collectionExtrasSupported) {
-    payload.is_favorite = Boolean(favoriteCheckbox?.checked)
     if (specialRaw === 'Multipack') {
       const chosen = packSizeSelect?.value === 'other' ? customPackSize?.value : packSizeSelect?.value
       payload.pack_size = Math.max(2, Math.floor(Number(chosen) || 5))

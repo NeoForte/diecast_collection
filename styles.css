@@ -3625,3 +3625,39 @@ html[data-theme="light"] .quantity-display {
   .stats-overview:has(#favorites-stat:not(.hidden)) .stat-summary-card strong { font-size:24px; }
   .multipack-fields { grid-template-columns:1fr; gap:0; }
 }
+
+
+/* v2.9.2 — card-level favorites, uncluttered Add Car */
+.quantity-badge { top:auto !important; bottom:8px !important; right:8px !important; }
+.favorite-card-toggle {
+  position:absolute;
+  top:8px;
+  right:8px;
+  z-index:5;
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid rgba(255,255,255,.38);
+  border-radius:50%;
+  background:rgba(0,0,0,.62);
+  color:rgba(255,255,255,.88);
+  font-size:21px;
+  line-height:1;
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+  cursor:pointer;
+}
+.favorite-card-toggle.is-favorite {
+  color:#bfe0ff;
+  border-color:rgba(109,173,255,.92);
+  background:radial-gradient(circle at 35% 25%, rgba(214,235,255,.98) 0 7%, rgba(80,153,255,.95) 25%, rgba(22,78,176,.98) 68%, rgba(6,25,64,.99) 100%);
+  box-shadow:0 0 10px rgba(67,137,243,.75), inset 0 1px 1px rgba(255,255,255,.55);
+  text-shadow:0 1px 1px rgba(0,0,0,.6);
+}
+.favorite-card-toggle:disabled { opacity:.55; cursor:default; }
+html[data-theme="light"] .favorite-card-toggle:not(.is-favorite) {
+  background:rgba(255,255,255,.82);
+  color:#374151;
+  border-color:rgba(17,24,39,.25);
+}
