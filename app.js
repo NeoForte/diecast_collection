@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.0.6'
+const APP_VERSION = '3.0.7'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -1808,6 +1808,63 @@ async function saveCar() {
   }
 }
 
+
+async function clearCollection() {
+  if (!session?.user) return
+  const firstConfirm = window.confirm(
+    'Clear this entire collection?\n\nThis will permanently delete every car and its saved car photo from THIS account. This cannot be undone.'
+  )
+  if (!firstConfirm) return
+
+  const typed = window.prompt('Type CLEAR to confirm deleting the entire collection from this account.')
+  if (typed !== 'CLEAR') {
+    if (typed !== null) alert('Collection was not cleared. Confirmation did not match.')
+    return
+  }
+
+  const button = $('clear-collection-button')
+  const originalText = button?.textContent || 'Clear'
+  if (button) {
+    button.disabled = true
+    button.textContent = 'Clearing…'
+  }
+
+  try {
+    const { data: rows, error: readError } = await supabase
+      .from('cars')
+      .select('id, photo_path')
+      .eq('user_id', session.user.id)
+    if (readError) throw readError
+
+    const photoPaths = [...new Set((rows || []).map((row) => row.photo_path).filter(Boolean))]
+    for (let i = 0; i < photoPaths.length; i += 100) {
+      const batch = photoPaths.slice(i, i + 100)
+      const { error: storageError } = await supabase.storage.from('car-photos').remove(batch)
+      if (storageError) throw storageError
+      await Promise.all(batch.map((path) => invalidatePrivatePhotoCache(path)))
+    }
+
+    const { error: deleteError } = await supabase
+      .from('cars')
+      .delete()
+      .eq('user_id', session.user.id)
+    if (deleteError) throw deleteError
+
+    clearPrivatePhotoMemoryCache()
+    await loadCars()
+    alert('Collection cleared. This account is ready for a clean restore test.')
+    showCollection()
+  } catch (err) {
+    console.error(err)
+    alert(`Could not clear the collection: ${err.message || err}`)
+  } finally {
+    if (button) {
+      button.disabled = false
+      button.textContent = originalText
+    }
+  }
+}
+
 async function deleteCar() {
   if (!editingCar || !confirm('Are you sure you want to delete this vehicle?')) return
   editorMessage.textContent = 'Deleting…'
@@ -2267,6 +2324,7 @@ $('restore-input').addEventListener('change', () => {
   if (file) restoreBackupFile(file)
 })
 $('refresh-button').addEventListener('click', loadCars)
+$('clear-collection-button')?.addEventListener('click', clearCollection)
 $('active-filter-pill').addEventListener('click', clearBrandFilter)
 $('profile-icon-button').addEventListener('click', () => $('profile-icon-input').click())
 $('profile-icon-input').addEventListener('change', () => saveProfileIcon($('profile-icon-input').files?.[0]))

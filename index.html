@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.0.6" />
+  <link rel="manifest" href="manifest.webmanifest?v=3.0.7" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=3.0.6" />
+  <link rel="stylesheet" href="styles.css?v=3.0.7" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -161,6 +161,13 @@
               </div>
               <input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" />
             </div>
+            <div class="settings-card settings-clear-card">
+              <div class="settings-copy">
+                <strong>Clear Collection</strong>
+                <span>Delete every car and car photo from this account. Useful for restore testing.</span>
+              </div>
+              <button id="clear-collection-button" class="settings-mini-button settings-clear-button" type="button">Clear</button>
+            </div>
             <div class="settings-card">
               <div class="settings-copy">
                 <strong>Account</strong>
@@ -173,7 +180,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 3.0.6</span>
+              <span class="version-badge">Version 3.0.7</span>
             </div>
           </div>
         </section>
@@ -344,7 +351,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=3.0.6"></script>
-  <script type="module" src="app.js?v=3.0.6"></script>
+  <script src="jszip.min.js?v=3.0.7"></script>
+  <script type="module" src="app.js?v=3.0.7"></script>
 </body>
 </html>

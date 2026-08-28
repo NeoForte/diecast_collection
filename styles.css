@@ -3908,3 +3908,18 @@ html[data-theme="light"] .favorite-card-toggle:not(.is-favorite) { color:#374151
     font-size:16px !important;
   }
 }
+
+
+.settings-clear-button {
+  border-color: rgba(248,113,113,.32);
+  background: rgba(127,29,29,.16);
+  color: #fca5a5;
+}
+.settings-clear-button:active {
+  background: rgba(127,29,29,.28);
+}
+html[data-theme="light"] .settings-clear-button {
+  border-color: rgba(220,38,38,.22);
+  background: rgba(220,38,38,.06);
+  color: #b91c1c;
+}
