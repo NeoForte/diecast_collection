@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.0.10'
+const APP_VERSION = '3.1.0'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -123,6 +123,7 @@ let quickAddKeepBrand = ''
 let quickAddKeepCustomBrand = ''
 let duplicateDismissedModel = ''
 let duplicateCheckTimer = null
+let selectedDuplicateId = null
 let loadedCarsUserId = null
 let carsLoadPromise = null
 let activeBrandFilter = null
@@ -646,7 +647,10 @@ async function renderToyNumberSuggestions() {
 function hideDuplicateWarning() {
   duplicateWarning.classList.add('hidden')
   duplicateWarningText.textContent = ''
+  selectedDuplicateId = null
   duplicateIncreaseBtn.classList.remove('hidden')
+  duplicateIncreaseBtn.disabled = false
+  duplicateIncreaseBtn.textContent = 'Increase Qty'
   const matchList = $('duplicate-match-list')
   matchList?.replaceChildren()
   matchList?.classList.add('hidden')
@@ -661,9 +665,22 @@ function renderDuplicateMatchList(matches) {
     return
   }
 
+  const selectMatch = (car, row) => {
+    selectedDuplicateId = car.id
+    for (const item of host.querySelectorAll('.duplicate-match-row')) {
+      item.classList.toggle('is-selected', item === row)
+      item.setAttribute('aria-pressed', item === row ? 'true' : 'false')
+    }
+    duplicateIncreaseBtn.disabled = false
+    duplicateIncreaseBtn.textContent = matches.length === 1 ? 'Add 1 to This Car' : 'Add 1 to Selected'
+  }
+
   for (const car of matches.slice(0, 4)) {
-    const row = document.createElement('div')
+    const row = document.createElement('button')
+    row.type = 'button'
     row.className = 'duplicate-match-row'
+    row.setAttribute('aria-pressed', 'false')
+    row.setAttribute('aria-label', `Select ${displayTitle(car)} to increase its quantity`)
 
     const thumb = document.createElement('div')
     thumb.className = 'duplicate-match-thumb'
@@ -690,17 +707,20 @@ function renderDuplicateMatchList(matches) {
       car.model_year,
       car.hotwheels_toy_number ? `SKU ${car.hotwheels_toy_number}` : '',
       car.color,
-      qty > 1 ? `QTY ${qty}` : '',
+      `QTY ${qty}`,
     ].filter(Boolean).join(' · ') || 'Existing entry'
     copy.append(title, meta)
     row.append(thumb, copy)
+    row.addEventListener('click', () => selectMatch(car, row))
     host.append(row)
+
+    if (matches.length === 1) selectMatch(car, row)
   }
 
   if (matches.length > 4) {
     const more = document.createElement('div')
     more.className = 'duplicate-match-more'
-    more.textContent = `+${matches.length - 4} more matching entries`
+    more.textContent = `+${matches.length - 4} more matching entries — refine Model or SKU to narrow the list`
     host.append(more)
   }
   host.classList.remove('hidden')
@@ -728,16 +748,24 @@ function checkDuplicateModel() {
     const brand = match.diecast_brand ? `${match.diecast_brand} · ` : ''
     duplicateWarningText.textContent = `Possible duplicate: ${brand}${match.model} is already in your garage (qty ${qty}).`
     duplicateIncreaseBtn.classList.remove('hidden')
+    duplicateIncreaseBtn.textContent = 'Add 1 to This Car'
   } else {
-    duplicateWarningText.textContent = `Possible duplicate: ${matches.length} existing entries use the model “${raw}”. Compare the photos/details below before adding another.`
-    duplicateIncreaseBtn.classList.add('hidden')
+    selectedDuplicateId = null
+    duplicateWarningText.textContent = `Possible duplicate: ${matches.length} existing entries use the model “${raw}”. Tap the matching car below, then add 1 to that entry — or Add Anyway for a different release.`
+    duplicateIncreaseBtn.classList.remove('hidden')
+    duplicateIncreaseBtn.textContent = 'Add 1 to Selected'
+    duplicateIncreaseBtn.disabled = true
   }
 }
 
 async function increaseDuplicateQuantity() {
   const matches = modelMatches($('model').value)
-  if (matches.length !== 1 || !session?.user) return
-  const match = matches[0]
+  if (!matches.length || !session?.user) return
+  const match = matches.find((car) => car.id === selectedDuplicateId) || (matches.length === 1 ? matches[0] : null)
+  if (!match) {
+    duplicateWarningText.textContent = 'Tap the matching car first, then choose Add 1 to Selected.'
+    return
+  }
   const currentQty = Math.max(1, Number(match.quantity) || 1)
   duplicateIncreaseBtn.disabled = true
   duplicateAnywayBtn.disabled = true

@@ -3966,9 +3966,11 @@ html[data-theme="light"] .photo-framer-actions .photo-use-button { background:#1
 }
 
 
-/* Pocket 64 v3.0.10 — visual duplicate check */
+/* Pocket 64 v3.1.0 — selectable duplicate check */
 .duplicate-match-list { display:grid; gap:7px; margin-top:9px; }
-.duplicate-match-row { display:grid; grid-template-columns:54px minmax(0,1fr); gap:9px; align-items:center; padding:7px; border:1px solid rgba(245,221,160,.22); border-radius:10px; background:rgba(10,10,10,.58); }
+.duplicate-match-row { width:100%; display:grid; grid-template-columns:54px minmax(0,1fr); gap:9px; align-items:center; padding:7px; border:1px solid rgba(245,221,160,.22); border-radius:10px; background:rgba(10,10,10,.58); color:inherit; text-align:left; appearance:none; -webkit-appearance:none; }
+.duplicate-match-row.is-selected { border-color:#7eb8ff; box-shadow:0 0 0 2px rgba(50,145,255,.25); background:rgba(12,35,61,.72); }
+.duplicate-match-row:focus-visible { outline:2px solid #7eb8ff; outline-offset:2px; }
 .duplicate-match-thumb { width:54px; height:54px; border-radius:8px; overflow:hidden; background:#0b0b0b; border:1px solid #3b3425; display:grid; place-items:center; }
 .duplicate-match-thumb img { width:100%; height:100%; object-fit:contain; display:block; background:#0b0b0b; }
 .duplicate-match-thumb span { font-size:8px; line-height:1.05; text-align:center; color:#8f8774; font-weight:850; letter-spacing:.04em; }
