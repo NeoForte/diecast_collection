@@ -3984,3 +3984,35 @@ html[data-theme="light"] .photo-framer-actions .photo-use-button { background:#1
   .duplicate-match-title { font-size:11px; }
   .duplicate-match-meta { font-size:9.5px; }
 }
+
+
+/* Pocket 64 v3.1.1 — one-tap Home search clear */
+.collection-controls-grid .search-shell {
+  position: relative;
+  width: 100%;
+}
+.collection-controls-grid .search-shell #search-input {
+  padding-right: 46px !important;
+}
+.collection-controls-grid .search-clear-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: #cbd5e1;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 0 0 2px;
+  z-index: 2;
+}
+.collection-controls-grid .search-clear-button:active {
+  background: rgba(255,255,255,.16);
+}

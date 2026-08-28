@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.1.0'
+const APP_VERSION = '3.1.1'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -1531,6 +1531,12 @@ function dateValue(value) {
   return Number.isFinite(time) ? time : 0
 }
 
+function newestActivityValue(car) {
+  // A duplicate quantity increase represents a newly acquired copy. That path
+  // updates updated_at, so Newest can surface it without rewriting created_at.
+  return Math.max(dateValue(car?.created_at), dateValue(car?.updated_at))
+}
+
 function specialRank(car) {
   return car?.special_status ? 0 : 1
 }
@@ -1556,7 +1562,7 @@ function sortCars(list) {
       case 'special-first': return (specialRank(a) - specialRank(b)) || (dateValue(b.created_at) - dateValue(a.created_at))
       case 'color-az': return byText(a, b, 'color', 1)
       case 'newest':
-      default: return dateValue(b.created_at) - dateValue(a.created_at)
+      default: return newestActivityValue(b) - newestActivityValue(a)
     }
   })
   return copy
@@ -2618,7 +2624,22 @@ $('clear-collection-button')?.addEventListener('click', clearCollection)
 $('active-filter-pill').addEventListener('click', clearBrandFilter)
 $('profile-icon-button').addEventListener('click', () => $('profile-icon-input').click())
 $('profile-icon-input').addEventListener('change', () => saveProfileIcon($('profile-icon-input').files?.[0]))
-searchInput.addEventListener('input', applySearch)
+searchInput.addEventListener('input', () => {
+  updateSearchClearButton()
+  applySearch()
+})
+$('search-clear-button')?.addEventListener('click', () => {
+  searchInput.value = ''
+  updateSearchClearButton()
+  applySearch()
+  searchInput.focus()
+})
+function updateSearchClearButton() {
+  const button = $('search-clear-button')
+  if (!button) return
+  button.classList.toggle('hidden', !searchInput.value)
+}
+updateSearchClearButton()
 sortSelect.addEventListener('change', () => {
   try { localStorage.setItem(SORT_STORAGE_KEY, sortSelect.value) } catch {}
   applySearch()
