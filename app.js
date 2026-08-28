@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.1.3'
+const APP_VERSION = '3.1.4'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -546,18 +546,50 @@ function applyCatalogCarToEditor(car, focusTarget = null, options = {}) {
   if (focusTarget) focusTarget.focus()
 }
 
+async function addOneFromSkuSuggestion(car, button) {
+  if (!car?.id || !session?.user) return
+  const currentQty = Math.max(1, Number(car.quantity) || 1)
+  const originalText = button?.textContent || 'Add 1'
+  if (button) {
+    button.disabled = true
+    button.textContent = 'Adding…'
+  }
+  try {
+    const { error } = await supabase
+      .from('cars')
+      .update({ quantity: currentQty + 1, updated_at: new Date().toISOString() })
+      .eq('id', car.id)
+      .eq('user_id', session.user.id)
+    if (error) throw error
+    car.quantity = currentQty + 1
+    car.updated_at = new Date().toISOString()
+    await loadCars()
+    hideToyNumberSuggestions()
+    if (quickAddMode) {
+      const keptBrand = $('diecast-brand').value
+      const keptCustomBrand = $('custom-brand').value
+      quickAddKeepBrand = keptBrand
+      quickAddKeepCustomBrand = keptCustomBrand
+      showEditor(null, { quick: true })
+      editorMessage.textContent = `Quantity increased to ${currentQty + 1} ✓ Ready for the next car.`
+      setTimeout(() => { if (quickAddMode) editorMessage.textContent = '' }, 1600)
+    } else {
+      showCollection()
+    }
+  } catch (error) {
+    console.error(error)
+    window.alert(error.message || 'Could not update quantity.')
+    if (button) {
+      button.disabled = false
+      button.textContent = originalText
+    }
+  }
+}
+
 async function renderToyNumberSuggestions() {
   const input = $('hotwheels-toy-number')
   const q = input.value.trim().toUpperCase()
   if (!q || !session?.user) {
-    hideToyNumberSuggestions()
-    return
-  }
-
-  const brandChoice = $('diecast-brand').value
-  const brandName = brandChoice === 'Other' ? $('custom-brand').value.trim() : brandChoice
-  const allowCatalog = !brandName || brandName.toLowerCase() === 'hot wheels'
-  if (!allowCatalog) {
     hideToyNumberSuggestions()
     return
   }
@@ -568,18 +600,40 @@ async function renderToyNumberSuggestions() {
     return
   }
 
-  const { data, error } = await supabase
-    .from('catalog_cars')
-    .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status,exclusive_retailer,exclusive_type')
-    .ilike('hotwheels_toy_number', `%${safeQuery}%`)
-    .limit(12)
+  // Your own garage always wins. Exact SKU matches sort first, then prefix/partial matches.
+  const garageMatches = cars
+    .filter((car) => !editingCar || car.id !== editingCar.id)
+    .filter((car) => String(car.hotwheels_toy_number || '').toUpperCase().includes(q))
+    .sort((a, b) => {
+      const an = String(a.hotwheels_toy_number || '').toUpperCase()
+      const bn = String(b.hotwheels_toy_number || '').toUpperCase()
+      const ae = an === q ? 0 : an.startsWith(q) ? 1 : 2
+      const be = bn === q ? 0 : bn.startsWith(q) ? 1 : 2
+      if (ae !== be) return ae - be
+      return an.localeCompare(bn, undefined, { numeric: true, sensitivity: 'base' })
+    })
 
-  if (error || !Array.isArray(data) || !data.length || input.value.trim().toUpperCase() !== q) {
+  const brandChoice = $('diecast-brand').value
+  const brandName = brandChoice === 'Other' ? $('custom-brand').value.trim() : brandChoice
+  const allowCatalog = !brandName || brandName.toLowerCase() === 'hot wheels'
+  let catalogMatches = []
+
+  if (allowCatalog) {
+    const { data, error } = await supabase
+      .from('catalog_cars')
+      .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status,exclusive_retailer,exclusive_type')
+      .ilike('hotwheels_toy_number', `%${safeQuery}%`)
+      .limit(12)
+    if (!error && Array.isArray(data)) catalogMatches = data
+  }
+
+  if (input.value.trim().toUpperCase() !== q) return
+  if (!garageMatches.length && !catalogMatches.length) {
     hideToyNumberSuggestions()
     return
   }
 
-  data.sort((a, b) => {
+  catalogMatches.sort((a, b) => {
     const an = String(a.hotwheels_toy_number || '').toUpperCase()
     const bn = String(b.hotwheels_toy_number || '').toUpperCase()
     const ae = an === q ? 0 : an.startsWith(q) ? 1 : 2
@@ -589,7 +643,69 @@ async function renderToyNumberSuggestions() {
   })
 
   toyNumberSuggestions.replaceChildren()
-  for (const car of data.slice(0, 10)) {
+
+  for (const car of garageMatches.slice(0, 5)) {
+    const option = document.createElement('div')
+    option.className = `model-suggestion garage-sku-suggestion${String(car.hotwheels_toy_number || '').toUpperCase() === q ? ' exact-garage-sku' : ''}`
+    option.setAttribute('role', 'option')
+
+    const thumb = document.createElement('div')
+    thumb.className = 'model-suggestion-thumb'
+    thumb.textContent = '🚗'
+    if (car.photo_path) {
+      const img = document.createElement('img')
+      img.alt = ''
+      thumb.replaceChildren(img)
+      lazyLoadPrivatePhoto(car.photo_path, img)
+    }
+
+    const text = document.createElement('span')
+    text.className = 'model-suggestion-text'
+    const title = document.createElement('span')
+    title.className = 'model-suggestion-title'
+    title.textContent = `${car.hotwheels_toy_number || '—'} · ${car.model || 'Untitled Car'}`
+    const meta = document.createElement('span')
+    meta.className = 'model-suggestion-meta garage-sku-meta'
+    const qty = Math.max(1, Number(car.quantity) || 1)
+    meta.textContent = ['IN YOUR GARAGE', `QTY ${qty}`, car.model_year, car.color, car.series_collection, car.general_number].filter(Boolean).join(' · ')
+    text.append(title, meta)
+
+    const addButton = document.createElement('button')
+    addButton.type = 'button'
+    addButton.className = 'sku-add-one-button'
+    addButton.textContent = 'Add 1'
+    addButton.setAttribute('aria-label', `Add one ${car.model || 'car'} to your existing quantity`)
+    addButton.addEventListener('mousedown', (event) => event.preventDefault())
+    addButton.addEventListener('click', async (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      await addOneFromSkuSuggestion(car, addButton)
+    })
+
+    option.addEventListener('mousedown', (event) => event.preventDefault())
+    option.addEventListener('click', (event) => {
+      if (event.target.closest('.sku-add-one-button')) return
+      event.preventDefault()
+      event.stopPropagation()
+      $('model').value = car.model || ''
+      setBrandValue(car.diecast_brand || '')
+      setYearValue(car.model_year || '')
+      input.value = String(car.hotwheels_toy_number || '').toUpperCase()
+      $('series').value = String(car.series_collection || '').toUpperCase()
+      $('general-number').value = String(car.general_number || '').toUpperCase()
+      $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
+      setColorValue(car.color || '')
+      hideToyNumberSuggestions()
+      duplicateDismissedModel = ''
+      checkDuplicateModel()
+      input.focus()
+    })
+
+    option.append(thumb, text, addButton)
+    toyNumberSuggestions.append(option)
+  }
+
+  for (const car of catalogMatches.slice(0, 10)) {
     const option = document.createElement('button')
     option.type = 'button'
     option.className = 'model-suggestion catalog-model-suggestion'
