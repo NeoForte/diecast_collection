@@ -1,4 +1,4 @@
-Pocket 64 v2.9.3
+Pocket 64 v3.0.1
 
 Changes: Favorite control removed from Add/Edit Car. Favorite is now a hollow star on the top-right of each collection card; tapping toggles a metallic-blue filled star. Quantity photo badge moved to bottom-right.
 
@@ -615,8 +615,15 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Favorites and pack-size persistence activate automatically after DATABASE-UPDATE-LATER.sql is applied. Until then, those controls stay safely hidden/disabled so the existing database keeps working.
 
 
-## v2.9.1
+## v3.0.1
 - Refined Favorite placement on Add/Edit Car: Favorite now sits directly above Custom in the existing flag stack without a decorative blue star beside the Favorite label.
 - The shiny metallic-blue star remains reserved for the collection-card Favorite badge.
 - Existing cars are fully eligible to become Favorites once the database update is applied; existing rows default to not-favorite and can be marked Favorite from Edit Car.
 - No database migration is required until Favorites/Multipacks are activated with DATABASE-UPDATE-LATER.sql.
+
+
+## v3.0.1
+- Favorites are card-only; removed Favorite from Add/Edit Car.
+- Favorite star upgraded to a brighter metallic-blue/chrome treatment.
+- Added a card ••• menu for Add/Remove from Showcase instead of long-press.
+- Showcase page now displays cars selected for Showcase.

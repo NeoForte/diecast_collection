@@ -8,7 +8,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Multipack']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
-const APP_VERSION = '2.9.3'
+const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
+const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
+const APP_VERSION = '3.0.1'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -50,7 +52,6 @@ function specialClassForStatus(status) {
     'Chase': 'special-chase',
     'Rare': 'special-rare',
     'Limited': 'special-limited',
-    'Multipack': 'special-multipack',
   }
   return map[status] || ''
 }
@@ -93,6 +94,9 @@ const packSizeSelect = $('pack-size')
 const customPackSizeLabel = $('custom-pack-size-label')
 const customPackSize = $('custom-pack-size')
 const multipackOption = $('multipack-option')
+const exclusiveRetailer = $('exclusive-retailer')
+const exclusiveType = $('exclusive-type')
+const exclusiveDetails = $('exclusive-details')
 
 let session = null
 let cars = []
@@ -141,6 +145,19 @@ function syncMultipackFields() {
   if (!isOther && customPackSize) customPackSize.value = ''
 }
 
+function syncExclusiveFields() {
+  const retailer = exclusiveRetailer?.value || ''
+  exclusiveDetails?.classList.toggle('hidden', !retailer)
+  if (!retailer && exclusiveType) exclusiveType.value = ''
+}
+
+function applyCatalogExclusive(car) {
+  if (!car) return
+  if (exclusiveRetailer) exclusiveRetailer.value = car.exclusive_retailer || ''
+  if (exclusiveType) exclusiveType.value = car.exclusive_type || ''
+  syncExclusiveFields()
+}
+
 function normalizedPackSize(car) {
   if (car?.special_status !== 'Multipack') return 1
   const size = Math.floor(Number(car?.pack_size) || 0)
@@ -156,11 +173,11 @@ async function detectCollectionExtrasSupport() {
   if (!session?.user) return false
   const { error } = await supabase
     .from('cars')
-    .select('is_favorite,pack_size')
+    .select('is_favorite,is_showcase,pack_size,exclusive_retailer,exclusive_type')
     .eq('user_id', session.user.id)
     .limit(1)
   collectionExtrasSupported = !error
-  if (error) console.info('Favorites and multipacks are staged until the Pocket 64 database update is applied.')
+  if (error) console.info('Favorites, Showcase, multipacks, and exclusives are staged until the Pocket 64 database update is applied.')
   favoritesStat?.classList.toggle('hidden', !collectionExtrasSupported)
   if (multipackOption) multipackOption.disabled = !collectionExtrasSupported
   syncMultipackFields()
@@ -293,6 +310,7 @@ function showSocial() {
   socialScreen.classList.add('active')
   mainNav.classList.remove('hidden')
   setActiveNav('social')
+  renderShowcase()
 }
 
 function showStats() {
@@ -409,7 +427,7 @@ async function renderModelSuggestions() {
     if (safeQuery) {
       const { data, error } = await supabase
         .from('catalog_cars')
-        .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status')
+        .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status,exclusive_retailer,exclusive_type')
         .ilike('model', `%${safeQuery}%`)
         .order('model', { ascending: true })
         .limit(10)
@@ -513,6 +531,7 @@ function applyCatalogCarToEditor(car, focusTarget = null) {
   $('general-number').value = String(car.general_number || '').toUpperCase()
   $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
   setSpecialValue(car.special_status || '')
+  applyCatalogExclusive(car)
   // Color intentionally stays blank because it is not in the imported catalog.
   setColorValue('')
   hideModelSuggestions()
@@ -546,7 +565,7 @@ async function renderToyNumberSuggestions() {
 
   const { data, error } = await supabase
     .from('catalog_cars')
-    .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status')
+    .select('id,diecast_brand,model,model_year,series_collection,general_number,series_collection_number,hotwheels_toy_number,color,special_status,exclusive_retailer,exclusive_type')
     .ilike('hotwheels_toy_number', `%${safeQuery}%`)
     .limit(12)
 
@@ -714,6 +733,9 @@ function fillEditor(car) {
     customPackSize.value = packSizeSelect.value === 'other' ? String(packSize) : ''
   }
   syncMultipackFields()
+  if (exclusiveRetailer) exclusiveRetailer.value = car?.exclusive_retailer ?? ''
+  if (exclusiveType) exclusiveType.value = car?.exclusive_type ?? ''
+  syncExclusiveFields()
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
   setPhotoPreview(null)
@@ -1047,6 +1069,8 @@ function restorePayload(car, targetId, initialPhotoPath) {
     updated_at: restoreDate(car.updated_at, now),
     package_status: nullableText(car.package_status),
     special_status: nullableText(car.special_status),
+    exclusive_retailer: nullableText(car.exclusive_retailer),
+    exclusive_type: nullableText(car.exclusive_type),
     general_number: nullableText(car.general_number),
     series_collection_number: nullableText(car.series_collection_number),
     color: nullableText(car.color),
@@ -1272,7 +1296,7 @@ function applySearch() {
   }
   if (q) {
     matches = matches.filter((car) => {
-      const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.notes]
+      const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.exclusive_retailer, car.exclusive_type, car.notes]
       if (car.is_custom) values.push('custom')
       if (car.is_favorite) values.push('favorite')
       return values.filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
@@ -1369,6 +1393,76 @@ function reorderRenderedCardsIfNeeded() {
   }
 }
 
+function renderShowcase() {
+  const grid = $('showcase-grid')
+  const empty = $('showcase-empty')
+  if (!grid || !empty) return
+  grid.replaceChildren()
+  const featured = cars.filter((car) => Boolean(car.is_showcase))
+  empty.classList.toggle('hidden', featured.length > 0)
+  grid.classList.toggle('hidden', featured.length === 0)
+  for (const car of featured) {
+    const card = document.createElement('article')
+    card.className = 'car-card showcase-card'
+    card.innerHTML = `<div class="car-photo"><span>🚗</span></div><div class="car-body"><div class="car-title"></div><div class="car-sub"></div></div>`
+    card.querySelector('.car-title').textContent = displayTitle(car)
+    card.querySelector('.car-sub').textContent = displaySubtitle(car)
+    const photoBox = card.querySelector('.car-photo')
+    if (car.photo_path) {
+      const img = document.createElement('img')
+      img.alt = displayTitle(car)
+      photoBox.replaceChildren(img)
+      lazyLoadPrivatePhoto(car.photo_path, img)
+    }
+    const remove = document.createElement('button')
+    remove.type = 'button'
+    remove.className = 'showcase-remove-button'
+    remove.textContent = 'Remove'
+    remove.addEventListener('click', async (event) => {
+      event.stopPropagation()
+      const { error } = await supabase.from('cars').update({ is_showcase:false, updated_at:new Date().toISOString() }).eq('id', car.id).eq('user_id', session.user.id)
+      if (error) return window.alert(error.message || 'Could not update Showcase.')
+      car.is_showcase = false
+      renderShowcase()
+      applyFiltersAndRender()
+    })
+    card.querySelector('.car-body').append(remove)
+    card.addEventListener('click', () => showEditor(car))
+    grid.append(card)
+  }
+}
+
+function addCardMenu(car, card, photoBox) {
+  if (!collectionExtrasSupported) return
+  const wrap = document.createElement('div')
+  wrap.className = 'card-more-wrap'
+  const more = document.createElement('button')
+  more.type = 'button'
+  more.className = 'card-more-button'
+  more.textContent = '•••'
+  more.setAttribute('aria-label', `More options for ${displayTitle(car)}`)
+  const menu = document.createElement('div')
+  menu.className = 'card-more-menu hidden'
+  const showcase = document.createElement('button')
+  showcase.type = 'button'
+  showcase.textContent = car.is_showcase ? 'Remove from Showcase' : 'Add to Showcase'
+  showcase.addEventListener('click', async (event) => {
+    event.preventDefault(); event.stopPropagation()
+    const nextValue = !Boolean(car.is_showcase)
+    const { error } = await supabase.from('cars').update({ is_showcase:nextValue, updated_at:new Date().toISOString() }).eq('id',car.id).eq('user_id',session.user.id)
+    if (error) return window.alert(error.message || 'Could not update Showcase.')
+    car.is_showcase = nextValue
+    showcase.textContent = nextValue ? 'Remove from Showcase' : 'Add to Showcase'
+    menu.classList.add('hidden')
+    if (socialScreen.classList.contains('active')) renderShowcase()
+  })
+  more.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); menu.classList.toggle('hidden') })
+  wrap.addEventListener('click', (event) => event.stopPropagation())
+  menu.append(showcase)
+  wrap.append(more, menu)
+  photoBox.append(wrap)
+}
+
 function renderCars() {
   carsGrid.replaceChildren()
   emptyState.classList.toggle('hidden', cars.length !== 0)
@@ -1379,7 +1473,7 @@ function renderCars() {
     card.dataset.carId = String(car.id)
     card.tabIndex = 0
     const specialStatus = SPECIAL_STATUSES.includes(car.special_status) ? car.special_status : ''
-    if (specialStatus) {
+    if (specialStatus && specialStatus !== 'Multipack') {
       const specialClass = specialClassForStatus(specialStatus)
       card.classList.add('special-card')
       if (specialClass) card.classList.add(specialClass)
@@ -1416,6 +1510,13 @@ function renderCars() {
       specialBadge.className = 'special-badge'
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
       badgeStack.append(specialBadge)
+    }
+    if (car.exclusive_retailer) {
+      const exclusiveBadge = document.createElement('div')
+      exclusiveBadge.className = 'special-badge exclusive-badge'
+      const shortRetailer = { 'Walmart':'WMT', 'Target':'TGT', 'Walgreens':'WAG', 'Dollar General':'DG', 'Kroger':'KROGER' }[car.exclusive_retailer] || car.exclusive_retailer
+      exclusiveBadge.textContent = car.exclusive_type ? `${shortRetailer} · ${car.exclusive_type.toUpperCase()}` : shortRetailer.toUpperCase()
+      badgeStack.append(exclusiveBadge)
     }
     if (car.is_custom) {
       const customBadge = document.createElement('div')
@@ -1464,6 +1565,7 @@ function renderCars() {
       favoriteButton.addEventListener('keydown', (event) => event.stopPropagation())
       photoBox.append(favoriteButton)
     }
+    addCardMenu(car, card, photoBox)
 
     const qtyControls = document.createElement('div')
     qtyControls.className = 'card-quantity-control'
@@ -1630,6 +1732,8 @@ function editorPayload() {
     updated_at: new Date().toISOString(),
   }
   if (collectionExtrasSupported) {
+    payload.exclusive_retailer = exclusiveRetailer?.value || null
+    payload.exclusive_type = exclusiveRetailer?.value ? (exclusiveType?.value || null) : null
     if (specialRaw === 'Multipack') {
       const chosen = packSizeSelect?.value === 'other' ? customPackSize?.value : packSizeSelect?.value
       payload.pack_size = Math.max(2, Math.floor(Number(chosen) || 5))
@@ -1942,6 +2046,7 @@ function populateYearOptions() {
 
 
 $('special-status').addEventListener('change', syncMultipackFields)
+exclusiveRetailer?.addEventListener('change', syncExclusiveFields)
 packSizeSelect?.addEventListener('change', syncMultipackFields)
 favoritesStat?.addEventListener('click', () => {
   activeBrandFilter = '__favorites__'
