@@ -1,4 +1,4 @@
-Pocket 64 v3.0.5
+Pocket 64 v3.0.6
 
 Changes: Favorite control removed from Add/Edit Car. Favorite is now a hollow star on the top-right of each collection card; tapping toggles a metallic-blue filled star. Quantity photo badge moved to bottom-right.
 
@@ -646,10 +646,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Preserved all existing data fields and behavior.
 
 
-## v3.0.5
+## v3.0.6
 - Reduced Model and Toy Number / SKU suggestion popup size and typography.
 - Renamed Toy Number to Toy Number / SKU.
 - Limited automatic exclusive detection to Toy Number / SKU catalog matching only.
 - Toy Number / SKU suggestions explicitly label retailer-exclusive catalog records as POSSIBLE EXCLUSIVE.
 - Model suggestions still identify/fill cars but do not apply exclusive status.
-- Bumped PWA cache/assets to 3.0.5.
+- Bumped PWA cache/assets to 3.0.6.

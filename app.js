@@ -968,7 +968,7 @@ async function exportBackup() {
     const backupCars = cars.map((car) => ({ ...car }))
     const backup = {
       format: 'ajs-garage-backup',
-      version: 4,
+      version: 5,
       exported_at: new Date().toISOString(),
       source_user_id: session.user.id,
       car_count: backupCars.length,
@@ -1093,6 +1093,7 @@ function restorePayload(car, targetId, initialPhotoPath) {
   }
   if (collectionExtrasSupported) {
     payload.is_favorite = restoreBoolean(car.is_favorite)
+    payload.is_showcase = restoreBoolean(car.is_showcase)
     const packSize = Number(car.pack_size)
     payload.pack_size = Number.isFinite(packSize) && packSize >= 2 ? Math.floor(packSize) : null
   }
