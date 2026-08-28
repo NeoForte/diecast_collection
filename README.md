@@ -1,4 +1,4 @@
-Pocket 64 v3.1.4
+Pocket 64 v3.1.5
 
 Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.
 
@@ -706,3 +706,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Toy Number / SKU suggestions now prioritize matching cars already in your own garage ahead of catalog results.
 - Garage SKU matches show the existing photo, current quantity, year/color/series details, and a direct Add 1 button.
 - Exact SKU matches are visually emphasized for faster entry.
+
+
+## v3.1.5
+- Simplified photo entry for faster, more consistent collection input: removed the in-app Take Photo/camera capture path. Add/Edit now uses Choose Photo only, so photos can be taken in the normal Camera app first and then selected in Pocket 64.
+- Increased Add Car possible-match thumbnails and match-row width so existing cars are easier to identify at a glance.
+- Prevented iPhone Safari from auto-zooming when the Home search field receives focus by keeping its mobile font size at 16px.

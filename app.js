@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.1.4'
+const APP_VERSION = '3.1.5'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -78,7 +78,6 @@ const deleteButton = $('delete-button')
 const photoPreview = $('photo-preview')
 const photoPlaceholder = $('photo-placeholder')
 const photoInput = $('photo-input')
-const cameraInput = $('camera-input')
 const duplicateWarning = $('duplicate-warning')
 const modelSuggestions = $('model-suggestions')
 const toyNumberSuggestions = $('toy-number-suggestions')
@@ -2644,17 +2643,7 @@ $('more-details-toggle').addEventListener('click', () => {
   const collapsed = section.classList.toggle('quick-collapsed')
   $('more-details-toggle').textContent = collapsed ? 'More Details ▾' : 'Fewer Details ▴'
 })
-$('take-photo-button')?.addEventListener('click', () => cameraInput?.click())
 $('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
-
-cameraInput?.addEventListener('change', () => {
-  selectedPhotoFile = cameraInput.files?.[0] ?? null
-  if (!selectedPhotoFile) return
-  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
-  previewObjectUrl = URL.createObjectURL(selectedPhotoFile)
-  setPhotoPreview(previewObjectUrl)
-  cameraInput.value = ''
-})
 
 photoInput.addEventListener('change', () => {
   selectedPhotoFile = photoInput.files?.[0] ?? null
