@@ -3923,3 +3923,44 @@ html[data-theme="light"] .settings-clear-button {
   background: rgba(220,38,38,.06);
   color: #b91c1c;
 }
+
+
+/* Pocket 64 v3.0.9 — speed-entry camera framing */
+.photo-picker { position:relative; }
+.photo-placeholder-speed { pointer-events:auto; }
+.photo-placeholder-speed .photo-placeholder-icon { font-size:24px; line-height:1; }
+.photo-source-actions { position:absolute; z-index:4; left:50%; bottom:8px; transform:translateX(-50%); display:flex; gap:6px; justify-content:center; white-space:nowrap; }
+.photo-source-actions button {
+  min-height:36px; padding:0 12px; border-radius:9px; border:1px solid rgba(255,255,255,.18);
+  background:#151515; color:#f3f4f6; font-size:12px; font-weight:850;
+}
+html[data-theme="light"] .photo-source-actions button { background:#fff; color:#111; border-color:#cfd3d8; }
+.photo-framer {
+  margin:-2px 0 10px; padding:10px; border:1px solid #303030; border-radius:14px;
+  background:#0d0d0d;
+}
+html[data-theme="light"] .photo-framer { background:#f7f8f9; border-color:#d3d7dc; }
+.photo-framer-heading { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.photo-framer-heading strong { font-size:13px; }
+.photo-framer-heading span { color:#8f969f; font-size:10px; text-align:right; }
+.photo-frame-viewport {
+  width:min(100%, 360px); aspect-ratio:1/1; margin:0 auto; position:relative; overflow:hidden;
+  border-radius:12px; background:#050505; border:1px solid #343434; touch-action:none; user-select:none;
+}
+.photo-frame-viewport::after {
+  content:""; position:absolute; inset:0; pointer-events:none; border:1px solid rgba(255,255,255,.42); border-radius:12px;
+}
+.photo-frame-viewport img {
+  position:absolute; left:50%; top:50%; transform-origin:center center; max-width:none; max-height:none;
+  will-change:transform; user-select:none; -webkit-user-drag:none;
+}
+.photo-framer-actions { display:grid; grid-template-columns:1fr 1.25fr; gap:8px; margin-top:8px; }
+.photo-framer-actions button { min-height:40px; border-radius:10px; border:1px solid #303030; background:#171717; color:#ddd; font-weight:850; }
+.photo-framer-actions .photo-use-button { background:#e8edf4; color:#07101b; border-color:#e8edf4; }
+html[data-theme="light"] .photo-framer-actions button { background:#fff; color:#111; border-color:#cfd3d8; }
+html[data-theme="light"] .photo-framer-actions .photo-use-button { background:#111827; color:#fff; border-color:#111827; }
+@media (max-width:560px) {
+  .photo-framer { padding:8px; }
+  .photo-frame-viewport { width:min(100%, 310px); }
+  .photo-framer-heading span { font-size:9px; }
+}

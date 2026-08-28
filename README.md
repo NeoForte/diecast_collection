@@ -1,3 +1,7 @@
+Pocket 64 v3.0.9
+
+Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.
+
 Pocket 64 v3.0.8
 
 Changes: Favorite control removed from Add/Edit Car. Favorite is now a hollow star on the top-right of each collection card; tapping toggles a metallic-blue filled star. Quantity photo badge moved to bottom-right.

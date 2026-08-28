@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.0.8" />
+  <link rel="manifest" href="manifest.webmanifest?v=3.0.9" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=3.0.8" />
+  <link rel="stylesheet" href="styles.css?v=3.0.9" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -79,6 +79,7 @@
                         <option value="qty-high">Qty High–Low</option>
                         <option value="qty-low">Qty Low–High</option>
                         <option value="special-first">Special First</option>
+                        <option value="color-az">Color A–Z</option>
                       </select>
                     </label>
                   </div>
@@ -180,7 +181,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 3.0.8</span>
+              <span class="version-badge">Version 3.0.9</span>
             </div>
           </div>
         </section>
@@ -212,8 +213,30 @@
 
           <div class="photo-picker">
             <img id="photo-preview" class="hidden" alt="Car preview" />
-            <div id="photo-placeholder">📷<span>Take Photo or Choose from Library</span></div>
-            <input id="photo-input" type="file" accept="image/*" />
+            <div id="photo-placeholder" class="photo-placeholder-speed">
+              <span class="photo-placeholder-icon" aria-hidden="true">📷</span>
+              <span>ADD PHOTO</span>
+            </div>
+            <div class="photo-source-actions">
+              <button id="take-photo-button" type="button">Take Photo</button>
+              <button id="choose-photo-button" type="button">Choose Photo</button>
+            </div>
+            <input id="camera-input" class="hidden" type="file" accept="image/*" capture="environment" />
+            <input id="photo-input" class="hidden" type="file" accept="image/*" />
+          </div>
+
+          <div id="photo-framer" class="photo-framer hidden" aria-label="Square photo framing">
+            <div class="photo-framer-heading">
+              <strong>Frame Photo</strong>
+              <span>1.5× start · pinch to zoom · drag to position</span>
+            </div>
+            <div id="photo-frame-viewport" class="photo-frame-viewport">
+              <img id="photo-frame-image" alt="Position your car photo" draggable="false" />
+            </div>
+            <div class="photo-framer-actions">
+              <button id="photo-retake-button" type="button">Retake</button>
+              <button id="photo-use-button" type="button" class="photo-use-button">Use Photo</button>
+            </div>
           </div>
 
           <form id="car-form" class="car-form compact-editor-form">
@@ -351,7 +374,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=3.0.8"></script>
-  <script type="module" src="app.js?v=3.0.8"></script>
+  <script src="jszip.min.js?v=3.0.9"></script>
+  <script type="module" src="app.js?v=3.0.9"></script>
 </body>
 </html>
