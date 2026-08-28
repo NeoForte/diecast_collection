@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.0.1'
+const APP_VERSION = '3.0.2'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -87,6 +87,7 @@ const duplicateAnywayBtn = $('duplicate-anyway-btn')
 const customColorLabel = $('custom-color-label')
 const customColor = $('custom-color')
 const customCheckbox = $('is-custom')
+const showcaseCheckbox = $('is-showcase')
 const favoritesStat = $('favorites-stat')
 const statsFavorites = $('stats-favorites')
 const multipackFields = $('multipack-fields')
@@ -715,6 +716,7 @@ function showEditor(car = null, options = {}) {
 function fillEditor(car) {
   setBrandValue(car?.diecast_brand ?? '')
   customCheckbox.checked = Boolean(car?.is_custom)
+  if (showcaseCheckbox) showcaseCheckbox.checked = Boolean(car?.is_showcase)
   $('model').value = car?.model ?? ''
   hideModelSuggestions()
   setYearValue(car?.model_year ?? '')
@@ -1432,37 +1434,6 @@ function renderShowcase() {
   }
 }
 
-function addCardMenu(car, card, photoBox) {
-  if (!collectionExtrasSupported) return
-  const wrap = document.createElement('div')
-  wrap.className = 'card-more-wrap'
-  const more = document.createElement('button')
-  more.type = 'button'
-  more.className = 'card-more-button'
-  more.textContent = '•••'
-  more.setAttribute('aria-label', `More options for ${displayTitle(car)}`)
-  const menu = document.createElement('div')
-  menu.className = 'card-more-menu hidden'
-  const showcase = document.createElement('button')
-  showcase.type = 'button'
-  showcase.textContent = car.is_showcase ? 'Remove from Showcase' : 'Add to Showcase'
-  showcase.addEventListener('click', async (event) => {
-    event.preventDefault(); event.stopPropagation()
-    const nextValue = !Boolean(car.is_showcase)
-    const { error } = await supabase.from('cars').update({ is_showcase:nextValue, updated_at:new Date().toISOString() }).eq('id',car.id).eq('user_id',session.user.id)
-    if (error) return window.alert(error.message || 'Could not update Showcase.')
-    car.is_showcase = nextValue
-    showcase.textContent = nextValue ? 'Remove from Showcase' : 'Add to Showcase'
-    menu.classList.add('hidden')
-    if (socialScreen.classList.contains('active')) renderShowcase()
-  })
-  more.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); menu.classList.toggle('hidden') })
-  wrap.addEventListener('click', (event) => event.stopPropagation())
-  menu.append(showcase)
-  wrap.append(more, menu)
-  photoBox.append(wrap)
-}
-
 function renderCars() {
   carsGrid.replaceChildren()
   emptyState.classList.toggle('hidden', cars.length !== 0)
@@ -1565,7 +1536,6 @@ function renderCars() {
       favoriteButton.addEventListener('keydown', (event) => event.stopPropagation())
       photoBox.append(favoriteButton)
     }
-    addCardMenu(car, card, photoBox)
 
     const qtyControls = document.createElement('div')
     qtyControls.className = 'card-quantity-control'
@@ -1719,6 +1689,7 @@ function editorPayload() {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
     is_custom: Boolean(customCheckbox.checked),
+    is_showcase: collectionExtrasSupported ? Boolean(showcaseCheckbox?.checked) : undefined,
     model: $('model').value.trim().toUpperCase() || null,
     model_year: yearRaw ? String(yearRaw).toUpperCase() : null,
     color: colorRaw ? String(colorRaw).toUpperCase() : null,
@@ -1731,6 +1702,7 @@ function editorPayload() {
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }
+  if (!collectionExtrasSupported) delete payload.is_showcase
   if (collectionExtrasSupported) {
     payload.exclusive_retailer = exclusiveRetailer?.value || null
     payload.exclusive_type = exclusiveRetailer?.value ? (exclusiveType?.value || null) : null

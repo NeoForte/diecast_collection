@@ -3696,33 +3696,43 @@ html[data-theme="light"] .favorite-card-toggle:not(.is-favorite) {
 @media (max-width:560px) { .exclusive-row { grid-template-columns:1fr; gap:0; } }
 
 
-/* v3.0.1 — card-only Favorites + Showcase card menu */
+
+
+/* v3.0.2 — restore original Favorite star; Showcase only in Add/Edit */
 .favorite-card-toggle {
-  font-size:19px;
-  width:25px;
-  height:25px;
-  color:rgba(230,236,245,.82);
-  -webkit-text-stroke:.3px rgba(255,255,255,.35);
-  transition:transform .15s ease, filter .15s ease, color .15s ease;
+  position:absolute;
+  top:4px;
+  right:4px;
+  z-index:5;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:none;
+  border-radius:0;
+  background:transparent;
+  color:rgba(255,255,255,.9);
+  font-size:18px;
+  line-height:1;
+  box-shadow:none;
+  text-shadow:0 1px 2px rgba(0,0,0,.75);
+  cursor:pointer;
+  width:auto;
+  height:auto;
+  -webkit-text-stroke:0;
+  filter:none;
 }
-.favorite-card-toggle:active { transform:scale(.88); }
 .favorite-card-toggle.is-favorite {
-  color:#54a9ff;
-  background:linear-gradient(145deg,#d9f0ff 0%,#77bdff 28%,#2588ee 58%,#9bd0ff 82%,#2d7bd1 100%);
-  -webkit-background-clip:text;
-  background-clip:text;
-  -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 3px rgba(67,157,255,.95)) drop-shadow(0 0 7px rgba(31,111,218,.65));
-  text-shadow:none;
+  color:#8ec5ff;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  -webkit-text-fill-color:currentColor;
+  filter:none;
+  text-shadow:0 0 6px rgba(66,133,244,.85), 0 1px 2px rgba(0,0,0,.78);
 }
-.card-more-wrap { position:absolute; top:3px; left:4px; z-index:7; }
-.card-more-button { border:0; background:rgba(8,10,14,.68); color:#f2f5f8; border-radius:10px; min-width:27px; height:23px; padding:0 5px 3px; font-size:14px; line-height:1; box-shadow:0 1px 5px rgba(0,0,0,.42); }
-.card-more-menu { position:absolute; top:27px; left:0; min-width:154px; padding:5px; border:1px solid rgba(115,145,185,.38); border-radius:10px; background:rgba(10,13,18,.97); box-shadow:0 10px 24px rgba(0,0,0,.5); }
-.card-more-menu button { width:100%; border:0; border-radius:7px; background:transparent; color:#eaf2ff; text-align:left; padding:8px 9px; font-size:12px; white-space:nowrap; }
-.card-more-menu button:hover { background:rgba(63,126,205,.18); }
+.favorite-card-toggle:disabled { opacity:.55; cursor:default; }
+html[data-theme="light"] .favorite-card-toggle:not(.is-favorite) { color:#374151; }
+.entry-flag-stack { gap:5px; }
 .showcase-grid { margin-top:14px; }
 .showcase-card { cursor:pointer; }
 .showcase-remove-button { margin-top:8px; border:1px solid rgba(214,177,72,.48); background:rgba(214,177,72,.08); color:#ead18b; border-radius:8px; padding:6px 9px; font-size:11px; }
-html[data-theme="light"] .card-more-button { background:rgba(255,255,255,.9); color:#172033; }
-html[data-theme="light"] .card-more-menu { background:rgba(255,255,255,.98); }
-html[data-theme="light"] .card-more-menu button { color:#182033; }
