@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.0.3'
+const APP_VERSION = '3.0.4'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -509,7 +509,7 @@ async function renderModelSuggestions() {
     option.addEventListener('click', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      applyCatalogCarToEditor(car, input)
+      applyCatalogCarToEditor(car, input, { applyExclusive: false })
     })
     modelSuggestions.append(option)
   }
@@ -523,7 +523,8 @@ function hideToyNumberSuggestions() {
   toyNumberSuggestions.replaceChildren()
 }
 
-function applyCatalogCarToEditor(car, focusTarget = null) {
+function applyCatalogCarToEditor(car, focusTarget = null, options = {}) {
+  const { applyExclusive = false } = options
   setBrandValue(car.diecast_brand || 'Hot Wheels')
   $('model').value = car.model || ''
   setYearValue(car.model_year || '')
@@ -532,7 +533,8 @@ function applyCatalogCarToEditor(car, focusTarget = null) {
   $('general-number').value = String(car.general_number || '').toUpperCase()
   $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
   setSpecialValue(car.special_status || '')
-  applyCatalogExclusive(car)
+  if (applyExclusive) applyCatalogExclusive(car)
+  // Exclusive detection is intentionally limited to Toy Number / SKU matching.
   // Color intentionally stays blank because it is not in the imported catalog.
   setColorValue('')
   hideModelSuggestions()
@@ -602,7 +604,17 @@ async function renderToyNumberSuggestions() {
     title.textContent = `${car.hotwheels_toy_number || '—'} · ${car.model || 'Untitled Car'}`
     const meta = document.createElement('span')
     meta.className = 'model-suggestion-meta'
-    meta.textContent = [car.model_year, car.series_collection, car.general_number, car.special_status].filter(Boolean).join(' · ')
+    const isPossibleExclusive = Boolean(car.exclusive_retailer || car.exclusive_type)
+    if (isPossibleExclusive) option.classList.add('possible-exclusive-suggestion')
+    meta.textContent = [
+      isPossibleExclusive ? 'POSSIBLE EXCLUSIVE' : '',
+      car.exclusive_retailer,
+      car.exclusive_type,
+      car.model_year,
+      car.series_collection,
+      car.general_number,
+      car.special_status
+    ].filter(Boolean).join(' · ')
     text.append(title, meta)
     option.append(thumb, text)
 
@@ -610,7 +622,7 @@ async function renderToyNumberSuggestions() {
     option.addEventListener('click', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      applyCatalogCarToEditor(car, input)
+      applyCatalogCarToEditor(car, input, { applyExclusive: true })
     })
     toyNumberSuggestions.append(option)
   }
