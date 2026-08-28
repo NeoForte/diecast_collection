@@ -1,4 +1,4 @@
-Pocket 64 v3.0.2
+Pocket 64 v3.0.3
 
 Changes: Favorite control removed from Add/Edit Car. Favorite is now a hollow star on the top-right of each collection card; tapping toggles a metallic-blue filled star. Quantity photo badge moved to bottom-right.
 
@@ -629,9 +629,18 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Showcase page now displays cars selected for Showcase.
 
 
-## v3.0.2
+## v3.0.3
 - Restored the original compact metallic-blue Favorite star treatment on collection cards.
 - Removed the three-dot Showcase menu from collection cards.
 - Added Showcase as a clean Add/Edit Car checkbox beside the existing entry flags.
 - Showcase remains a separate collection view and can still be removed from the Showcase screen.
-- Bumped PWA cache/assets to 3.0.2.
+- Bumped PWA cache/assets to 3.0.3.
+
+## v3.0.3
+- Rebuilt Add/Edit Car into a compact, consistent layout aimed at minimal scrolling.
+- Reduced photo area height while preserving a useful card preview.
+- Standardized Add/Edit label, input, select, and textarea typography/sizing.
+- Paired Brand + Model, Quantity + Special, Year + Color, and Toy Number + Exclusive for faster entry.
+- Moved Showcase + Custom into a compact Options row near the bottom.
+- Reduced default Notes height; it remains resizable.
+- Preserved all existing data fields and behavior.

@@ -3736,3 +3736,134 @@ html[data-theme="light"] .favorite-card-toggle:not(.is-favorite) { color:#374151
 .showcase-grid { margin-top:14px; }
 .showcase-card { cursor:pointer; }
 .showcase-remove-button { margin-top:8px; border:1px solid rgba(214,177,72,.48); background:rgba(214,177,72,.08); color:#ead18b; border-radius:8px; padding:6px 9px; font-size:11px; }
+
+/* Pocket 64 v3.0.3 — compact, consistent Add/Edit layout */
+#editor-screen { padding-top:0 !important; }
+#editor-screen .editor-header { margin:2px -2px 8px !important; min-height:36px; }
+#editor-screen .editor-header h2 { font-size:17px !important; }
+#editor-screen .photo-picker {
+  height:clamp(190px, 30vw, 290px) !important;
+  aspect-ratio:auto !important;
+  margin-bottom:10px !important;
+  border-radius:14px !important;
+}
+#editor-screen .photo-picker #photo-placeholder { font-size:13px !important; gap:7px !important; }
+#editor-screen .photo-picker #photo-placeholder:first-line { font-size:22px; }
+
+#car-form.compact-editor-form {
+  padding:12px !important;
+  border-radius:14px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+}
+#car-form.compact-editor-form label,
+#car-form.compact-editor-form .quantity-field > label,
+#car-form.compact-editor-form .entry-options-label {
+  margin:0 !important;
+  font-size:12px !important;
+  line-height:1.2 !important;
+  font-weight:800 !important;
+  color:var(--p64-label, #e6e6e6) !important;
+}
+#car-form.compact-editor-form label { display:flex; flex-direction:column; gap:4px; min-width:0; }
+#car-form.compact-editor-form .editor-row {
+  display:grid !important;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap:10px !important;
+  align-items:end !important;
+  margin:0 !important;
+}
+#car-form.compact-editor-form .brand-model-row { grid-template-columns:minmax(150px, .72fr) minmax(0, 1.28fr) !important; }
+#car-form.compact-editor-form .quantity-special-row { grid-template-columns:minmax(180px, .72fr) minmax(0, 1.28fr) !important; }
+#car-form.compact-editor-form .toy-exclusive-row { grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important; }
+
+#car-form.compact-editor-form input:not([type="checkbox"]):not([type="hidden"]),
+#car-form.compact-editor-form select,
+#car-form.compact-editor-form textarea,
+#car-form.compact-editor-form .quantity-display,
+#car-form.compact-editor-form .quantity-step {
+  min-height:40px !important;
+  height:40px !important;
+  font-size:13px !important;
+  border-radius:9px !important;
+}
+#car-form.compact-editor-form input:not([type="checkbox"]):not([type="hidden"]),
+#car-form.compact-editor-form select,
+#car-form.compact-editor-form textarea { padding:8px 12px !important; }
+#car-form.compact-editor-form .quantity-control {
+  display:grid !important;
+  grid-template-columns:40px minmax(72px,1fr) 40px !important;
+  gap:5px !important;
+  min-height:40px !important;
+  margin:0 !important;
+}
+#car-form.compact-editor-form .quantity-field { margin:0 !important; max-width:none !important; }
+#car-form.compact-editor-form .quantity-field > label { margin-bottom:4px !important; }
+#car-form.compact-editor-form .quantity-step { width:40px !important; padding:0 !important; font-size:20px !important; }
+#car-form.compact-editor-form .quantity-display { display:grid !important; place-items:center; padding:0 8px !important; }
+
+#car-form.compact-editor-form .multipack-fields,
+#car-form.compact-editor-form .conditional-row {
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin:0 !important;
+}
+#car-form.compact-editor-form .multipack-fields.hidden,
+#car-form.compact-editor-form .conditional-row:has(> .hidden:nth-child(1)):has(> .hidden:nth-child(2)) { display:none !important; }
+#car-form.compact-editor-form .compact-conditional-field { margin:0 !important; }
+#car-form.compact-editor-form .hidden { display:none !important; }
+
+#car-form.compact-editor-form .entry-options-row {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:14px !important;
+  min-height:30px !important;
+  margin:0 !important;
+  padding:2px 2px 0 !important;
+}
+#car-form.compact-editor-form .entry-options-label { margin-right:auto !important; opacity:.78; }
+#car-form.compact-editor-form .custom-toggle {
+  display:inline-flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:5px !important;
+  width:auto !important;
+  min-height:26px !important;
+  padding:0 !important;
+  font-size:12px !important;
+  white-space:nowrap;
+}
+#car-form.compact-editor-form .custom-toggle input { width:18px !important; height:18px !important; margin:0 !important; }
+#car-form.compact-editor-form .custom-toggle span { font-size:12px !important; }
+
+#car-form.compact-editor-form #notes {
+  min-height:52px !important;
+  height:52px !important;
+  resize:vertical !important;
+}
+#car-form.compact-editor-form .duplicate-warning { margin:0 !important; }
+#car-form.compact-editor-form .model-suggestions { top:100% !important; }
+
+@media (max-width:560px) {
+  #editor-screen .photo-picker { height:clamp(175px, 52vw, 220px) !important; }
+  #car-form.compact-editor-form { padding:10px !important; gap:7px !important; }
+  #car-form.compact-editor-form .editor-row { gap:7px !important; }
+  #car-form.compact-editor-form .brand-model-row { grid-template-columns:minmax(112px, .78fr) minmax(0, 1.22fr) !important; }
+  #car-form.compact-editor-form .quantity-special-row { grid-template-columns:minmax(150px, .86fr) minmax(0, 1.14fr) !important; }
+  #car-form.compact-editor-form .quantity-control { grid-template-columns:36px minmax(64px,1fr) 36px !important; gap:4px !important; }
+  #car-form.compact-editor-form .quantity-step { width:36px !important; }
+  #car-form.compact-editor-form input:not([type="checkbox"]):not([type="hidden"]),
+  #car-form.compact-editor-form select,
+  #car-form.compact-editor-form .quantity-display { font-size:12px !important; padding-left:8px !important; padding-right:8px !important; }
+  #car-form.compact-editor-form label,
+  #car-form.compact-editor-form .quantity-field > label,
+  #car-form.compact-editor-form .entry-options-label { font-size:11px !important; }
+}
+
+@media (max-width:380px) {
+  #car-form.compact-editor-form .brand-model-row,
+  #car-form.compact-editor-form .toy-exclusive-row { grid-template-columns:1fr !important; }
+}

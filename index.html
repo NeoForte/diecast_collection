@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.0.2" />
+  <link rel="manifest" href="manifest.webmanifest?v=3.0.3" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=3.0.2" />
+  <link rel="stylesheet" href="styles.css?v=3.0.3" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -173,7 +173,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 3.0.2</span>
+              <span class="version-badge">Version 3.0.3</span>
             </div>
           </div>
         </section>
@@ -209,40 +209,31 @@
             <input id="photo-input" type="file" accept="image/*" />
           </div>
 
-          <form id="car-form" class="car-form">
-            <div class="brand-custom-row">
+          <form id="car-form" class="car-form compact-editor-form">
+            <div class="editor-row brand-model-row">
               <label class="brand-field">Diecast Brand
-              <select id="diecast-brand">
-                <option value=""></option>
-                <option value="None">None</option>
-                <option value="Hot Wheels">Hot Wheels</option>
-                <option value="Matchbox">Matchbox</option>
-                <option value="M2">M2</option>
-                <option value="Cartuned">Cartuned</option>
-                <option value="Maisto">Maisto</option>
-                <option value="Mini GT">Mini GT</option>
-                <option value="Majorette">Majorette</option>
-                <option value="Other">Type your own…</option>
-              </select>
+                <select id="diecast-brand">
+                  <option value=""></option>
+                  <option value="None">None</option>
+                  <option value="Hot Wheels">Hot Wheels</option>
+                  <option value="Matchbox">Matchbox</option>
+                  <option value="M2">M2</option>
+                  <option value="Cartuned">Cartuned</option>
+                  <option value="Maisto">Maisto</option>
+                  <option value="Mini GT">Mini GT</option>
+                  <option value="Majorette">Majorette</option>
+                  <option value="Other">Type your own…</option>
+                </select>
               </label>
-              <div class="entry-flag-stack">
-                <label class="custom-toggle" for="is-showcase">
-                  <input id="is-showcase" type="checkbox" />
-                  <span>Showcase</span>
-                </label>
-                <label class="custom-toggle" for="is-custom">
-                  <input id="is-custom" type="checkbox" />
-                  <span>Custom</span>
-                </label>
-              </div>
+              <label class="model-field">Model
+                <input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" aria-autocomplete="list" aria-controls="model-suggestions" />
+                <div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars in your garage and catalog"></div>
+              </label>
             </div>
             <label id="custom-brand-label" class="hidden">Custom Brand
               <input id="custom-brand" type="text" placeholder="Type brand name" />
             </label>
-            <label class="model-field">Model
-              <input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" aria-autocomplete="list" aria-controls="model-suggestions" />
-              <div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars in your garage and catalog"></div>
-            </label>
+
             <div id="duplicate-warning" class="duplicate-warning hidden" role="status" aria-live="polite">
               <div id="duplicate-warning-text"></div>
               <div id="duplicate-warning-actions" class="duplicate-warning-actions">
@@ -250,7 +241,8 @@
                 <button id="duplicate-anyway-btn" type="button">Add Anyway</button>
               </div>
             </div>
-            <div class="quick-core-row quantity-special-row">
+
+            <div class="editor-row quantity-special-row">
               <div class="quantity-field">
                 <label for="quantity">Quantity</label>
                 <div class="quantity-control">
@@ -280,94 +272,69 @@
             <div id="multipack-fields" class="multipack-fields hidden">
               <label>Pack Size
                 <select id="pack-size">
-                  <option value="5">5-Pack</option>
-                  <option value="8">8-Pack</option>
-                  <option value="10">10-Pack</option>
-                  <option value="20">20-Pack</option>
-                  <option value="3">3-Pack</option>
-                  <option value="2">2-Pack</option>
-                  <option value="50">50-Pack</option>
-                  <option value="60">60-Pack</option>
-                  <option value="other">Other</option>
+                  <option value="5">5-Pack</option><option value="8">8-Pack</option><option value="10">10-Pack</option><option value="20">20-Pack</option><option value="3">3-Pack</option><option value="2">2-Pack</option><option value="50">50-Pack</option><option value="60">60-Pack</option><option value="other">Other</option>
                 </select>
               </label>
               <label id="custom-pack-size-label" class="hidden">Cars in Pack
                 <input id="custom-pack-size" type="number" inputmode="numeric" min="2" max="999" step="1" placeholder="Enter number" />
               </label>
             </div>
-            <div class="exclusive-row">
-              <label>Exclusive
-                <select id="exclusive-retailer">
-                  <option value="">None</option>
-                  <option value="Walmart">Walmart</option>
-                  <option value="Target">Target</option>
-                  <option value="Walgreens">Walgreens</option>
-                  <option value="Dollar General">Dollar General</option>
-                  <option value="Kroger">Kroger</option>
-                  <option value="Other">Other</option>
-                </select>
+
+            <div class="editor-row year-color-row">
+              <label>Release Year
+                <select id="model-year"><option value=""></option></select>
               </label>
-              <label id="exclusive-details" class="hidden">Type
-                <select id="exclusive-type">
-                  <option value=""></option>
-                  <option value="Store Recolor">Store Recolor</option>
-                  <option value="ZAMAC">ZAMAC</option>
-                  <option value="Red Edition">Red Edition</option>
-                  <option value="Exclusive Series">Exclusive Series</option>
-                  <option value="Other">Other</option>
+              <label>Color
+                <select id="color">
+                  <option value=""></option><option value="Black">Black</option><option value="White">White</option><option value="Silver">Silver</option><option value="Gray">Gray</option><option value="Red">Red</option><option value="Blue">Blue</option><option value="Green">Green</option><option value="Yellow">Yellow</option><option value="Orange">Orange</option><option value="Purple">Purple</option><option value="Pink">Pink</option><option value="Gold">Gold</option><option value="Brown">Brown</option><option value="Tan">Tan</option><option value="Other">Type your own…</option>
                 </select>
               </label>
             </div>
-            <button id="more-details-toggle" class="more-details-toggle hidden" type="button">More Details ▾</button>
-            <div id="more-details-section">
-              <div class="two-col year-color-row">
-                <label>Release Year
-                  <select id="model-year">
-                    <option value=""></option>
-                  </select>
-                </label>
-                <label>Color
-                  <select id="color">
-                    <option value=""></option>
-                    <option value="Black">Black</option>
-                    <option value="White">White</option>
-                    <option value="Silver">Silver</option>
-                    <option value="Gray">Gray</option>
-                    <option value="Red">Red</option>
-                    <option value="Blue">Blue</option>
-                    <option value="Green">Green</option>
-                    <option value="Yellow">Yellow</option>
-                    <option value="Orange">Orange</option>
-                    <option value="Purple">Purple</option>
-                    <option value="Pink">Pink</option>
-                    <option value="Gold">Gold</option>
-                    <option value="Brown">Brown</option>
-                    <option value="Tan">Tan</option>
-                    <option value="Other">Type your own…</option>
-                  </select>
-                </label>
-              </div>
+            <div class="editor-row conditional-row">
               <label id="custom-year-label" class="hidden">Other Release Year
                 <input id="custom-year" type="text" inputmode="numeric" placeholder="Type year" />
               </label>
               <label id="custom-color-label" class="hidden">Custom Color
                 <input id="custom-color" type="text" placeholder="Type color" />
               </label>
+            </div>
+
+            <div class="editor-row toy-exclusive-row">
               <label class="toy-number-field model-field">Toy Number
                 <input id="hotwheels-toy-number" type="text" placeholder="JBC11" autocomplete="off" aria-autocomplete="list" aria-controls="toy-number-suggestions" />
                 <div id="toy-number-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching toy numbers in the catalog"></div>
               </label>
-              <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
-              <div class="two-col number-fields">
-                <label>General Number
-                  <input id="general-number" type="text" inputmode="text" placeholder="e.g. 123/250" autocomplete="off" />
-                </label>
-                <label>Series / Collection Number
-                  <input id="series-collection-number" type="text" inputmode="text" placeholder="e.g. 3/10" autocomplete="off" />
-                </label>
-              </div>
-              <label>Notes<textarea id="notes" rows="4" placeholder="Optional notes"></textarea></label>
+              <label>Exclusive
+                <select id="exclusive-retailer">
+                  <option value="">None</option><option value="Walmart">Walmart</option><option value="Target">Target</option><option value="Walgreens">Walgreens</option><option value="Dollar General">Dollar General</option><option value="Kroger">Kroger</option><option value="Other">Other</option>
+                </select>
+              </label>
             </div>
+            <label id="exclusive-details" class="hidden compact-conditional-field">Exclusive Type
+              <select id="exclusive-type">
+                <option value=""></option><option value="Store Recolor">Store Recolor</option><option value="ZAMAC">ZAMAC</option><option value="Red Edition">Red Edition</option><option value="Exclusive Series">Exclusive Series</option><option value="Other">Other</option>
+              </select>
+            </label>
+
+            <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
+            <div class="editor-row number-fields">
+              <label>General Number
+                <input id="general-number" type="text" inputmode="text" placeholder="e.g. 123/250" autocomplete="off" />
+              </label>
+              <label>Series / Collection Number
+                <input id="series-collection-number" type="text" inputmode="text" placeholder="e.g. 3/10" autocomplete="off" />
+              </label>
+            </div>
+
+            <div class="entry-options-row" aria-label="Car options">
+              <span class="entry-options-label">Options</span>
+              <label class="custom-toggle" for="is-showcase"><input id="is-showcase" type="checkbox" /><span>Showcase</span></label>
+              <label class="custom-toggle" for="is-custom"><input id="is-custom" type="checkbox" /><span>Custom</span></label>
+            </div>
+
+            <label class="notes-field">Notes<textarea id="notes" rows="2" placeholder="Optional notes"></textarea></label>
+            <button id="more-details-toggle" class="more-details-toggle hidden" type="button">More Details ▾</button>
+            <div id="more-details-section" class="hidden"></div>
           </form>
 
           <button id="delete-button" class="danger hidden" type="button">Delete Car</button>
@@ -377,7 +344,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=3.0.2"></script>
-  <script type="module" src="app.js?v=3.0.2"></script>
+  <script src="jszip.min.js?v=3.0.3"></script>
+  <script type="module" src="app.js?v=3.0.3"></script>
 </body>
 </html>
