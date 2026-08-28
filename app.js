@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.0.7'
+const APP_VERSION = '3.0.8'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -1091,12 +1091,10 @@ function restorePayload(car, targetId, initialPhotoPath) {
     hotwheels_toy_number: nullableText(car.hotwheels_toy_number),
     is_custom: restoreBoolean(car.is_custom),
   }
-  if (collectionExtrasSupported) {
-    payload.is_favorite = restoreBoolean(car.is_favorite)
-    payload.is_showcase = restoreBoolean(car.is_showcase)
-    const packSize = Number(car.pack_size)
-    payload.pack_size = Number.isFinite(packSize) && packSize >= 2 ? Math.floor(packSize) : null
-  }
+  payload.is_favorite = restoreBoolean(car.is_favorite)
+  payload.is_showcase = restoreBoolean(car.is_showcase)
+  const packSize = Number(car.pack_size)
+  payload.pack_size = Number.isFinite(packSize) && packSize >= 2 ? Math.floor(packSize) : null
   return payload
 }
 
@@ -1107,6 +1105,61 @@ async function upsertRestoreRows(rows) {
     const { error } = await supabase.from('cars').upsert(chunk, { onConflict: 'id' })
     if (error) throw error
   }
+}
+
+
+async function verifyAndRepairRestoreFlags(rows) {
+  const expected = new Map(rows.map((row) => [row.id, {
+    is_favorite: Boolean(row.is_favorite),
+    is_showcase: Boolean(row.is_showcase),
+  }]))
+  if (!expected.size) return
+
+  const ids = [...expected.keys()]
+  const chunkSize = 100
+  for (let start = 0; start < ids.length; start += chunkSize) {
+    const chunkIds = ids.slice(start, start + chunkSize)
+    const { data, error } = await supabase
+      .from('cars')
+      .select('id,is_favorite,is_showcase')
+      .eq('user_id', session.user.id)
+      .in('id', chunkIds)
+    if (error) throw error
+
+    const actualById = new Map((data || []).map((row) => [row.id, row]))
+    for (const id of chunkIds) {
+      const wanted = expected.get(id)
+      const actual = actualById.get(id)
+      if (!actual) throw new Error(`Restore verification could not find car ${id}.`)
+      const favoriteMismatch = Boolean(actual.is_favorite) !== wanted.is_favorite
+      const showcaseMismatch = Boolean(actual.is_showcase) !== wanted.is_showcase
+      if (!favoriteMismatch && !showcaseMismatch) continue
+
+      const { error: repairError } = await supabase
+        .from('cars')
+        .update({
+          is_favorite: wanted.is_favorite,
+          is_showcase: wanted.is_showcase,
+        })
+        .eq('id', id)
+        .eq('user_id', session.user.id)
+      if (repairError) throw repairError
+    }
+  }
+
+  const { data: verified, error: verifyError } = await supabase
+    .from('cars')
+    .select('id,is_favorite,is_showcase')
+    .eq('user_id', session.user.id)
+    .in('id', ids)
+  if (verifyError) throw verifyError
+  const verifiedById = new Map((verified || []).map((row) => [row.id, row]))
+  const failed = ids.filter((id) => {
+    const wanted = expected.get(id)
+    const actual = verifiedById.get(id)
+    return !actual || Boolean(actual.is_favorite) !== wanted.is_favorite || Boolean(actual.is_showcase) !== wanted.is_showcase
+  })
+  if (failed.length) throw new Error(`Restore verification failed for ${failed.length} Favorite/Showcase flag${failed.length === 1 ? '' : 's'}.`)
 }
 
 async function restoreBackupFile(file) {
@@ -1173,6 +1226,8 @@ async function restoreBackupFile(file) {
     restoreButton.textContent = `Cars 0/${restoreItems.length}`
     const rows = restoreItems.map((item) => item.payload)
     await upsertRestoreRows(rows)
+    restoreButton.textContent = 'Verifying…'
+    await verifyAndRepairRestoreFlags(rows)
     restoreButton.textContent = `Cars ${restoreItems.length}/${restoreItems.length}`
 
     const photoItems = restoreItems.filter((item) => item.embeddedPath)

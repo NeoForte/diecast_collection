@@ -1,4 +1,4 @@
-Pocket 64 v3.0.7
+Pocket 64 v3.0.8
 
 Changes: Favorite control removed from Add/Edit Car. Favorite is now a hollow star on the top-right of each collection card; tapping toggles a metallic-blue filled star. Quantity photo badge moved to bottom-right.
 
@@ -660,3 +660,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Requires two-step confirmation, including typing CLEAR.
 - Deletes the signed-in account's car records and associated car photos only; profile icon is preserved.
 - Bumped app/PWA cache assets to 3.0.7.
+
+
+## v3.0.8
+- Restore now writes Favorite, Showcase, and pack-size fields directly instead of depending on the optional extras-support probe.
+- Restore verifies Favorite and Showcase flags after database insertion and repairs mismatches before reporting success.
+- Bumped app/PWA cache assets to 3.0.8.
