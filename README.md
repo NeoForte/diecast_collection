@@ -1,4 +1,4 @@
-Pocket 64 v3.1.1
+Pocket 64 v3.1.2
 
 Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.
 
@@ -688,3 +688,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 ## v3.1.1
 - Newest sorting now uses the most recent add/update activity timestamp, so adding 1 to a selected duplicate moves that car to the top without rewriting its original created_at date.
 - Added a dedicated one-tap × button inside Home search to instantly clear the query and return to the full collection.
+
+
+## v3.1.2
+- Removed the camera photo framing/crop step, including pinch-to-zoom and drag positioning.
+- Take Photo now uses the captured image immediately for faster car entry.
+- Choose Photo remains a separate direct photo-library option.
+- Preserved all v3.1.1 duplicate, search-clear, sorting, and backup/restore behavior.

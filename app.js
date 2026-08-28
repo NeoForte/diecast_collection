@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.1.1'
+const APP_VERSION = '3.1.2'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -79,9 +79,6 @@ const photoPreview = $('photo-preview')
 const photoPlaceholder = $('photo-placeholder')
 const photoInput = $('photo-input')
 const cameraInput = $('camera-input')
-const photoFramer = $('photo-framer')
-const photoFrameViewport = $('photo-frame-viewport')
-const photoFrameImage = $('photo-frame-image')
 const duplicateWarning = $('duplicate-warning')
 const modelSuggestions = $('model-suggestions')
 const toyNumberSuggestions = $('toy-number-suggestions')
@@ -109,15 +106,6 @@ let filteredCars = []
 let editingCar = null
 let selectedPhotoFile = null
 let previewObjectUrl = null
-let framingObjectUrl = null
-let framingSourceFile = null
-let framingScale = 1.5
-let framingX = 0
-let framingY = 0
-let framingBaseScale = 1
-let framingPointers = new Map()
-let framingLastDistance = 0
-let framingDragStart = null
 let quickAddMode = false
 let quickAddKeepBrand = ''
 let quickAddKeepCustomBrand = ''
@@ -868,139 +856,6 @@ function setPhotoPreview(src) {
   }
 }
 
-
-function closePhotoFramer() {
-  photoFramer?.classList.add('hidden')
-  framingPointers.clear()
-  framingLastDistance = 0
-  framingDragStart = null
-  framingSourceFile = null
-  if (framingObjectUrl) URL.revokeObjectURL(framingObjectUrl)
-  framingObjectUrl = null
-  if (photoFrameImage) {
-    photoFrameImage.removeAttribute('src')
-    photoFrameImage.style.transform = ''
-  }
-}
-
-function updatePhotoFrameTransform() {
-  if (!photoFrameImage) return
-  photoFrameImage.style.transform = `translate(-50%, -50%) translate3d(${framingX}px, ${framingY}px, 0) scale(${framingScale})`
-}
-
-function clampPhotoFramePosition() {
-  if (!photoFrameImage || !photoFrameViewport) return
-  const vw = photoFrameViewport.clientWidth
-  const vh = photoFrameViewport.clientHeight
-  const naturalW = photoFrameImage.naturalWidth || 1
-  const naturalH = photoFrameImage.naturalHeight || 1
-  const fittedW = naturalW * framingBaseScale * framingScale
-  const fittedH = naturalH * framingBaseScale * framingScale
-  const maxX = Math.max(0, (fittedW - vw) / 2)
-  const maxY = Math.max(0, (fittedH - vh) / 2)
-  framingX = Math.max(-maxX, Math.min(maxX, framingX))
-  framingY = Math.max(-maxY, Math.min(maxY, framingY))
-}
-
-function setupPhotoFrameGeometry() {
-  if (!photoFrameImage || !photoFrameViewport) return
-  const vw = photoFrameViewport.clientWidth
-  const vh = photoFrameViewport.clientHeight
-  const naturalW = photoFrameImage.naturalWidth || 1
-  const naturalH = photoFrameImage.naturalHeight || 1
-  framingBaseScale = Math.max(vw / naturalW, vh / naturalH)
-  photoFrameImage.style.width = `${naturalW * framingBaseScale}px`
-  photoFrameImage.style.height = `${naturalH * framingBaseScale}px`
-  framingScale = 1.5
-  framingX = 0
-  framingY = 0
-  updatePhotoFrameTransform()
-}
-
-function openPhotoFramer(file) {
-  if (!file || !photoFramer || !photoFrameImage) return
-  closePhotoFramer()
-  framingSourceFile = file
-  framingObjectUrl = URL.createObjectURL(file)
-  photoFrameImage.onload = () => {
-    photoFramer.classList.remove('hidden')
-    requestAnimationFrame(setupPhotoFrameGeometry)
-  }
-  photoFrameImage.src = framingObjectUrl
-}
-
-function pointerDistance() {
-  const pts = [...framingPointers.values()]
-  if (pts.length < 2) return 0
-  return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
-}
-
-function onPhotoFramePointerDown(event) {
-  if (!photoFrameViewport) return
-  photoFrameViewport.setPointerCapture?.(event.pointerId)
-  framingPointers.set(event.pointerId, { x:event.clientX, y:event.clientY })
-  if (framingPointers.size === 1) framingDragStart = { x:event.clientX, y:event.clientY, frameX:framingX, frameY:framingY }
-  if (framingPointers.size === 2) framingLastDistance = pointerDistance()
-}
-
-function onPhotoFramePointerMove(event) {
-  if (!framingPointers.has(event.pointerId)) return
-  framingPointers.set(event.pointerId, { x:event.clientX, y:event.clientY })
-  if (framingPointers.size >= 2) {
-    const distance = pointerDistance()
-    if (framingLastDistance > 0 && distance > 0) {
-      framingScale = Math.max(1, Math.min(4, framingScale * (distance / framingLastDistance)))
-      framingLastDistance = distance
-      clampPhotoFramePosition()
-      updatePhotoFrameTransform()
-    }
-    return
-  }
-  if (framingDragStart) {
-    framingX = framingDragStart.frameX + (event.clientX - framingDragStart.x)
-    framingY = framingDragStart.frameY + (event.clientY - framingDragStart.y)
-    clampPhotoFramePosition()
-    updatePhotoFrameTransform()
-  }
-}
-
-function onPhotoFramePointerUp(event) {
-  framingPointers.delete(event.pointerId)
-  if (framingPointers.size < 2) framingLastDistance = 0
-  if (framingPointers.size === 1) {
-    const point = [...framingPointers.values()][0]
-    framingDragStart = { x:point.x, y:point.y, frameX:framingX, frameY:framingY }
-  } else if (framingPointers.size === 0) {
-    framingDragStart = null
-  }
-}
-
-async function framedSquareFile() {
-  if (!framingSourceFile || !photoFrameImage || !photoFrameViewport) throw new Error('No photo is ready to frame.')
-  const outputSize = 1400
-  const vw = photoFrameViewport.clientWidth || 1
-  const vh = photoFrameViewport.clientHeight || vw
-  const naturalW = photoFrameImage.naturalWidth || 1
-  const naturalH = photoFrameImage.naturalHeight || 1
-  const displayedW = naturalW * framingBaseScale * framingScale
-  const displayedH = naturalH * framingBaseScale * framingScale
-  const left = (vw - displayedW) / 2 + framingX
-  const top = (vh - displayedH) / 2 + framingY
-  const sourceX = Math.max(0, (-left / displayedW) * naturalW)
-  const sourceY = Math.max(0, (-top / displayedH) * naturalH)
-  const sourceW = Math.min(naturalW - sourceX, (vw / displayedW) * naturalW)
-  const sourceH = Math.min(naturalH - sourceY, (vh / displayedH) * naturalH)
-  const square = Math.min(sourceW, sourceH)
-  const canvas = document.createElement('canvas')
-  canvas.width = outputSize
-  canvas.height = outputSize
-  const ctx = canvas.getContext('2d')
-  ctx.fillStyle = '#0d0d0d'
-  ctx.fillRect(0, 0, outputSize, outputSize)
-  ctx.drawImage(photoFrameImage, sourceX, sourceY, square, square, 0, 0, outputSize, outputSize)
-  const blob = await new Promise((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Could not prepare framed photo.')), 'image/jpeg', .9))
-  return new File([blob], `pocket64-${Date.now()}.jpg`, { type:'image/jpeg' })
-}
 
 function privatePhotoCacheName() {
   const userKey = session?.user?.id || 'signed-out'
@@ -2676,30 +2531,13 @@ $('more-details-toggle').addEventListener('click', () => {
 })
 $('take-photo-button')?.addEventListener('click', () => cameraInput?.click())
 $('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
-$('photo-retake-button')?.addEventListener('click', () => cameraInput?.click())
-$('photo-use-button')?.addEventListener('click', async () => {
-  const button = $('photo-use-button')
-  const original = button.textContent
-  button.disabled = true
-  button.textContent = 'Using…'
-  try {
-    selectedPhotoFile = await framedSquareFile()
-    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
-    previewObjectUrl = URL.createObjectURL(selectedPhotoFile)
-    setPhotoPreview(previewObjectUrl)
-    closePhotoFramer()
-  } catch (error) {
-    alert(error.message || 'Could not frame photo.')
-  } finally {
-    button.disabled = false
-    button.textContent = original
-  }
-})
 
 cameraInput?.addEventListener('change', () => {
-  const file = cameraInput.files?.[0] ?? null
-  if (!file) return
-  openPhotoFramer(file)
+  selectedPhotoFile = cameraInput.files?.[0] ?? null
+  if (!selectedPhotoFile) return
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
+  previewObjectUrl = URL.createObjectURL(selectedPhotoFile)
+  setPhotoPreview(previewObjectUrl)
   cameraInput.value = ''
 })
 
@@ -2711,11 +2549,6 @@ photoInput.addEventListener('change', () => {
   setPhotoPreview(previewObjectUrl)
   photoInput.value = ''
 })
-
-photoFrameViewport?.addEventListener('pointerdown', onPhotoFramePointerDown)
-photoFrameViewport?.addEventListener('pointermove', onPhotoFramePointerMove)
-photoFrameViewport?.addEventListener('pointerup', onPhotoFramePointerUp)
-photoFrameViewport?.addEventListener('pointercancel', onPhotoFramePointerUp)
 
 populateYearOptions()
 applySortPreference()
