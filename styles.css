@@ -3884,3 +3884,27 @@ html[data-theme="light"] .favorite-card-toggle:not(.is-favorite) { color:#374151
   .model-suggestion-title { font-size:11.5px; }
   .model-suggestion-meta { font-size:9.5px; }
 }
+
+/* Pocket 64 v3.0.5 — tighter suggestions + prevent iOS focus zoom */
+.model-suggestions { max-height:170px; }
+.model-suggestion { grid-template-columns:28px minmax(0,1fr); gap:5px; padding:4px 6px; }
+.model-suggestion-thumb { width:28px; height:28px; border-radius:6px; font-size:9px; }
+.model-suggestion-text { gap:0; }
+.model-suggestion-title { font-size:10.5px; line-height:1.1; }
+.model-suggestion-meta { font-size:8.75px; line-height:1.1; }
+@media (max-width:420px) {
+  .model-suggestions { max-height:150px; }
+  .model-suggestion { grid-template-columns:26px minmax(0,1fr); padding:3px 5px; gap:5px; }
+  .model-suggestion-thumb { width:26px; height:26px; font-size:8.5px; }
+  .model-suggestion-title { font-size:10px; }
+  .model-suggestion-meta { font-size:8.5px; }
+}
+
+/* iOS Safari auto-zooms form controls whose computed font is below 16px. */
+@media (max-width:768px) {
+  #car-form.compact-editor-form input:not([type="checkbox"]):not([type="hidden"]),
+  #car-form.compact-editor-form select,
+  #car-form.compact-editor-form textarea {
+    font-size:16px !important;
+  }
+}
