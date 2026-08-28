@@ -3925,7 +3925,7 @@ html[data-theme="light"] .settings-clear-button {
 }
 
 
-/* Pocket 64 v3.0.9 — speed-entry camera framing */
+/* Pocket 64 v3.0.10 — speed-entry camera framing */
 .photo-picker { position:relative; }
 .photo-placeholder-speed { pointer-events:auto; }
 .photo-placeholder-speed .photo-placeholder-icon { font-size:24px; line-height:1; }
@@ -3963,4 +3963,22 @@ html[data-theme="light"] .photo-framer-actions .photo-use-button { background:#1
   .photo-framer { padding:8px; }
   .photo-frame-viewport { width:min(100%, 310px); }
   .photo-framer-heading span { font-size:9px; }
+}
+
+
+/* Pocket 64 v3.0.10 — visual duplicate check */
+.duplicate-match-list { display:grid; gap:7px; margin-top:9px; }
+.duplicate-match-row { display:grid; grid-template-columns:54px minmax(0,1fr); gap:9px; align-items:center; padding:7px; border:1px solid rgba(245,221,160,.22); border-radius:10px; background:rgba(10,10,10,.58); }
+.duplicate-match-thumb { width:54px; height:54px; border-radius:8px; overflow:hidden; background:#0b0b0b; border:1px solid #3b3425; display:grid; place-items:center; }
+.duplicate-match-thumb img { width:100%; height:100%; object-fit:contain; display:block; background:#0b0b0b; }
+.duplicate-match-thumb span { font-size:8px; line-height:1.05; text-align:center; color:#8f8774; font-weight:850; letter-spacing:.04em; }
+.duplicate-match-copy { min-width:0; }
+.duplicate-match-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff3c8; font-size:12px; line-height:1.2; font-weight:900; }
+.duplicate-match-meta { margin-top:3px; color:#c7b98f; font-size:10px; line-height:1.25; overflow-wrap:anywhere; }
+.duplicate-match-more { padding:2px 5px 0; color:#bcae82; font-size:10px; font-weight:750; }
+@media (max-width:420px) {
+  .duplicate-match-row { grid-template-columns:48px minmax(0,1fr); gap:7px; padding:6px; }
+  .duplicate-match-thumb { width:48px; height:48px; }
+  .duplicate-match-title { font-size:11px; }
+  .duplicate-match-meta { font-size:9.5px; }
 }

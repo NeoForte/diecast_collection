@@ -1,4 +1,4 @@
-Pocket 64 v3.0.9
+Pocket 64 v3.0.10
 
 Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.
 
@@ -7,6 +7,12 @@ Pocket 64 v3.0.8
 Changes: Favorite control removed from Add/Edit Car. Favorite is now a hollow star on the top-right of each collection card; tapping toggles a metallic-blue filled star. Quantity photo badge moved to bottom-right.
 
 # Pocket 64
+
+## v3.0.10
+- Fixed the Favorites-filter error when removing a favorite from the Favorites stats view.
+- Duplicate warnings now show compact photo/details previews for existing matching cars before Add Anyway.
+- Keeps v3.0.9 camera framing, Color sort, and v3.0.8 verified backup/restore behavior unchanged.
+
 
 Private personal PWA for cataloging diecast cars.
 

@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.0.9'
+const APP_VERSION = '3.0.10'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -647,6 +647,63 @@ function hideDuplicateWarning() {
   duplicateWarning.classList.add('hidden')
   duplicateWarningText.textContent = ''
   duplicateIncreaseBtn.classList.remove('hidden')
+  const matchList = $('duplicate-match-list')
+  matchList?.replaceChildren()
+  matchList?.classList.add('hidden')
+}
+
+function renderDuplicateMatchList(matches) {
+  const host = $('duplicate-match-list')
+  if (!host) return
+  host.replaceChildren()
+  if (!matches.length) {
+    host.classList.add('hidden')
+    return
+  }
+
+  for (const car of matches.slice(0, 4)) {
+    const row = document.createElement('div')
+    row.className = 'duplicate-match-row'
+
+    const thumb = document.createElement('div')
+    thumb.className = 'duplicate-match-thumb'
+    if (car.photo_path) {
+      const img = document.createElement('img')
+      img.alt = `${displayTitle(car)} existing car`
+      thumb.append(img)
+      lazyLoadPrivatePhoto(car.photo_path, img)
+    } else {
+      const empty = document.createElement('span')
+      empty.textContent = 'NO PHOTO'
+      thumb.append(empty)
+    }
+
+    const copy = document.createElement('div')
+    copy.className = 'duplicate-match-copy'
+    const title = document.createElement('div')
+    title.className = 'duplicate-match-title'
+    title.textContent = displayTitle(car)
+    const qty = Math.max(1, Number(car.quantity) || 1)
+    const meta = document.createElement('div')
+    meta.className = 'duplicate-match-meta'
+    meta.textContent = [
+      car.model_year,
+      car.hotwheels_toy_number ? `SKU ${car.hotwheels_toy_number}` : '',
+      car.color,
+      qty > 1 ? `QTY ${qty}` : '',
+    ].filter(Boolean).join(' · ') || 'Existing entry'
+    copy.append(title, meta)
+    row.append(thumb, copy)
+    host.append(row)
+  }
+
+  if (matches.length > 4) {
+    const more = document.createElement('div')
+    more.className = 'duplicate-match-more'
+    more.textContent = `+${matches.length - 4} more matching entries`
+    host.append(more)
+  }
+  host.classList.remove('hidden')
 }
 
 function checkDuplicateModel() {
@@ -664,6 +721,7 @@ function checkDuplicateModel() {
   }
 
   duplicateWarning.classList.remove('hidden')
+  renderDuplicateMatchList(matches)
   if (matches.length === 1) {
     const match = matches[0]
     const qty = Math.max(1, Number(match.quantity) || 1)
@@ -671,7 +729,7 @@ function checkDuplicateModel() {
     duplicateWarningText.textContent = `Possible duplicate: ${brand}${match.model} is already in your garage (qty ${qty}).`
     duplicateIncreaseBtn.classList.remove('hidden')
   } else {
-    duplicateWarningText.textContent = `Possible duplicate: ${matches.length} existing entries use the model “${raw}”. Check the collection before adding another.`
+    duplicateWarningText.textContent = `Possible duplicate: ${matches.length} existing entries use the model “${raw}”. Compare the photos/details below before adding another.`
     duplicateIncreaseBtn.classList.add('hidden')
   }
 }
@@ -1643,7 +1701,7 @@ function renderShowcase() {
       if (error) return window.alert(error.message || 'Could not update Showcase.')
       car.is_showcase = false
       renderShowcase()
-      applyFiltersAndRender()
+      applySearch()
     })
     card.querySelector('.car-body').append(remove)
     card.addEventListener('click', () => showEditor(car))
@@ -1741,7 +1799,7 @@ function renderCars() {
           favoriteButton.title = nextValue ? 'Remove from favorites' : 'Add to favorites'
           renderStats()
           if (activeBrandFilter === '__favorites__' && !nextValue) {
-            applyFiltersAndRender()
+            applySearch()
           }
         } catch (error) {
           console.error(error)
