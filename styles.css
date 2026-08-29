@@ -4058,7 +4058,7 @@ html[data-theme="light"] .photo-source-actions button { background:#fff; color:#
 }
 
 
-/* Pocket 64 v3.2.1 — clean square Home tiles + square camera */
+/* Pocket 64 v3.2.2 — clean square Home tiles + square camera */
 #collection-screen .cars-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
@@ -4297,7 +4297,7 @@ body.camera-open { overflow: hidden; }
   display: block;
 }
 
-/* Pocket 64 v3.2.1 — 2:3 portrait collection cards with dedicated footer */
+/* Pocket 64 v3.2.2 — 2:3 portrait collection cards with dedicated footer */
 #collection-screen .square-car-card {
   aspect-ratio: 2 / 3 !important;
   border-radius: 15px !important;
@@ -4426,4 +4426,144 @@ body.camera-open { overflow: hidden; }
   #collection-screen .square-card-info .car-sub { font-size: 8.3px !important; }
   #collection-screen .square-qty-control { grid-template-columns: 23px 23px 23px !important; }
   #collection-screen .square-qty-control .card-quantity-button { width: 23px !important; min-width: 23px !important; height: 27px !important; min-height: 27px !important; }
+}
+
+
+/* Pocket 64 v3.2.2 — uniform silver-style borders, badge-led classification, no in-app camera */
+.photo-source-actions { justify-content: center; }
+.photo-source-actions #choose-photo-button { min-width: 140px; }
+
+#collection-screen .square-car-card,
+#collection-screen .square-car-card.special-card,
+#collection-screen .square-car-card.special-th,
+#collection-screen .square-car-card.special-sth,
+#collection-screen .square-car-card.special-chase,
+#collection-screen .square-car-card.special-rare,
+#collection-screen .square-car-card.special-limited,
+#collection-screen .square-car-card.special-other,
+#collection-screen .square-car-card.special-silver-series,
+#collection-screen .square-car-card.special-premium,
+#collection-screen .square-car-card.special-car-culture,
+#collection-screen .square-car-card.special-elite-64,
+#collection-screen .square-car-card.special-red-line-club,
+#collection-screen .square-car-card.custom-car-card {
+  border: 2px solid #c8ccd2 !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 6px 22px rgba(0,0,0,.48), 0 0 18px rgba(192,192,192,.24) !important;
+}
+#collection-screen .square-car-card.custom-car-card::after {
+  content: none !important;
+}
+html[data-theme="light"] #collection-screen .square-car-card,
+html[data-theme="light"] #collection-screen .square-car-card.special-card,
+html[data-theme="light"] #collection-screen .square-car-card.custom-car-card {
+  border-color: #bcc3cc !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.72), 0 6px 18px rgba(17,24,39,.08), 0 0 14px rgba(148,163,184,.18) !important;
+}
+
+#collection-screen .square-badge-stack .special-badge {
+  border-width: 1px !important;
+  font-weight: 950 !important;
+  letter-spacing: .04em !important;
+}
+#collection-screen .square-badge-stack .special-badge.badge-default {
+  color: #f1e5b7;
+  border-color: rgba(241,229,183,.7);
+  background: rgba(23,23,23,.92);
+}
+#collection-screen .square-badge-stack .special-badge.badge-th {
+  color: #d9f7bb;
+  border-color: rgba(142,197,92,.78);
+  background: linear-gradient(135deg, rgba(24,61,24,.95), rgba(58,108,42,.95));
+}
+#collection-screen .square-badge-stack .special-badge.badge-sth {
+  color: #fff0b3;
+  border-color: rgba(215,175,55,.86);
+  background: linear-gradient(135deg, rgba(92,66,8,.96), rgba(165,124,18,.96));
+}
+#collection-screen .square-badge-stack .special-badge.badge-silver-series {
+  color: #f4f6f8;
+  border-color: rgba(201,208,217,.88);
+  background: linear-gradient(135deg, rgba(106,114,125,.96), rgba(164,173,184,.96));
+}
+#collection-screen .square-badge-stack .special-badge.badge-premium {
+  color: #eef2f6;
+  border-color: rgba(100,114,129,.84);
+  background: linear-gradient(135deg, rgba(44,50,57,.96), rgba(76,84,94,.96));
+}
+#collection-screen .square-badge-stack .special-badge.badge-car-culture {
+  color: #ffe7c8;
+  border-color: rgba(171,126,81,.82);
+  background: linear-gradient(135deg, rgba(77,50,29,.95), rgba(124,90,56,.95));
+}
+#collection-screen .square-badge-stack .special-badge.badge-elite-64 {
+  color: #dff8ff;
+  border-color: rgba(87,148,171,.82);
+  background: linear-gradient(135deg, rgba(28,53,66,.95), rgba(54,92,112,.95));
+}
+#collection-screen .square-badge-stack .special-badge.badge-red-line-club {
+  color: #ffd8db;
+  border-color: rgba(202,70,76,.82);
+  background: linear-gradient(135deg, rgba(92,15,21,.96), rgba(149,33,41,.96));
+}
+#collection-screen .square-badge-stack .special-badge.badge-chase {
+  color: #ffe3e3;
+  border-color: rgba(191,74,74,.82);
+  background: linear-gradient(135deg, rgba(88,23,23,.96), rgba(145,42,42,.96));
+}
+#collection-screen .square-badge-stack .special-badge.badge-rare {
+  color: #efe3ff;
+  border-color: rgba(144,110,201,.82);
+  background: linear-gradient(135deg, rgba(61,36,97,.96), rgba(101,66,154,.96));
+}
+#collection-screen .square-badge-stack .special-badge.badge-limited {
+  color: #dff0ff;
+  border-color: rgba(86,133,179,.82);
+  background: linear-gradient(135deg, rgba(25,49,78,.96), rgba(53,98,145,.96));
+}
+#collection-screen .square-badge-stack .special-badge.badge-multipack {
+  color: #fff2cc;
+  border-color: rgba(217,157,66,.84);
+  background: linear-gradient(135deg, rgba(94,57,12,.96), rgba(160,104,28,.96));
+}
+#collection-screen .square-badge-stack .special-badge.custom-badge {
+  color:#fff;
+  border-color:#f4f4f4;
+  background:linear-gradient(135deg, rgba(255,80,180,.9), rgba(75,150,255,.9), rgba(80,230,190,.9));
+  text-shadow:0 1px 2px rgba(0,0,0,.65);
+  box-shadow:0 0 10px rgba(130,190,255,.28);
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge {
+  color: #dbeafe;
+  border-color: rgba(96,165,250,.76);
+  background: linear-gradient(135deg, rgba(18,35,63,.95), rgba(31,61,112,.95));
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge.exclusive-type-red-edition {
+  color: #ffe1e1;
+  border-color: rgba(239,97,97,.82);
+  background: linear-gradient(135deg, rgba(110,18,18,.95), rgba(171,33,33,.95));
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge.exclusive-type-zamac {
+  color: #f4f6f8;
+  border-color: rgba(200,207,217,.84);
+  background: linear-gradient(135deg, rgba(84,92,101,.96), rgba(131,140,150,.96));
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge.retailer-target {
+  color: #ffe2e2;
+  border-color: rgba(245,110,110,.78);
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge.retailer-walmart {
+  color: #e3ecff;
+  border-color: rgba(123,166,255,.78);
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge.retailer-dollar-general {
+  color: #f2e7ff;
+  border-color: rgba(181,131,255,.78);
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge.retailer-kroger {
+  color: #dff4ff;
+  border-color: rgba(99,182,217,.78);
+}
+#collection-screen .square-badge-stack .special-badge.exclusive-badge.retailer-walgreens {
+  color: #ffe6f1;
+  border-color: rgba(231,118,162,.78);
 }

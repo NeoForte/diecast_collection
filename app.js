@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.2.1'
+const APP_VERSION = '3.2.2'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -54,6 +54,27 @@ function specialClassForStatus(status) {
     'Limited': 'special-limited',
   }
   return map[status] || ''
+}
+
+function badgeClassForStatus(status) {
+  const map = {
+    'TH': 'badge-th',
+    'STH': 'badge-sth',
+    'Silver Series': 'badge-silver-series',
+    'Premium': 'badge-premium',
+    'Car Culture': 'badge-car-culture',
+    'Elite 64': 'badge-elite-64',
+    'Red Line Club': 'badge-red-line-club',
+    'Chase': 'badge-chase',
+    'Rare': 'badge-rare',
+    'Limited': 'badge-limited',
+    'Multipack': 'badge-multipack',
+  }
+  return map[status] || 'badge-default'
+}
+
+function slugForClass(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
 const $ = (id) => document.getElementById(id)
@@ -1756,13 +1777,13 @@ function renderCars() {
     badgeStack.className = 'badge-stack square-badge-stack'
     if (specialStatus) {
       const specialBadge = document.createElement('div')
-      specialBadge.className = 'special-badge'
+      specialBadge.className = `special-badge ${badgeClassForStatus(specialStatus)}`
       specialBadge.textContent = specialStatus === 'Limited' ? 'LIMITED' : specialStatus.toUpperCase()
       badgeStack.append(specialBadge)
     }
     if (car.exclusive_retailer) {
       const exclusiveBadge = document.createElement('div')
-      exclusiveBadge.className = 'special-badge exclusive-badge'
+      exclusiveBadge.className = `special-badge exclusive-badge ${car.exclusive_type ? `exclusive-type-${slugForClass(car.exclusive_type)}` : ''} ${car.exclusive_retailer ? `retailer-${slugForClass(car.exclusive_retailer)}` : ''}`.trim()
       const shortRetailer = { 'Walmart':'WMT', 'Target':'TGT', 'Walgreens':'WAG', 'Dollar General':'DG', 'Kroger':'KROGER' }[car.exclusive_retailer] || car.exclusive_retailer
       exclusiveBadge.textContent = car.exclusive_type ? `${shortRetailer} · ${car.exclusive_type.toUpperCase()}` : shortRetailer.toUpperCase()
       badgeStack.append(exclusiveBadge)
@@ -2751,7 +2772,6 @@ function useSquareCameraPhoto() {
   closeSquareCamera()
 }
 
-$('take-photo-button')?.addEventListener('click', openSquareCamera)
 $('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
 $('square-camera-cancel')?.addEventListener('click', closeSquareCamera)
 $('square-camera-shutter')?.addEventListener('click', captureSquareCameraFrame)
