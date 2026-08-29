@@ -28,6 +28,7 @@
       }
       #social-screen .showcase-home-card .favorite-card-toggle { pointer-events:none !important; }
       #search-input { text-transform:uppercase; }
+      .collection-controls-grid #search-input { font-size:14px !important; }
       @media (min-width:700px) {
         #social-screen .showcase-grid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:12px !important; }
       }
