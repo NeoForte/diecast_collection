@@ -1,5 +1,5 @@
-const CACHE = 'pocket64-v3.2.4'
-const ASSETS = ['./', './index.html', './styles.css?v=3.2.4', './app.js?v=3.2.4', './manifest.webmanifest?v=3.2.4', './jszip.min.js?v=3.2.4', './black-brick-wall.svg', './icon-192.png', './icon-512.png', './pocket64-speedline-v251.png']
+const CACHE = 'pocket64-v3.2.5'
+const ASSETS = ['./', './index.html', './styles.css?v=3.2.5', './app.js?v=3.2.5', './showcase-sync.js?v=3.2.5', './manifest.webmanifest?v=3.2.5', './jszip.min.js?v=3.2.5', './black-brick-wall.svg', './icon-192.png', './icon-512.png', './pocket64-speedline-v251.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)))
