@@ -1,4 +1,19 @@
-Pocket 64 v3.2.6
-Historical rollback snapshot matching the live v3.2.6 release.
-Includes Showcase/Home card mirroring fix and v3.2.6 cache/version bump.
+Pocket 64 v3.3.0 — Stability Release
 Created 2026-08-29.
+
+Built directly from the verified Pocket 64 v3.2.9 release.
+No collection feature redesigns were added.
+
+Stability/hardening changes:
+- Safe service-worker update lifecycle: no mid-session skipWaiting/clients.claim takeover.
+- SHA-256 integrity manifest for new self-contained backup ZIPs; restore validates before changing data.
+- Optimistic conflict protection on full car edits and photo replacement.
+- Delete/Clear/Duplicate cleanup protects database records before deleting Storage files.
+- Local-only diagnostics log for uncaught JavaScript/promise failures.
+- Restore normalization preserves compatibility with older backups under stricter DB rules.
+- Backend: quantity/default/consistency constraints, automatic updated_at safeguard, least-privilege grants.
+- Storage: private JPEG-only bucket with 5 MB object limit.
+
+Emergency rollback:
+- Redeploy Pocket-64-v3.2.9.zip for app code.
+- Use the separately retained Pocket-64-v3.3.0-Recovery.zip if backend rollback is ever required.

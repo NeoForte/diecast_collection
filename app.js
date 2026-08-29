@@ -10,13 +10,44 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.2.9'
+const APP_VERSION = '3.3.0'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
 const BACKUP_REMINDER_MIN_CARS = 15
 const BACKUP_REMINDER_DAYS = 30
 const BACKUP_REMINDER_SNOOZE_DAYS = 7
+const DIAGNOSTICS_STORAGE_KEY = 'pocket64-diagnostics-v1'
+const DIAGNOSTICS_MAX_ENTRIES = 25
+
+function readDiagnostics() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DIAGNOSTICS_STORAGE_KEY) || '[]')
+    return Array.isArray(parsed) ? parsed.slice(-DIAGNOSTICS_MAX_ENTRIES) : []
+  } catch { return [] }
+}
+
+function recordDiagnostic(kind, message, detail = '') {
+  try {
+    const entries = readDiagnostics()
+    entries.push({
+      at: new Date().toISOString(),
+      version: APP_VERSION,
+      kind: String(kind || 'error').slice(0, 40),
+      message: String(message || 'Unknown error').slice(0, 500),
+      detail: String(detail || '').slice(0, 500),
+    })
+    localStorage.setItem(DIAGNOSTICS_STORAGE_KEY, JSON.stringify(entries.slice(-DIAGNOSTICS_MAX_ENTRIES)))
+  } catch {}
+}
+
+window.addEventListener('error', (event) => {
+  recordDiagnostic('javascript', event.message, `${event.filename || ''}:${event.lineno || ''}:${event.colno || ''}`)
+})
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason
+  recordDiagnostic('promise', reason?.message || reason || 'Unhandled promise rejection', reason?.stack || '')
+})
 const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)')
 
 function getSavedAppearance() {
@@ -1216,6 +1247,45 @@ function requireZipSupport() {
   return window.JSZip
 }
 
+async function sha256Hex(value) {
+  const buffer = value instanceof Blob
+    ? await value.arrayBuffer()
+    : (value instanceof ArrayBuffer ? value : new TextEncoder().encode(String(value)))
+  const digest = await crypto.subtle.digest('SHA-256', buffer)
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function validateBackupIntegrity(zip, backup) {
+  const integrityEntry = zip?.file('integrity.json')
+  if (!integrityEntry) {
+    if ((Number(backup?.version) || 1) >= 6) throw new Error('Backup integrity manifest is missing.')
+    return { verified: false, legacy: true }
+  }
+
+  const integrity = JSON.parse(await integrityEntry.async('string'))
+  if (integrity?.algorithm !== 'SHA-256' || !integrity?.files || typeof integrity.files !== 'object') {
+    throw new Error('Backup integrity manifest is invalid.')
+  }
+
+  const backupEntry = zip.file('backup.json')
+  const backupText = await backupEntry.async('string')
+  const expectedBackupHash = integrity.files['backup.json']
+  if (!expectedBackupHash || await sha256Hex(backupText) !== expectedBackupHash) {
+    throw new Error('backup.json failed its integrity check. This backup may be damaged or modified.')
+  }
+
+  for (const [path, expectedHash] of Object.entries(integrity.files)) {
+    if (path === 'backup.json') continue
+    const entry = zip.file(path)
+    if (!entry) throw new Error(`${path} is missing from the backup.`)
+    const blob = await entry.async('blob')
+    if (await sha256Hex(blob) !== expectedHash) {
+      throw new Error(`${path} failed its integrity check. This backup may be damaged or modified.`)
+    }
+  }
+  return { verified: true, legacy: false }
+}
+
 async function exportBackup() {
   if (!session?.user) {
     alert('Your session expired. Sign out and sign back in, then try the backup again.')
@@ -1235,6 +1305,7 @@ async function exportBackup() {
 
     const zip = new JSZip()
     const photoMap = {}
+    const integrityFiles = {}
     const photoCars = cars.filter((car) => Boolean(car.photo_path))
     const failures = []
 
@@ -1249,6 +1320,7 @@ async function exportBackup() {
       const photoFile = `photos/${car.id}.jpg`
       photoMap[car.id] = photoFile
       zip.file(photoFile, data, { binary: true, compression: 'STORE' })
+      integrityFiles[photoFile] = await sha256Hex(data)
     }
 
     if (failures.length) {
@@ -1260,7 +1332,7 @@ async function exportBackup() {
     const backupCars = cars.map((car) => ({ ...car }))
     const backup = {
       format: 'ajs-garage-backup',
-      version: 5,
+      version: 6,
       exported_at: new Date().toISOString(),
       source_user_id: session.user.id,
       car_count: backupCars.length,
@@ -1270,7 +1342,16 @@ async function exportBackup() {
       cars: backupCars,
     }
 
-    zip.file('backup.json', JSON.stringify(backup, null, 2))
+    const backupText = JSON.stringify(backup, null, 2)
+    zip.file('backup.json', backupText)
+    integrityFiles['backup.json'] = await sha256Hex(backupText)
+    zip.file('integrity.json', JSON.stringify({
+      format: 'pocket64-integrity',
+      version: 1,
+      algorithm: 'SHA-256',
+      generated_at: backup.exported_at,
+      files: integrityFiles,
+    }, null, 2))
     zip.file('README.txt', [
       "Pocket 64 Disaster-Recovery Backup",
       '',
@@ -1280,6 +1361,7 @@ async function exportBackup() {
       '',
       'Keep this ZIP file somewhere safe. Do not unzip or modify it before restoring in Pocket 64.',
       'The backup contains collection data plus the actual stored car images.',
+      'Pocket 64 v3.3.0+ also validates SHA-256 checksums before a restore changes your collection.',
     ].join('\n'))
 
     button.textContent = 'Packing…'
@@ -1313,9 +1395,9 @@ function nullableText(value) {
 }
 
 function restoreQuantity(value) {
-  if (value === null || value === undefined || value === '') return null
+  if (value === null || value === undefined || value === '') return 1
   const number = Number(value)
-  return Number.isFinite(number) ? Math.max(1, Math.floor(number)) : null
+  return Number.isFinite(number) ? Math.max(1, Math.floor(number)) : 1
 }
 
 function restoreBoolean(value) {
@@ -1377,7 +1459,7 @@ function restorePayload(car, targetId, initialPhotoPath) {
     package_status: nullableText(car.package_status),
     special_status: nullableText(car.special_status),
     exclusive_retailer: nullableText(car.exclusive_retailer),
-    exclusive_type: nullableText(car.exclusive_type),
+    exclusive_type: nullableText(car.exclusive_retailer) ? nullableText(car.exclusive_type) : null,
     general_number: nullableText(car.general_number),
     series_collection_number: nullableText(car.series_collection_number),
     color: nullableText(car.color),
@@ -1387,7 +1469,9 @@ function restorePayload(car, targetId, initialPhotoPath) {
   payload.is_favorite = restoreBoolean(car.is_favorite)
   payload.is_showcase = restoreBoolean(car.is_showcase)
   const packSize = Number(car.pack_size)
-  payload.pack_size = Number.isFinite(packSize) && packSize >= 2 ? Math.floor(packSize) : null
+  payload.pack_size = payload.special_status === 'Multipack'
+    ? (Number.isFinite(packSize) && packSize >= 2 ? Math.min(999, Math.floor(packSize)) : 5)
+    : null
   return payload
 }
 
@@ -1471,6 +1555,8 @@ async function restoreBackupFile(file) {
   try {
     const { backup, zip, legacyJson } = await readBackupFile(file)
     validateBackup(backup)
+    restoreButton.textContent = 'Checking…'
+    const integrityResult = zip ? await validateBackupIntegrity(zip, backup) : { verified: false, legacy: true }
 
     const backupVersion = Number(backup.version) || 1
     const sourceUserId = nullableText(backup.source_user_id) || nullableText(backup.cars.find((car) => car?.user_id)?.user_id)
@@ -1484,6 +1570,9 @@ async function restoreBackupFile(file) {
     const accountNote = sameAccount
       ? 'Matching backed-up cars will be updated.'
       : 'This backup came from a different or unknown account, so restored cars will receive new IDs.'
+    const integrityNote = integrityResult.verified
+      ? 'Integrity check: PASSED (SHA-256).'
+      : 'Integrity check: legacy backup (no checksum manifest).'
     const photoNote = embeddedPhotoCount
       ? `${embeddedPhotoCount} embedded photo${embeddedPhotoCount === 1 ? '' : 's'} will also be restored.`
       : 'This backup has no embedded images. Car data will restore, but image recovery depends on any old Supabase photo paths still existing.'
@@ -1491,7 +1580,7 @@ async function restoreBackupFile(file) {
     const approved = window.confirm(
       `Restore Pocket 64 backup from ${exportedDate}?\n\n` +
       `${backup.cars.length} car${backup.cars.length === 1 ? '' : 's'}\n` +
-      `${photoNote}\n\n${accountNote}\n` +
+      `${photoNote}\n${integrityNote}\n\n${accountNote}\n` +
       'Current cars that are not in the backup will NOT be deleted.'
     )
     if (!approved) return
@@ -2108,14 +2197,19 @@ async function saveCar() {
     const payload = editorPayload()
     let car
     if (editingCar) {
-      const { data, error } = await supabase
+      const expectedUpdatedAt = editingCar.updated_at
+      let query = supabase
         .from('cars')
         .update(payload)
         .eq('id', editingCar.id)
         .eq('user_id', session.user.id)
-        .select()
-        .single()
+      if (expectedUpdatedAt) query = query.eq('updated_at', expectedUpdatedAt)
+      const { data, error } = await query.select().maybeSingle()
       if (error) throw error
+      if (!data) {
+        await loadCars()
+        throw new Error('This car changed in another Pocket 64 session. Reopen it and review the latest version before saving so nothing gets overwritten.')
+      }
       car = data
     } else {
       const { data, error } = await supabase
@@ -2130,15 +2224,19 @@ async function saveCar() {
     if (selectedPhotoFile) {
       const oldPhotoPath = editingCar?.photo_path || car?.photo_path || ''
       const path = await uploadPhoto(car.id, selectedPhotoFile)
-      const { error } = await supabase
+      const { data: photoUpdate, error } = await supabase
         .from('cars')
         .update({ photo_path: path })
         .eq('id', car.id)
         .eq('user_id', session.user.id)
-      if (error) {
+        .eq('updated_at', car.updated_at)
+        .select('id,updated_at')
+        .maybeSingle()
+      if (error || !photoUpdate) {
         await supabase.storage.from('car-photos').remove([path])
         await invalidatePrivatePhotoCache(path)
-        throw error
+        if (error) throw error
+        throw new Error('This car changed while its new photo was being saved. The new upload was safely discarded; reopen the car and try again.')
       }
       if (oldPhotoPath && oldPhotoPath !== path) {
         const { error: removeOldError } = await supabase.storage.from('car-photos').remove([oldPhotoPath])
@@ -2195,22 +2293,29 @@ async function clearCollection() {
     if (readError) throw readError
 
     const photoPaths = [...new Set((rows || []).map((row) => row.photo_path).filter(Boolean))]
-    for (let i = 0; i < photoPaths.length; i += 100) {
-      const batch = photoPaths.slice(i, i + 100)
-      const { error: storageError } = await supabase.storage.from('car-photos').remove(batch)
-      if (storageError) throw storageError
-      await Promise.all(batch.map((path) => invalidatePrivatePhotoCache(path)))
-    }
 
+    // Database truth first. If Storage cleanup later fails, the result is only an
+    // orphaned image — never a surviving car whose photo was already destroyed.
     const { error: deleteError } = await supabase
       .from('cars')
       .delete()
       .eq('user_id', session.user.id)
     if (deleteError) throw deleteError
 
+    const storageCleanupFailures = []
+    for (let i = 0; i < photoPaths.length; i += 100) {
+      const batch = photoPaths.slice(i, i + 100)
+      const { error: storageError } = await supabase.storage.from('car-photos').remove(batch)
+      if (storageError) {
+        console.warn('Collection rows were cleared, but some old photos could not be removed from Storage.', storageError)
+        storageCleanupFailures.push(...batch)
+      }
+      await Promise.all(batch.map((path) => invalidatePrivatePhotoCache(path)))
+    }
+
     clearPrivatePhotoMemoryCache()
     await loadCars()
-    alert('Collection cleared. This account is ready for a clean restore test.')
+    alert(storageCleanupFailures.length ? 'Collection cleared. Some old photo files could not be removed from Storage, but no car records were left broken.' : 'Collection cleared. This account is ready for a clean restore test.')
     showCollection()
   } catch (err) {
     console.error(err)
@@ -2227,16 +2332,19 @@ async function deleteCar() {
   if (!editingCar || !confirm('Are you sure you want to delete this vehicle?')) return
   editorMessage.textContent = 'Deleting…'
   try {
-    if (editingCar.photo_path) {
-      await supabase.storage.from('car-photos').remove([editingCar.photo_path])
-      await invalidatePrivatePhotoCache(editingCar.photo_path)
-    }
+    const photoPath = editingCar.photo_path || ''
     const { error } = await supabase
       .from('cars')
       .delete()
       .eq('id', editingCar.id)
       .eq('user_id', session.user.id)
     if (error) throw error
+
+    if (photoPath) {
+      const { error: storageError } = await supabase.storage.from('car-photos').remove([photoPath])
+      if (storageError) console.warn('Car was deleted, but its old photo could not be removed from Storage.', storageError)
+      await invalidatePrivatePhotoCache(photoPath)
+    }
     await loadCars()
     showCollection()
   } catch (err) {
@@ -2375,12 +2483,6 @@ async function mergeExactDuplicateGroup(groupIndex, card) {
     if (updateError) throw updateError
 
     const photoPaths = removeCars.map((car) => car.photo_path).filter(Boolean)
-    if (photoPaths.length) {
-      const { error: storageError } = await supabase.storage.from('car-photos').remove(photoPaths)
-      if (storageError) console.warn('Could not remove one or more duplicate photos:', storageError)
-      for (const path of photoPaths) await invalidatePrivatePhotoCache(path)
-    }
-
     const removeIds = removeCars.map((car) => car.id)
     if (removeIds.length) {
       const { error: deleteError } = await supabase
@@ -2388,7 +2490,21 @@ async function mergeExactDuplicateGroup(groupIndex, card) {
         .delete()
         .in('id', removeIds)
         .eq('user_id', session.user.id)
-      if (deleteError) throw deleteError
+      if (deleteError) {
+        const { error: rollbackError } = await supabase
+          .from('cars')
+          .update({ quantity: Math.max(1, Number(keeper.quantity) || 1), updated_at: new Date().toISOString() })
+          .eq('id', keeper.id)
+          .eq('user_id', session.user.id)
+        if (rollbackError) console.error('Duplicate combine rollback also failed', rollbackError)
+        throw deleteError
+      }
+    }
+
+    if (photoPaths.length) {
+      const { error: storageError } = await supabase.storage.from('car-photos').remove(photoPaths)
+      if (storageError) console.warn('Duplicates were combined, but one or more old photos could not be removed:', storageError)
+      for (const path of photoPaths) await invalidatePrivatePhotoCache(path)
     }
 
     await loadCars()
@@ -2669,6 +2785,15 @@ $('stats-nav').addEventListener('click', showStats)
 $('settings-row-button')?.addEventListener('click', showSettings)
 $('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
 $('settings-profile-icon').addEventListener('click', () => $('profile-icon-input').click())
+$('diagnostics-button')?.addEventListener('click', () => {
+  const entries = readDiagnostics()
+  if (!entries.length) {
+    alert(`Pocket 64 ${APP_VERSION} diagnostics: no JavaScript crashes or unhandled promise errors recorded on this device.`)
+    return
+  }
+  const report = entries.map((entry) => `[${entry.at}] v${entry.version} ${entry.kind}: ${entry.message}${entry.detail ? ` (${entry.detail})` : ''}`).join('\n')
+  alert(`Pocket 64 diagnostics — last ${entries.length} event${entries.length === 1 ? '' : 's'}:\n\n${report}`)
+})
 $('add-button').addEventListener('click', () => showEditor())
 $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', showCollection)
@@ -2922,5 +3047,13 @@ if (session) {
 }
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'))
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('./sw.js')
+      await registration.update()
+    } catch (error) {
+      console.error('Service worker registration failed', error)
+      recordDiagnostic('service-worker', error?.message || error)
+    }
+  })
 }

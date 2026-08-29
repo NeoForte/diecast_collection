@@ -1,3 +1,7 @@
+Pocket 64 v3.3.0 — Stability Release
+
+This release focuses on integrity, crash resistance, photo safety, backup verification, safe updates, and backend hardening. See RELEASE-NOTES-v3.3.0.txt.
+
 Pocket 64 v3.2.4
 
 Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.

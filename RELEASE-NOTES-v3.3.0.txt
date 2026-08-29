@@ -1,0 +1,32 @@
+Pocket 64 v3.3.0 — Stability Release
+
+VISIBLE CHANGE
+- Settings now includes Diagnostics. It stores only the last local JavaScript/unhandled-promise errors on that device. Nothing is uploaded.
+
+UNDER THE HOOD
+- New backup ZIPs are version 6 and contain integrity.json with SHA-256 checksums for backup.json and every embedded car photo.
+- Restore verifies those checksums before modifying the collection. Older backups still restore and are labeled as legacy/no-checksum.
+- Full car edits use optimistic concurrency protection so a stale Safari/app/Chrome session cannot silently overwrite a newer edit.
+- Photo replacement also detects a concurrent edit and safely discards the newly uploaded image if the database row changed first.
+- Delete Car and Clear Collection now delete database records before cleaning Storage, preventing a failed DB operation from leaving live cars with destroyed images.
+- Duplicate combination follows the same safer cleanup ordering and attempts to roll the keeper quantity back if row deletion fails.
+- Service-worker upgrades no longer take over an already-open Pocket 64 session. A session finishes on one version and the new worker controls a later clean launch.
+
+BACKEND HARDENING ALREADY APPLIED
+- cars.quantity is NOT NULL, DEFAULT 1, CHECK >= 1.
+- Multipack/pack_size consistency is database-enforced.
+- Exclusive type cannot exist without an exclusive retailer.
+- updated_at has a database-side safeguard when an update omits a new timestamp.
+- anon has no public.cars table privileges.
+- authenticated has only SELECT/INSERT/UPDATE/DELETE; RLS still restricts rows to auth.uid() = user_id.
+- car-photos remains private and is limited to image/jpeg up to 5 MB.
+
+VERIFIED BEFORE RELEASE
+- 187 current cars.
+- 0 invalid/null quantities.
+- 0 multipack consistency problems.
+- 0 exclusivity consistency problems.
+- 0 car records pointing to missing photos.
+- Existing Storage objects max ~0.85 MB, safely below the new 5 MB limit.
+- JavaScript syntax checks passed for app.js, showcase-sync.js, and sw.js.
+- Synthetic SHA-256 backup integrity test passed.
