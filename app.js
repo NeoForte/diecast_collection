@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.2.3'
+const APP_VERSION = '3.2.4'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -111,6 +111,11 @@ const customCheckbox = $('is-custom')
 const showcaseCheckbox = $('is-showcase')
 const favoritesStat = $('favorites-stat')
 const statsFavorites = $('stats-favorites')
+const jdmStat = $('jdm-stat')
+const statsJdm = $('stats-jdm')
+const categorySelect = $('category')
+const customCategoryLabel = $('custom-category-label')
+const customCategory = $('custom-category')
 const multipackFields = $('multipack-fields')
 const packSizeSelect = $('pack-size')
 const customPackSizeLabel = $('custom-pack-size-label')
@@ -172,6 +177,30 @@ function syncExclusiveFields() {
   const retailer = exclusiveRetailer?.value || ''
   exclusiveDetails?.classList.toggle('hidden', !retailer)
   if (!retailer && exclusiveType) exclusiveType.value = ''
+}
+
+function syncCategoryCustomField() {
+  const isOther = categorySelect?.value === 'Other'
+  customCategoryLabel?.classList.toggle('hidden', !isOther)
+  if (!isOther && customCategory) customCategory.value = ''
+}
+
+function setCategoryValue(value) {
+  if (!categorySelect) return
+  const raw = String(value ?? '').trim()
+  const presets = ['JDM', 'Transport / Hauler', 'Emergency / Service']
+  const preset = presets.find((item) => item.toLowerCase() === raw.toLowerCase())
+  if (!raw) {
+    categorySelect.value = ''
+    if (customCategory) customCategory.value = ''
+  } else if (preset) {
+    categorySelect.value = preset
+    if (customCategory) customCategory.value = ''
+  } else {
+    categorySelect.value = 'Other'
+    if (customCategory) customCategory.value = raw
+  }
+  syncCategoryCustomField()
 }
 
 function applyCatalogExclusive(car) {
@@ -962,7 +991,7 @@ function fillEditor(car) {
   setColorValue(car?.color ?? '')
   $('hotwheels-toy-number').value = String(car?.hotwheels_toy_number ?? '').toUpperCase()
   $('series').value = car?.series_collection ?? ''
-  if ($('category')) $('category').value = car?.category ?? ''
+  setCategoryValue(car?.category ?? '')
   $('general-number').value = car?.general_number ?? ''
   $('series-collection-number').value = car?.series_collection_number ?? ''
   $('quantity').value = String(car?.quantity ?? 1)
@@ -1578,7 +1607,7 @@ function updateActiveFilterPill() {
     pill.textContent = ''
     return
   }
-  const label = activeBrandFilter === '__none__' ? 'None' : activeBrandFilter === '__favorites__' ? 'Favorites' : activeBrandFilter
+  const label = activeBrandFilter === '__none__' ? 'None' : activeBrandFilter === '__favorites__' ? 'Favorites' : activeBrandFilter === '__jdm__' ? 'JDM' : activeBrandFilter
   pill.textContent = `${label} ×`
   pill.title = `Clear ${label} filter`
   row.classList.remove('hidden')
@@ -1597,6 +1626,7 @@ function applySearch() {
     matches = cars.filter((car) => {
       const brand = String(car.diecast_brand ?? '').trim()
       if (activeBrandFilter === '__favorites__') return Boolean(car.is_favorite)
+      if (activeBrandFilter === '__jdm__') return String(car.category || '').trim().toUpperCase() === 'JDM'
       if (activeBrandFilter === '__none__') return !brand || brand.toLowerCase() === 'none'
       return brand.toLowerCase() === activeBrandFilter.toLowerCase()
     })
@@ -1869,6 +1899,7 @@ function renderStats() {
   const grandTotal = cars.reduce((sum, car) => sum + totalCarsFor(car), 0)
   statsGrandTotal.textContent = String(grandTotal)
   if (statsFavorites) statsFavorites.textContent = String(cars.filter((car) => car.is_favorite).length)
+  if (statsJdm) statsJdm.textContent = String(cars.filter((car) => String(car.category || '').trim().toUpperCase() === 'JDM').length)
   favoritesStat?.classList.toggle('hidden', !collectionExtrasSupported)
   brandStats.replaceChildren()
 
@@ -1973,6 +2004,8 @@ function editorPayload() {
   const customColorRaw = customColor.value.trim()
   const colorRaw = colorChoice === 'Other' ? customColorRaw : colorChoice
   const specialRaw = $('special-status').value
+  const categoryChoice = categorySelect?.value || ''
+  const categoryRaw = categoryChoice === 'Other' ? (customCategory?.value.trim() || '') : categoryChoice
   const payload = {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
@@ -1983,7 +2016,7 @@ function editorPayload() {
     color: colorRaw ? String(colorRaw).toUpperCase() : null,
     hotwheels_toy_number: $('hotwheels-toy-number').value.trim().toUpperCase() || null,
     series_collection: $('series').value.trim().toUpperCase() || null,
-    category: $('category')?.value || null,
+    category: categoryRaw ? String(categoryRaw).toUpperCase() : null,
     general_number: $('general-number').value.trim().toUpperCase() || null,
     series_collection_number: $('series-collection-number').value.trim().toUpperCase() || null,
     quantity: Math.max(1, Math.floor(Number(qtyRaw) || 1)),
@@ -2365,9 +2398,16 @@ function populateYearOptions() {
 
 $('special-status').addEventListener('change', syncMultipackFields)
 exclusiveRetailer?.addEventListener('change', syncExclusiveFields)
+categorySelect?.addEventListener('change', syncCategoryCustomField)
 packSizeSelect?.addEventListener('change', syncMultipackFields)
 favoritesStat?.addEventListener('click', () => {
   activeBrandFilter = '__favorites__'
+  searchInput.value = ''
+  showCollection()
+  applySearch()
+})
+jdmStat?.addEventListener('click', () => {
+  activeBrandFilter = '__jdm__'
   searchInput.value = ''
   showCollection()
   applySearch()

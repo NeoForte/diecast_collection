@@ -1,4 +1,4 @@
-Pocket 64 v3.2.3
+Pocket 64 v3.2.4
 
 Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.
 
@@ -720,17 +720,24 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - No crop, pinch, zoom, or framing screen.
 
 
-## v3.2.3
+## v3.2.4
 - Rebuilt the Home collection as a clean square-tile layout: two perfect-square cards across on phones.
 - Card title/subtitle, badges, Favorite star, and quantity controls now overlay the image so every card keeps the same square footprint.
 - Added an in-app square camera with a fixed 1:1 viewfinder, shutter, Retake, and Use Photo only. No pinch, zoom, drag, or crop controls.
 - Existing collection records remain unchanged; older photos continue to display and can be replaced over time.
 
 
-## v3.2.3
+## v3.2.4
 - Removed the redundant circular quantity badge from collection photos; quantity remains in the footer stepper.
 - Non-favorites now use a solid white star; Favorites retain the metallic-blue star.
 - Possible-match and duplicate rows are wider/flatter with larger thumbnails.
 - Added Pink Slips to Brand presets.
 - Added Category with JDM as the first category option.
 - Added a floating Back-to-Top arrow on the Home collection after scrolling.
+
+
+## v3.2.4
+- Expanded Category presets to JDM, Transport / Hauler, and Emergency / Service.
+- Added Other / Custom Category with a typeable custom category field.
+- Added a clickable JDM stat that filters Home to Category = JDM.
+- Preserved the v3.2.x 2:3 card/photo layout unchanged.
