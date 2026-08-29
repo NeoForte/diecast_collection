@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.2.4" />
+  <link rel="manifest" href="manifest.webmanifest?v=3.2.5" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=3.2.4" />
+  <link rel="stylesheet" href="styles.css?v=3.2.5" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -38,8 +38,7 @@
           <input id="profile-icon-input" class="hidden" type="file" accept="image/*" />
           <img class="brand-banner" src="pocket64-speedline-v251.png" alt="Pocket 64" />
         </div>
-        <div class="topbar-actions">
-        </div>
+        <div class="topbar-actions"></div>
       </header>
 
       <main>
@@ -62,325 +61,73 @@
               <span class="premium-add-sheen" aria-hidden="true"></span>
               <span class="premium-add-orb" aria-hidden="true">+</span>
               <span class="premium-add-kicker">NEW ENTRY</span>
-              <span class="premium-add-visual premium-add-photo" aria-hidden="true">
-                <img src="pocket64-addcar-blue-sportscar.png" alt="" />
-              </span>
+              <span class="premium-add-visual premium-add-photo" aria-hidden="true"><img src="pocket64-addcar-blue-sportscar.png" alt="" /></span>
               <span class="premium-add-title">ADD CAR</span>
             </button>
             <div class="summary-row">
-              <div id="sort-settings-row" class="sort-settings-row">
-                <div class="sort-settings-sort">
-                  <div class="collection-summary-left">
-                    <label class="sort-control" for="sort-select">
-                      <select id="sort-select" aria-label="Sort collection">
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                        <option value="brand-az">Brand A–Z</option>
-                        <option value="brand-za">Brand Z–A</option>
-                        <option value="model-az">Model A–Z</option>
-                        <option value="model-za">Model Z–A</option>
-                        <option value="qty-high">Qty High–Low</option>
-                        <option value="qty-low">Qty Low–High</option>
-                        <option value="special-first">Special First</option>
-                        <option value="color-az">Color A–Z</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-              </div>
+              <div id="sort-settings-row" class="sort-settings-row"><div class="sort-settings-sort"><div class="collection-summary-left"><label class="sort-control" for="sort-select"><select id="sort-select" aria-label="Sort collection"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="brand-az">Brand A–Z</option><option value="brand-za">Brand Z–A</option><option value="model-az">Model A–Z</option><option value="model-za">Model Z–A</option><option value="qty-high">Qty High–Low</option><option value="qty-low">Qty Low–High</option><option value="special-first">Special First</option><option value="color-az">Color A–Z</option></select></label></div></div></div>
             </div>
           </div>
-          <div id="active-filter-row" class="active-filter-row hidden">
-            <button id="active-filter-pill" class="active-filter-pill" type="button" aria-label="Clear brand filter"></button>
-          </div>
-          <div id="backup-reminder" class="backup-reminder hidden" role="status">
-            <div><strong>Protect your garage</strong><span id="backup-reminder-copy">It has been a while since your last backup.</span></div>
-            <div class="backup-reminder-actions"><button id="backup-reminder-now" type="button">Export</button><button id="backup-reminder-later" type="button">Later</button></div>
-          </div>
+          <div id="active-filter-row" class="active-filter-row hidden"><button id="active-filter-pill" class="active-filter-pill" type="button" aria-label="Clear brand filter"></button></div>
+          <div id="backup-reminder" class="backup-reminder hidden" role="status"><div><strong>Protect your garage</strong><span id="backup-reminder-copy">It has been a while since your last backup.</span></div><div class="backup-reminder-actions"><button id="backup-reminder-now" type="button">Export</button><button id="backup-reminder-later" type="button">Later</button></div></div>
           <div id="cars-grid" class="cars-grid"></div>
-          <div id="empty-state" class="empty-state hidden">
-            <div class="empty-icon">🚗</div>
-            <h2>No cars yet</h2>
-            <p>Add your first diecast car. Every field is optional.</p>
-            <button id="empty-add-button">Add Car</button>
-          </div>
+          <div id="empty-state" class="empty-state hidden"><div class="empty-icon">🚗</div><h2>No cars yet</h2><p>Add your first diecast car. Every field is optional.</p><button id="empty-add-button">Add Car</button></div>
         </section>
 
         <section id="social-screen" class="screen">
-          <div class="page-heading">
-            <div>
-              <div class="eyebrow">POCKET 64 COMMUNITY</div>
-              <h2>Showcase</h2>
-            </div>
-          </div>
-          <div id="showcase-empty" class="social-placeholder">
-            <div class="social-placeholder-icon">🏁</div>
-            <h3>Your Showcase is empty</h3>
-            <p>Mark a car as Showcase from its Add/Edit screen to feature it here.</p>
-          </div>
+          <div class="page-heading"><div><div class="eyebrow">POCKET 64 COMMUNITY</div><h2>Showcase</h2></div></div>
+          <div id="showcase-empty" class="social-placeholder"><div class="social-placeholder-icon">🏁</div><h3>Your Showcase is empty</h3><p>Mark a car as Showcase from its Add/Edit screen to feature it here.</p></div>
           <div id="showcase-grid" class="cars-grid showcase-grid"></div>
         </section>
 
         <section id="settings-screen" class="screen">
-          <div class="page-heading settings-heading">
-            <div>
-              <div class="eyebrow">POCKET 64</div>
-              <h2>Settings</h2>
-            </div>
-          </div>
+          <div class="page-heading settings-heading"><div><div class="eyebrow">POCKET 64</div><h2>Settings</h2></div></div>
           <div class="settings-list">
-            <div class="settings-card">
-              <div class="settings-copy">
-                <strong>Appearance</strong>
-                <span>Choose how Pocket 64 looks on this device.</span>
-              </div>
-              <select id="appearance-select" class="settings-select" aria-label="Appearance">
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-                <option value="system">System</option>
-              </select>
-            </div>
-            <button id="settings-profile-icon" class="settings-card settings-button-card" type="button">
-              <div class="settings-copy">
-                <strong>Profile Icon</strong>
-                <span>Change your round garage icon.</span>
-              </div>
-              <span class="settings-action">Change</span>
-            </button>
-            <div class="settings-card">
-              <div class="settings-copy">
-                <strong>Refresh</strong>
-                <span>Reload your garage data and photos.</span>
-              </div>
-              <button id="refresh-button" class="settings-mini-button" type="button">Refresh</button>
-            </div>
-            <div class="settings-card settings-backup-card">
-              <div class="settings-copy">
-                <strong>Backup &amp; Restore</strong>
-                <span id="last-backup-text">No backup recorded on this device yet.</span>
-              </div>
-              <div class="settings-inline-actions">
-                <button id="backup-button" class="settings-mini-button" type="button">Export</button>
-                <button id="restore-button" class="settings-mini-button" type="button">Restore</button>
-              </div>
-              <input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" />
-            </div>
-            <div class="settings-card settings-clear-card">
-              <div class="settings-copy">
-                <strong>Clear Collection</strong>
-                <span>Delete every car and car photo from this account. Useful for restore testing.</span>
-              </div>
-              <button id="clear-collection-button" class="settings-mini-button settings-clear-button" type="button">Clear</button>
-            </div>
-            <div class="settings-card">
-              <div class="settings-copy">
-                <strong>Account</strong>
-                <span>Sign out of Pocket 64 on this device.</span>
-              </div>
-              <button id="logout-btn" class="settings-mini-button settings-signout-button" type="button">Sign Out</button>
-            </div>
-            <div class="settings-card">
-              <div class="settings-copy">
-                <strong>About</strong>
-                <span>Your diecast collection, in your pocket.</span>
-              </div>
-              <span class="version-badge">Version 3.2.4</span>
-            </div>
+            <div class="settings-card"><div class="settings-copy"><strong>Appearance</strong><span>Choose how Pocket 64 looks on this device.</span></div><select id="appearance-select" class="settings-select" aria-label="Appearance"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></div>
+            <button id="settings-profile-icon" class="settings-card settings-button-card" type="button"><div class="settings-copy"><strong>Profile Icon</strong><span>Change your round garage icon.</span></div><span class="settings-action">Change</span></button>
+            <div class="settings-card"><div class="settings-copy"><strong>Refresh</strong><span>Reload your garage data and photos.</span></div><button id="refresh-button" class="settings-mini-button" type="button">Refresh</button></div>
+            <div class="settings-card settings-backup-card"><div class="settings-copy"><strong>Backup &amp; Restore</strong><span id="last-backup-text">No backup recorded on this device yet.</span></div><div class="settings-inline-actions"><button id="backup-button" class="settings-mini-button" type="button">Export</button><button id="restore-button" class="settings-mini-button" type="button">Restore</button></div><input id="restore-input" class="hidden" type="file" accept=".zip,.json,application/zip,application/json" /></div>
+            <div class="settings-card settings-clear-card"><div class="settings-copy"><strong>Clear Collection</strong><span>Delete every car and car photo from this account. Useful for restore testing.</span></div><button id="clear-collection-button" class="settings-mini-button settings-clear-button" type="button">Clear</button></div>
+            <div class="settings-card"><div class="settings-copy"><strong>Account</strong><span>Sign out of Pocket 64 on this device.</span></div><button id="logout-btn" class="settings-mini-button settings-signout-button" type="button">Sign Out</button></div>
+            <div class="settings-card"><div class="settings-copy"><strong>About</strong><span>Your diecast collection, in your pocket.</span></div><span class="version-badge">Version 3.2.5</span></div>
           </div>
         </section>
 
         <section id="stats-screen" class="screen">
-          <div class="page-heading">
-            <div>
-              <div class="eyebrow">DIECAST BRANDS</div>
-              <h2>Brand Stats</h2>
-            </div>
-          </div>
-          <div class="stats-overview">
-            <div class="stat-summary-card"><span>Unique Items</span><strong id="stats-total">0</strong></div>
-            <div class="stat-summary-card"><span>Grand Total</span><strong id="stats-grand-total">0</strong></div>
-            <button id="favorites-stat" class="stat-summary-card stat-summary-button hidden" type="button" aria-label="Show favorite items"><span>Favorites</span><strong id="stats-favorites">0</strong></button>
-            <button id="jdm-stat" class="stat-summary-card stat-summary-button" type="button" aria-label="Show JDM items"><span>JDM</span><strong id="stats-jdm">0</strong></button>
-          </div>
+          <div class="page-heading"><div><div class="eyebrow">DIECAST BRANDS</div><h2>Brand Stats</h2></div></div>
+          <div class="stats-overview"><div class="stat-summary-card"><span>Unique Items</span><strong id="stats-total">0</strong></div><div class="stat-summary-card"><span>Grand Total</span><strong id="stats-grand-total">0</strong></div><button id="favorites-stat" class="stat-summary-card stat-summary-button hidden" type="button" aria-label="Show favorite items"><span>Favorites</span><strong id="stats-favorites">0</strong></button><button id="jdm-stat" class="stat-summary-card stat-summary-button" type="button" aria-label="Show JDM items"><span>JDM</span><strong id="stats-jdm">0</strong></button></div>
           <div id="brand-stats" class="brand-stats"></div>
         </section>
 
         <section id="editor-screen" class="screen">
-          <div class="editor-header">
-            <div class="editor-header-left">
-              <button id="cancel-button" class="text-button">Cancel</button>
-              <button id="share-button" class="text-button share-button hidden" type="button">Share</button>
-            </div>
-            <h2 id="editor-title">Add Car</h2>
-            <button id="save-button" class="text-button strong" type="button">Save</button>
-          </div>
-
-          <div class="photo-picker">
-            <img id="photo-preview" class="hidden" alt="Car preview" />
-            <div id="photo-placeholder" class="photo-placeholder-speed">
-              <span class="photo-placeholder-icon" aria-hidden="true">📷</span>
-              <span>ADD PHOTO</span>
-            </div>
-            <div class="photo-source-actions">
-              <button id="choose-photo-button" type="button">Choose Photo</button>
-            </div>
-            <input id="photo-input" class="hidden" type="file" accept="image/*" />
-          </div>
-
+          <div class="editor-header"><div class="editor-header-left"><button id="cancel-button" class="text-button">Cancel</button><button id="share-button" class="text-button share-button hidden" type="button">Share</button></div><h2 id="editor-title">Add Car</h2><button id="save-button" class="text-button strong" type="button">Save</button></div>
+          <div class="photo-picker"><img id="photo-preview" class="hidden" alt="Car preview" /><div id="photo-placeholder" class="photo-placeholder-speed"><span class="photo-placeholder-icon" aria-hidden="true">📷</span><span>ADD PHOTO</span></div><div class="photo-source-actions"><button id="choose-photo-button" type="button">Choose Photo</button></div><input id="photo-input" class="hidden" type="file" accept="image/*" /></div>
           <form id="car-form" class="car-form compact-editor-form">
-            <div class="editor-row brand-model-row">
-              <label class="brand-field">Diecast Brand
-                <select id="diecast-brand">
-                  <option value=""></option>
-                  <option value="None">None</option>
-                  <option value="Hot Wheels">Hot Wheels</option>
-                  <option value="Matchbox">Matchbox</option>
-                  <option value="M2">M2</option>
-                  <option value="Cartuned">Cartuned</option>
-                  <option value="Maisto">Maisto</option>
-                  <option value="Mini GT">Mini GT</option>
-                  <option value="Majorette">Majorette</option>
-                  <option value="Pink Slips">Pink Slips</option>
-                  <option value="Other">Type your own…</option>
-                </select>
-              </label>
-              <label class="model-field">Model
-                <input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" aria-autocomplete="list" aria-controls="model-suggestions" />
-                <div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars in your garage and catalog"></div>
-              </label>
-            </div>
-            <label id="custom-brand-label" class="hidden">Custom Brand
-              <input id="custom-brand" type="text" placeholder="Type brand name" />
-            </label>
-
-            <div id="duplicate-warning" class="duplicate-warning hidden" role="status" aria-live="polite">
-              <div id="duplicate-warning-text"></div>
-              <div id="duplicate-match-list" class="duplicate-match-list hidden" aria-label="Existing matching cars"></div>
-              <div id="duplicate-warning-actions" class="duplicate-warning-actions">
-                <button id="duplicate-increase-btn" type="button">Increase Qty</button>
-                <button id="duplicate-anyway-btn" type="button">Add Anyway</button>
-              </div>
-            </div>
-
-            <div class="editor-row quantity-special-row">
-              <div class="quantity-field">
-                <label for="quantity">Quantity</label>
-                <div class="quantity-control">
-                  <button id="quantity-minus" class="quantity-step" type="button" aria-label="Decrease quantity">−</button>
-                  <input id="quantity" type="hidden" value="1" />
-                  <div id="quantity-display" class="quantity-display" aria-live="polite" aria-label="Quantity">QTY 1</div>
-                  <button id="quantity-plus" class="quantity-step" type="button" aria-label="Increase quantity">+</button>
-                </div>
-              </div>
-              <label>Special Category
-                <select id="special-status">
-                  <option value=""></option>
-                  <option value="TH">Treasure Hunt (TH)</option>
-                  <option value="STH">Super Treasure Hunt (STH)</option>
-                  <option value="Silver Series">Silver Series</option>
-                  <option value="Premium">Premium</option>
-                  <option value="Car Culture">Car Culture</option>
-                  <option value="Elite 64">Elite 64</option>
-                  <option value="Red Line Club">Red Line Club</option>
-                  <option value="Chase">Chase</option>
-                  <option value="Rare">Rare</option>
-                  <option value="Limited">Limited / Special Edition</option>
-                  <option id="multipack-option" value="Multipack">Multipack</option>
-                </select>
-              </label>
-            </div>
-            <div id="multipack-fields" class="multipack-fields hidden">
-              <label>Pack Size
-                <select id="pack-size">
-                  <option value="5">5-Pack</option><option value="8">8-Pack</option><option value="10">10-Pack</option><option value="20">20-Pack</option><option value="3">3-Pack</option><option value="2">2-Pack</option><option value="50">50-Pack</option><option value="60">60-Pack</option><option value="other">Other</option>
-                </select>
-              </label>
-              <label id="custom-pack-size-label" class="hidden">Cars in Pack
-                <input id="custom-pack-size" type="number" inputmode="numeric" min="2" max="999" step="1" placeholder="Enter number" />
-              </label>
-            </div>
-
-            <div class="editor-row year-color-row">
-              <label>Release Year
-                <select id="model-year"><option value=""></option></select>
-              </label>
-              <label>Color
-                <select id="color">
-                  <option value=""></option><option value="Black">Black</option><option value="White">White</option><option value="Silver">Silver</option><option value="Gray">Gray</option><option value="Red">Red</option><option value="Blue">Blue</option><option value="Green">Green</option><option value="Yellow">Yellow</option><option value="Orange">Orange</option><option value="Purple">Purple</option><option value="Pink">Pink</option><option value="Gold">Gold</option><option value="Brown">Brown</option><option value="Tan">Tan</option><option value="Other">Type your own…</option>
-                </select>
-              </label>
-            </div>
-            <div class="editor-row conditional-row">
-              <label id="custom-year-label" class="hidden">Other Release Year
-                <input id="custom-year" type="text" inputmode="numeric" placeholder="Type year" />
-              </label>
-              <label id="custom-color-label" class="hidden">Custom Color
-                <input id="custom-color" type="text" placeholder="Type color" />
-              </label>
-            </div>
-
-            <div class="editor-row toy-exclusive-row">
-              <label class="toy-number-field model-field">Toy Number / SKU
-                <input id="hotwheels-toy-number" type="text" placeholder="JBC11" autocomplete="off" aria-autocomplete="list" aria-controls="toy-number-suggestions" />
-                <div id="toy-number-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching toy numbers in the catalog"></div>
-              </label>
-              <label>Exclusive
-                <select id="exclusive-retailer">
-                  <option value="">None</option><option value="Walmart">Walmart</option><option value="Target">Target</option><option value="Walgreens">Walgreens</option><option value="Dollar General">Dollar General</option><option value="Kroger">Kroger</option><option value="Other">Other</option>
-                </select>
-              </label>
-            </div>
-            <label id="exclusive-details" class="hidden compact-conditional-field">Exclusive Type
-              <select id="exclusive-type">
-                <option value=""></option><option value="Store Recolor">Store Recolor</option><option value="ZAMAC">ZAMAC</option><option value="Red Edition">Red Edition</option><option value="Exclusive Series">Exclusive Series</option><option value="Other">Other</option>
-              </select>
-            </label>
-
-            <div class="editor-row series-category-row">
-              <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
-              <label>Category
-                <select id="category">
-                  <option value=""></option>
-                  <option value="JDM">JDM</option>
-                  <option value="Transport / Hauler">Transport / Hauler</option>
-                  <option value="Emergency / Service">Emergency / Service</option>
-                  <option value="Other">Other / Custom…</option>
-                </select>
-              </label>
-            </div>
-            <label id="custom-category-label" class="hidden compact-conditional-field">Custom Category
-              <input id="custom-category" type="text" placeholder="Type category" />
-            </label>
-            <div class="editor-row number-fields">
-              <label>General Number
-                <input id="general-number" type="text" inputmode="text" placeholder="e.g. 123/250" autocomplete="off" />
-              </label>
-              <label>Series / Collection Number
-                <input id="series-collection-number" type="text" inputmode="text" placeholder="e.g. 3/10" autocomplete="off" />
-              </label>
-            </div>
-
-            <div class="entry-options-row" aria-label="Car options">
-              <span class="entry-options-label">Options</span>
-              <label class="custom-toggle" for="is-showcase"><input id="is-showcase" type="checkbox" /><span>Showcase</span></label>
-              <label class="custom-toggle" for="is-custom"><input id="is-custom" type="checkbox" /><span>Custom</span></label>
-            </div>
-
+            <div class="editor-row brand-model-row"><label class="brand-field">Diecast Brand<select id="diecast-brand"><option value=""></option><option value="None">None</option><option value="Hot Wheels">Hot Wheels</option><option value="Matchbox">Matchbox</option><option value="M2">M2</option><option value="Cartuned">Cartuned</option><option value="Maisto">Maisto</option><option value="Mini GT">Mini GT</option><option value="Majorette">Majorette</option><option value="Pink Slips">Pink Slips</option><option value="Other">Type your own…</option></select></label><label class="model-field">Model<input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" aria-autocomplete="list" aria-controls="model-suggestions" /><div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars in your garage and catalog"></div></label></div>
+            <label id="custom-brand-label" class="hidden">Custom Brand<input id="custom-brand" type="text" placeholder="Type brand name" /></label>
+            <div id="duplicate-warning" class="duplicate-warning hidden" role="status" aria-live="polite"><div id="duplicate-warning-text"></div><div id="duplicate-match-list" class="duplicate-match-list hidden" aria-label="Existing matching cars"></div><div id="duplicate-warning-actions" class="duplicate-warning-actions"><button id="duplicate-increase-btn" type="button">Increase Qty</button><button id="duplicate-anyway-btn" type="button">Add Anyway</button></div></div>
+            <div class="editor-row quantity-special-row"><div class="quantity-field"><label for="quantity">Quantity</label><div class="quantity-control"><button id="quantity-minus" class="quantity-step" type="button" aria-label="Decrease quantity">−</button><input id="quantity" type="hidden" value="1" /><div id="quantity-display" class="quantity-display" aria-live="polite" aria-label="Quantity">QTY 1</div><button id="quantity-plus" class="quantity-step" type="button" aria-label="Increase quantity">+</button></div></div><label>Special Category<select id="special-status"><option value=""></option><option value="TH">Treasure Hunt (TH)</option><option value="STH">Super Treasure Hunt (STH)</option><option value="Silver Series">Silver Series</option><option value="Premium">Premium</option><option value="Car Culture">Car Culture</option><option value="Elite 64">Elite 64</option><option value="Red Line Club">Red Line Club</option><option value="Chase">Chase</option><option value="Rare">Rare</option><option value="Limited">Limited / Special Edition</option><option id="multipack-option" value="Multipack">Multipack</option></select></label></div>
+            <div id="multipack-fields" class="multipack-fields hidden"><label>Pack Size<select id="pack-size"><option value="5">5-Pack</option><option value="8">8-Pack</option><option value="10">10-Pack</option><option value="20">20-Pack</option><option value="3">3-Pack</option><option value="2">2-Pack</option><option value="50">50-Pack</option><option value="60">60-Pack</option><option value="other">Other</option></select></label><label id="custom-pack-size-label" class="hidden">Cars in Pack<input id="custom-pack-size" type="number" inputmode="numeric" min="2" max="999" step="1" placeholder="Enter number" /></label></div>
+            <div class="editor-row year-color-row"><label>Release Year<select id="model-year"><option value=""></option></select></label><label>Color<select id="color"><option value=""></option><option value="Black">Black</option><option value="White">White</option><option value="Silver">Silver</option><option value="Gray">Gray</option><option value="Red">Red</option><option value="Blue">Blue</option><option value="Green">Green</option><option value="Yellow">Yellow</option><option value="Orange">Orange</option><option value="Purple">Purple</option><option value="Pink">Pink</option><option value="Gold">Gold</option><option value="Brown">Brown</option><option value="Tan">Tan</option><option value="Other">Type your own…</option></select></label></div>
+            <div class="editor-row conditional-row"><label id="custom-year-label" class="hidden">Other Release Year<input id="custom-year" type="text" inputmode="numeric" placeholder="Type year" /></label><label id="custom-color-label" class="hidden">Custom Color<input id="custom-color" type="text" placeholder="Type color" /></label></div>
+            <div class="editor-row toy-exclusive-row"><label class="toy-number-field model-field">Toy Number / SKU<input id="hotwheels-toy-number" type="text" placeholder="JBC11" autocomplete="off" aria-autocomplete="list" aria-controls="toy-number-suggestions" /><div id="toy-number-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching toy numbers in the catalog"></div></label><label>Exclusive<select id="exclusive-retailer"><option value="">None</option><option value="Walmart">Walmart</option><option value="Target">Target</option><option value="Walgreens">Walgreens</option><option value="Dollar General">Dollar General</option><option value="Kroger">Kroger</option><option value="Other">Other</option></select></label></div>
+            <label id="exclusive-details" class="hidden compact-conditional-field">Exclusive Type<select id="exclusive-type"><option value=""></option><option value="Store Recolor">Store Recolor</option><option value="ZAMAC">ZAMAC</option><option value="Red Edition">Red Edition</option><option value="Exclusive Series">Exclusive Series</option><option value="Other">Other</option></select></label>
+            <div class="editor-row series-category-row"><label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label><label>Category<select id="category"><option value=""></option><option value="JDM">JDM</option><option value="Transport / Hauler">Transport / Hauler</option><option value="Emergency / Service">Emergency / Service</option><option value="Other">Other / Custom…</option></select></label></div>
+            <label id="custom-category-label" class="hidden compact-conditional-field">Custom Category<input id="custom-category" type="text" placeholder="Type category" /></label>
+            <div class="editor-row number-fields"><label>General Number<input id="general-number" type="text" inputmode="text" placeholder="e.g. 123/250" autocomplete="off" /></label><label>Series / Collection Number<input id="series-collection-number" type="text" inputmode="text" placeholder="e.g. 3/10" autocomplete="off" /></label></div>
+            <div class="entry-options-row" aria-label="Car options"><span class="entry-options-label">Options</span><label class="custom-toggle" for="is-showcase"><input id="is-showcase" type="checkbox" /><span>Showcase</span></label><label class="custom-toggle" for="is-custom"><input id="is-custom" type="checkbox" /><span>Custom</span></label></div>
             <label class="notes-field">Notes<textarea id="notes" rows="2" placeholder="Optional notes"></textarea></label>
-            <button id="more-details-toggle" class="more-details-toggle hidden" type="button">More Details ▾</button>
-            <div id="more-details-section" class="hidden"></div>
+            <button id="more-details-toggle" class="more-details-toggle hidden" type="button">More Details ▾</button><div id="more-details-section" class="hidden"></div>
           </form>
-
-          <button id="delete-button" class="danger hidden" type="button">Delete Car</button>
-          <p id="editor-message" class="message"></p>
+          <button id="delete-button" class="danger hidden" type="button">Delete Car</button><p id="editor-message" class="message"></p>
         </section>
       </main>
     </section>
   </div>
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
-
-  <script src="jszip.min.js?v=3.2.4"></script>
-  <script type="module" src="app.js?v=3.2.4"></script>
+  <script src="jszip.min.js?v=3.2.5"></script>
+  <script type="module" src="app.js?v=3.2.5"></script>
+  <script src="showcase-sync.js?v=3.2.5"></script>
 </body>
 </html>
