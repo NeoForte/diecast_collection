@@ -8,142 +8,44 @@
     const style = document.createElement('style')
     style.id = STYLE_ID
     style.textContent = `
-      #social-screen .showcase-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 10px !important;
+      #social-screen .showcase-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important; }
+      #social-screen .showcase-home-card { cursor:pointer; }
+      #social-screen .showcase-home-card .showcase-remove-button {
+        pointer-events:auto !important;
+        width:auto !important;
+        min-width:0 !important;
+        min-height:24px !important;
+        margin:0 !important;
+        padding:0 7px !important;
+        border:1px solid rgba(255,255,255,.18) !important;
+        border-radius:8px !important;
+        background:rgba(0,0,0,.66) !important;
+        color:rgba(255,255,255,.86) !important;
+        font-size:8px !important;
+        line-height:1 !important;
+        font-weight:850 !important;
+        backdrop-filter:blur(5px);
       }
-      #social-screen .showcase-square-card {
-        position: relative !important;
-        display: block !important;
-        aspect-ratio: 1 / 1 !important;
-        min-height: 0 !important;
-        border-radius: 14px !important;
-        overflow: hidden !important;
-        background: #0b0b0b !important;
-        isolation: isolate;
-        border: 1px solid rgba(192,192,192,.72) !important;
-        box-shadow: 0 2px 14px rgba(0,0,0,.35) !important;
-      }
-      #social-screen .showcase-square-card .square-car-photo {
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        aspect-ratio: 1 / 1 !important;
-        background: #0b0b0b !important;
-      }
-      #social-screen .showcase-square-card .square-car-photo img {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
-        object-position: center !important;
-        background: #0b0b0b !important;
-      }
-      #social-screen .showcase-square-card .square-card-gradient {
-        position: absolute;
-        inset: 38% 0 0;
-        z-index: 2;
-        pointer-events: none;
-        background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.20) 24%, rgba(0,0,0,.88) 100%);
-      }
-      #social-screen .showcase-square-card .square-card-info {
-        position: absolute !important;
-        z-index: 4 !important;
-        left: 8px !important;
-        right: 8px !important;
-        bottom: 7px !important;
-        padding: 0 !important;
-        display: grid !important;
-        grid-template-columns: minmax(0,1fr) auto !important;
-        align-items: end !important;
-        gap: 6px !important;
-        pointer-events: none;
-        background: transparent !important;
-      }
-      #social-screen .showcase-square-card .square-card-copy { min-width: 0; }
-      #social-screen .showcase-square-card .car-title {
-        margin: 0 0 2px !important;
-        color: #fff !important;
-        font-size: 11.5px !important;
-        line-height: 1.05 !important;
-        font-weight: 900 !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-shadow: 0 1px 3px rgba(0,0,0,.9);
-      }
-      #social-screen .showcase-square-card .car-sub {
-        margin: 0 !important;
-        min-height: 0 !important;
-        color: rgba(255,255,255,.76) !important;
-        font-size: 8.5px !important;
-        line-height: 1.05 !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-shadow: 0 1px 2px rgba(0,0,0,.9);
-      }
-      #social-screen .showcase-square-card .showcase-remove-button {
-        pointer-events: auto !important;
-        align-self: end;
-        width: auto !important;
-        min-width: 0 !important;
-        min-height: 24px !important;
-        margin: 0 !important;
-        padding: 0 7px !important;
-        border: 1px solid rgba(255,255,255,.18) !important;
-        border-radius: 8px !important;
-        background: rgba(0,0,0,.66) !important;
-        color: rgba(255,255,255,.82) !important;
-        font-size: 8px !important;
-        line-height: 1 !important;
-        font-weight: 850 !important;
-        backdrop-filter: blur(5px);
-      }
-      #social-screen .showcase-square-card .square-badge-stack {
-        position: absolute !important;
-        z-index: 5 !important;
-        top: 6px !important;
-        left: 6px !important;
-        right: auto !important;
-        max-width: calc(100% - 44px);
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 3px !important;
-      }
-      #social-screen .showcase-square-card .square-badge-stack .special-badge {
-        position: static !important;
-        max-width: 100%;
-        min-height: 18px !important;
-        padding: 2px 5px !important;
-        border-radius: 5px !important;
-        font-size: 7.5px !important;
-        line-height: 1.05 !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      #social-screen .showcase-favorite-star {
-        position: absolute;
-        z-index: 6;
-        top: 6px;
-        right: 7px;
-        color: #5aa7ff;
-        font-size: 22px;
-        line-height: 1;
-        text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(90,167,255,.5);
-        pointer-events: none;
-      }
-      #search-input { text-transform: uppercase; }
-      @media (min-width: 700px) {
-        #social-screen .showcase-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          gap: 12px !important;
-        }
+      #social-screen .showcase-home-card .favorite-card-toggle { pointer-events:none !important; }
+      #search-input { text-transform:uppercase; }
+      @media (min-width:700px) {
+        #social-screen .showcase-grid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:12px !important; }
       }
     `
     document.head.append(style)
+  }
+
+  function copyComputedStyle(source, target) {
+    const style = getComputedStyle(source)
+    for (const prop of style) target.style.setProperty(prop, style.getPropertyValue(prop), style.getPropertyPriority(prop))
+  }
+
+  function copyComputedTree(source, target) {
+    copyComputedStyle(source, target)
+    const sourceNodes = source.querySelectorAll('*')
+    const targetNodes = target.querySelectorAll('*')
+    const count = Math.min(sourceNodes.length, targetNodes.length)
+    for (let i = 0; i < count; i += 1) copyComputedStyle(sourceNodes[i], targetNodes[i])
   }
 
   function homeCardMaps() {
@@ -159,59 +61,48 @@
     return { byPath, byText }
   }
 
-  function syncOneCard(card, maps) {
-    if (!(card instanceof HTMLElement) || card.dataset.showcaseSynced === '1') return
-
-    const photo = card.querySelector('.car-photo')
-    const body = card.querySelector('.car-body')
-    const title = card.querySelector('.car-title')
-    const sub = card.querySelector('.car-sub')
-    const remove = card.querySelector('.showcase-remove-button')
-    if (!photo || !body || !title || !sub) return
-
-    const img = photo.querySelector('img[data-private-photo-path]')
+  function findHomeCard(showcaseCard, maps) {
+    const img = showcaseCard.querySelector('img[data-private-photo-path]')
     const path = img?.dataset.privatePhotoPath || ''
-    const textKey = `${title.textContent?.trim() || ''}\u241f${sub.textContent?.trim() || ''}`
-    const homeCard = (path && maps.byPath.get(path)) || maps.byText.get(textKey) || null
+    const title = showcaseCard.querySelector('.car-title')?.textContent?.trim() || ''
+    const sub = showcaseCard.querySelector('.car-sub')?.textContent?.trim() || ''
+    return (path && maps.byPath.get(path)) || maps.byText.get(`${title}\u241f${sub}`) || null
+  }
 
-    card.classList.add('square-car-card', 'showcase-square-card')
-    photo.classList.add('square-car-photo')
+  function syncOneCard(card, maps) {
+    if (!(card instanceof HTMLElement) || card.dataset.showcaseSynced === '2') return
+    const removeButton = card.querySelector('.showcase-remove-button')
+    const oldImg = card.querySelector('img[data-private-photo-path]')
+    const homeCard = findHomeCard(card, maps)
+    if (!homeCard) return
 
-    if (img && homeCard) {
-      const homeImg = homeCard.querySelector('img[data-private-photo-path]')
-      if (homeImg?.src && img.src !== homeImg.src) img.src = homeImg.src
+    const clone = homeCard.cloneNode(true)
+    copyComputedTree(homeCard, clone)
+
+    const homeImg = homeCard.querySelector('img[data-private-photo-path]')
+    const cloneImg = clone.querySelector('img[data-private-photo-path]')
+    if (cloneImg) {
+      if (homeImg?.src) cloneImg.src = homeImg.src
+      else if (oldImg?.src) cloneImg.src = oldImg.src
     }
 
-    let gradient = card.querySelector('.square-card-gradient')
-    if (!gradient) {
-      gradient = document.createElement('div')
-      gradient.className = 'square-card-gradient'
-      gradient.setAttribute('aria-hidden', 'true')
-      photo.insertAdjacentElement('afterend', gradient)
+    const qty = clone.querySelector('.card-quantity-control')
+    if (qty && removeButton) qty.replaceWith(removeButton)
+    else if (removeButton) clone.append(removeButton)
+
+    const favorite = clone.querySelector('.favorite-card-toggle')
+    if (favorite) {
+      favorite.disabled = true
+      favorite.tabIndex = -1
+      favorite.setAttribute('aria-hidden', 'true')
     }
 
-    const copy = document.createElement('div')
-    copy.className = 'square-card-copy'
-    copy.append(title, sub)
-    body.className = 'square-card-info showcase-square-info'
-    body.replaceChildren(copy)
-    if (remove) body.append(remove)
-
-    card.querySelector('.square-badge-stack')?.remove()
-    card.querySelector('.showcase-favorite-star')?.remove()
-    if (homeCard) {
-      const badges = homeCard.querySelector('.square-badge-stack')
-      if (badges) card.append(badges.cloneNode(true))
-      if (homeCard.querySelector('.favorite-card-toggle.is-favorite')) {
-        const star = document.createElement('span')
-        star.className = 'showcase-favorite-star'
-        star.textContent = '★'
-        star.setAttribute('aria-hidden', 'true')
-        card.append(star)
-      }
-    }
-
-    card.dataset.showcaseSynced = '1'
+    card.className = `${homeCard.className} showcase-card showcase-home-card`
+    card.dataset.carId = homeCard.dataset.carId || ''
+    card.tabIndex = homeCard.tabIndex
+    copyComputedStyle(homeCard, card)
+    card.replaceChildren(...clone.childNodes)
+    card.dataset.showcaseSynced = '2'
   }
 
   function syncShowcaseCards() {
@@ -256,12 +147,11 @@
     const grid = document.getElementById('showcase-grid')
     const nav = document.getElementById('social-nav')
     if (!grid || !nav) return
-
     nav.addEventListener('click', () => setTimeout(syncShowcaseCards, 0))
-    new MutationObserver(scheduleSync).observe(grid, { childList: true })
+    new MutationObserver(scheduleSync).observe(grid, { childList:true })
     scheduleSync()
   }
 
   if (document.readyState === 'complete') init()
-  else window.addEventListener('load', init, { once: true })
+  else window.addEventListener('load', init, { once:true })
 })()
