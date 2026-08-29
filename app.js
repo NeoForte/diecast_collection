@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.1.6'
+const APP_VERSION = '3.2.0'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -1718,42 +1718,42 @@ function renderCars() {
 
   for (const car of filteredCars) {
     const card = document.createElement('article')
-    card.className = 'car-card'
+    card.className = 'car-card square-car-card'
     card.dataset.carId = String(car.id)
     card.tabIndex = 0
+
     const specialStatus = SPECIAL_STATUSES.includes(car.special_status) ? car.special_status : ''
     if (specialStatus && specialStatus !== 'Multipack') {
       const specialClass = specialClassForStatus(specialStatus)
       card.classList.add('special-card')
       if (specialClass) card.classList.add(specialClass)
     }
-    if (car.is_custom) {
-      card.classList.add('custom-car-card')
-    }
+    if (car.is_custom) card.classList.add('custom-car-card')
+
     card.innerHTML = `
-      <div class="car-photo"><span>🚗</span></div>
-      <div class="car-body">
-        <div class="car-title"></div>
-        <div class="car-sub"></div>
+      <div class="car-photo square-car-photo"><span>🚗</span></div>
+      <div class="square-card-gradient" aria-hidden="true"></div>
+      <div class="square-card-info">
+        <div class="square-card-copy">
+          <div class="car-title"></div>
+          <div class="car-sub"></div>
+        </div>
+        <div class="card-quantity-control square-qty-control"></div>
       </div>`
+
     card.querySelector('.car-title').textContent = displayTitle(car)
     card.querySelector('.car-sub').textContent = displaySubtitle(car)
     const photoBox = card.querySelector('.car-photo')
+
     if (car.photo_path) {
       const img = document.createElement('img')
       img.alt = displayTitle(car)
       photoBox.replaceChildren(img)
       lazyLoadPrivatePhoto(car.photo_path, img)
     }
-    const quantity = Number(car.quantity)
-    if (Number.isFinite(quantity) && quantity > 1) {
-      const qtyBadge = document.createElement('div')
-      qtyBadge.className = 'quantity-badge'
-      qtyBadge.textContent = String(quantity)
-      photoBox.append(qtyBadge)
-    }
+
     const badgeStack = document.createElement('div')
-    badgeStack.className = 'badge-stack'
+    badgeStack.className = 'badge-stack square-badge-stack'
     if (specialStatus) {
       const specialBadge = document.createElement('div')
       specialBadge.className = 'special-badge'
@@ -1773,7 +1773,7 @@ function renderCars() {
       customBadge.textContent = 'CUSTOM'
       badgeStack.append(customBadge)
     }
-    if (badgeStack.childElementCount) photoBox.append(badgeStack)
+    if (badgeStack.childElementCount) card.append(badgeStack)
 
     if (collectionExtrasSupported) {
       const favoriteButton = document.createElement('button')
@@ -1801,9 +1801,7 @@ function renderCars() {
           favoriteButton.setAttribute('aria-label', nextValue ? 'Remove from favorites' : 'Add to favorites')
           favoriteButton.title = nextValue ? 'Remove from favorites' : 'Add to favorites'
           renderStats()
-          if (activeBrandFilter === '__favorites__' && !nextValue) {
-            applySearch()
-          }
+          if (activeBrandFilter === '__favorites__' && !nextValue) applySearch()
         } catch (error) {
           console.error(error)
           window.alert(error.message || 'Could not update favorite.')
@@ -1812,11 +1810,10 @@ function renderCars() {
         }
       })
       favoriteButton.addEventListener('keydown', (event) => event.stopPropagation())
-      photoBox.append(favoriteButton)
+      card.append(favoriteButton)
     }
 
-    const qtyControls = document.createElement('div')
-    qtyControls.className = 'card-quantity-control'
+    const qtyControls = card.querySelector('.card-quantity-control')
     const minusButton = document.createElement('button')
     minusButton.type = 'button'
     minusButton.className = 'card-quantity-button'
@@ -1833,7 +1830,6 @@ function renderCars() {
     plusButton.textContent = '+'
     plusButton.setAttribute('aria-label', `Increase quantity for ${displayTitle(car)}`)
     qtyControls.append(minusButton, qtyValue, plusButton)
-    card.querySelector('.car-body').append(qtyControls)
 
     minusButton.addEventListener('click', (event) => {
       event.preventDefault()
@@ -1845,6 +1841,7 @@ function renderCars() {
       event.stopPropagation()
       updateCardQuantity(car, 1, qtyControls)
     })
+    qtyControls.addEventListener('click', (event) => event.stopPropagation())
     qtyControls.addEventListener('keydown', (event) => event.stopPropagation())
 
     const open = () => showEditor(car)
@@ -2644,6 +2641,12 @@ $('more-details-toggle').addEventListener('click', () => {
   $('more-details-toggle').textContent = collapsed ? 'More Details ▾' : 'Fewer Details ▴'
 })
 const cameraInput = $('camera-input')
+const squareCameraModal = $('square-camera-modal')
+const squareCameraVideo = $('square-camera-video')
+const squareCameraPreview = $('square-camera-preview')
+const squareCameraStatus = $('square-camera-status')
+let squareCameraStream = null
+let squareCameraBlob = null
 
 function useSelectedPhotoFile(file) {
   selectedPhotoFile = file ?? null
@@ -2653,8 +2656,107 @@ function useSelectedPhotoFile(file) {
   setPhotoPreview(previewObjectUrl)
 }
 
-$('take-photo-button')?.addEventListener('click', () => cameraInput?.click())
+function stopSquareCameraStream() {
+  if (squareCameraStream) {
+    squareCameraStream.getTracks().forEach((track) => track.stop())
+    squareCameraStream = null
+  }
+  if (squareCameraVideo) squareCameraVideo.srcObject = null
+}
+
+function resetSquareCameraCapture() {
+  squareCameraBlob = null
+  if (squareCameraPreview) {
+    squareCameraPreview.src = ''
+    squareCameraPreview.classList.add('hidden')
+  }
+  squareCameraVideo?.classList.remove('hidden')
+  $('square-camera-shutter')?.classList.remove('hidden')
+  $('square-camera-retake')?.classList.add('hidden')
+  $('square-camera-use')?.classList.add('hidden')
+  if (squareCameraStatus) squareCameraStatus.textContent = 'Center the package inside the square.'
+}
+
+async function openSquareCamera() {
+  if (!squareCameraModal || !squareCameraVideo || !navigator.mediaDevices?.getUserMedia) {
+    cameraInput?.click()
+    return
+  }
+  resetSquareCameraCapture()
+  squareCameraModal.classList.remove('hidden')
+  document.body.classList.add('camera-open')
+  try {
+    squareCameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false,
+    })
+    squareCameraVideo.srcObject = squareCameraStream
+    await squareCameraVideo.play()
+  } catch (error) {
+    console.warn('Square camera unavailable; using device camera picker.', error)
+    closeSquareCamera()
+    cameraInput?.click()
+  }
+}
+
+function closeSquareCamera() {
+  stopSquareCameraStream()
+  squareCameraModal?.classList.add('hidden')
+  document.body.classList.remove('camera-open')
+  resetSquareCameraCapture()
+}
+
+async function captureSquareCameraFrame() {
+  if (!squareCameraVideo?.videoWidth || !squareCameraVideo?.videoHeight) return
+  const sourceW = squareCameraVideo.videoWidth
+  const sourceH = squareCameraVideo.videoHeight
+  const side = Math.min(sourceW, sourceH)
+  const sx = Math.floor((sourceW - side) / 2)
+  const sy = Math.floor((sourceH - side) / 2)
+  const canvas = document.createElement('canvas')
+  canvas.width = 1200
+  canvas.height = 1200
+  const ctx = canvas.getContext('2d', { alpha: false })
+  ctx.drawImage(squareCameraVideo, sx, sy, side, side, 0, 0, canvas.width, canvas.height)
+  squareCameraBlob = await new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Could not capture photo.')), 'image/jpeg', .9)
+  })
+  const url = URL.createObjectURL(squareCameraBlob)
+  squareCameraPreview.src = url
+  squareCameraPreview.onload = () => URL.revokeObjectURL(url)
+  squareCameraPreview.classList.remove('hidden')
+  squareCameraVideo.classList.add('hidden')
+  $('square-camera-shutter')?.classList.add('hidden')
+  $('square-camera-retake')?.classList.remove('hidden')
+  $('square-camera-use')?.classList.remove('hidden')
+  if (squareCameraStatus) squareCameraStatus.textContent = 'Square captured.'
+}
+
+async function retakeSquareCameraPhoto() {
+  squareCameraBlob = null
+  squareCameraPreview.src = ''
+  squareCameraPreview.classList.add('hidden')
+  squareCameraVideo.classList.remove('hidden')
+  $('square-camera-shutter')?.classList.remove('hidden')
+  $('square-camera-retake')?.classList.add('hidden')
+  $('square-camera-use')?.classList.add('hidden')
+  if (squareCameraStatus) squareCameraStatus.textContent = 'Center the package inside the square.'
+  if (!squareCameraStream) await openSquareCamera()
+}
+
+function useSquareCameraPhoto() {
+  if (!squareCameraBlob) return
+  const file = new File([squareCameraBlob], `pocket64-${Date.now()}.jpg`, { type: 'image/jpeg' })
+  useSelectedPhotoFile(file)
+  closeSquareCamera()
+}
+
+$('take-photo-button')?.addEventListener('click', openSquareCamera)
 $('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
+$('square-camera-cancel')?.addEventListener('click', closeSquareCamera)
+$('square-camera-shutter')?.addEventListener('click', captureSquareCameraFrame)
+$('square-camera-retake')?.addEventListener('click', retakeSquareCameraPhoto)
+$('square-camera-use')?.addEventListener('click', useSquareCameraPhoto)
 
 cameraInput?.addEventListener('change', () => {
   useSelectedPhotoFile(cameraInput.files?.[0])

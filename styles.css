@@ -4056,3 +4056,243 @@ html[data-theme="light"] .photo-source-actions button { background:#fff; color:#
   .photo-source-actions #take-photo-button,
   .photo-source-actions #choose-photo-button { min-width:104px; }
 }
+
+
+/* Pocket 64 v3.2.0 — clean square Home tiles + square camera */
+#collection-screen .cars-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+#collection-screen .square-car-card {
+  position: relative !important;
+  display: block !important;
+  aspect-ratio: 1 / 1 !important;
+  min-height: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  background: #0b0b0b !important;
+  isolation: isolate;
+}
+#collection-screen .square-car-photo {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  background: #0b0b0b !important;
+}
+#collection-screen .square-car-photo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  background: #0b0b0b !important;
+}
+#collection-screen .square-card-gradient {
+  position: absolute;
+  inset: 38% 0 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.20) 24%, rgba(0,0,0,.88) 100%);
+}
+#collection-screen .square-card-info {
+  position: absolute;
+  z-index: 4;
+  left: 8px;
+  right: 8px;
+  bottom: 7px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: end;
+  gap: 6px;
+  pointer-events: none;
+}
+#collection-screen .square-card-copy { min-width: 0; }
+#collection-screen .square-card-info .car-title {
+  margin: 0 0 2px !important;
+  color: #fff !important;
+  font-size: 11.5px !important;
+  line-height: 1.05 !important;
+  font-weight: 900 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0,0,0,.9);
+}
+#collection-screen .square-card-info .car-sub {
+  margin: 0 !important;
+  min-height: 0 !important;
+  color: rgba(255,255,255,.76) !important;
+  font-size: 8.5px !important;
+  line-height: 1.05 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0,0,0,.9);
+}
+#collection-screen .square-qty-control {
+  pointer-events: auto;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  display: grid !important;
+  grid-template-columns: 22px 21px 22px !important;
+  gap: 2px !important;
+  align-items: center;
+  background: rgba(0,0,0,.66);
+  border-radius: 9px;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+}
+#collection-screen .square-qty-control .card-quantity-button {
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+  font-size: 14px !important;
+}
+#collection-screen .square-qty-control .card-quantity-value {
+  font-size: 10px !important;
+  color: #fff !important;
+  text-align: center;
+}
+#collection-screen .square-badge-stack {
+  position: absolute !important;
+  z-index: 5 !important;
+  top: 6px !important;
+  left: 6px !important;
+  right: auto !important;
+  max-width: calc(100% - 44px);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 3px !important;
+}
+#collection-screen .square-badge-stack .special-badge {
+  position: static !important;
+  max-width: 100%;
+  min-height: 18px !important;
+  padding: 2px 5px !important;
+  border-radius: 5px !important;
+  font-size: 7.5px !important;
+  line-height: 1.05 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#collection-screen .square-car-card .favorite-card-toggle {
+  top: 6px !important;
+  right: 7px !important;
+  z-index: 6 !important;
+  font-size: 22px !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,.95) !important;
+}
+#collection-screen .square-car-card.special-card { border-width: 2px !important; }
+#collection-screen .square-car-card.custom-car-card::after { border-radius: 12px !important; }
+@media (min-width: 700px) {
+  #collection-screen .cars-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+/* Square camera — no zoom/crop controls, just frame, shutter, retake/use */
+body.camera-open { overflow: hidden; }
+.square-camera-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+  background: rgba(0,0,0,.96);
+}
+.square-camera-shell {
+  width: min(100%, 520px);
+  display: grid;
+  gap: 12px;
+}
+.square-camera-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 40px;
+}
+.square-camera-topbar button {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: #d5d5d5;
+  padding: 8px 4px;
+  font-size: 15px;
+}
+.square-camera-topbar strong { color: #fff; font-size: 16px; }
+.square-camera-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #050505;
+  border: 1px solid rgba(255,255,255,.22);
+}
+.square-camera-frame video,
+.square-camera-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.square-camera-guide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
+}
+.square-camera-status {
+  min-height: 18px;
+  text-align: center;
+  color: #a9a9a9;
+  font-size: 12px;
+}
+.square-camera-actions {
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+.square-camera-actions > button:not(.square-camera-shutter) {
+  min-width: 86px;
+  border: 1px solid #363636;
+  border-radius: 11px;
+  background: #171717;
+  color: #fff;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+#square-camera-retake { justify-self: end; grid-column: 1; }
+#square-camera-use { justify-self: start; grid-column: 3; background: #f6f6f6; color: #050505; border-color: #f6f6f6; }
+.square-camera-shutter {
+  grid-column: 2;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+.square-camera-shutter span {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: #fff;
+  display: block;
+}

@@ -1,4 +1,4 @@
-Pocket 64 v3.1.6
+Pocket 64 v3.2.0
 
 Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.
 
@@ -718,3 +718,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Restored the taller 3:4 portrait photo area on collection cards so carded diecast photos display larger and more consistently.
 - Restored Take Photo beside Choose Photo. Take Photo opens the device camera directly and uses the captured image as-is.
 - No crop, pinch, zoom, or framing screen.
+
+
+## v3.2.0
+- Rebuilt the Home collection as a clean square-tile layout: two perfect-square cards across on phones.
+- Card title/subtitle, badges, Favorite star, and quantity controls now overlay the image so every card keeps the same square footprint.
+- Added an in-app square camera with a fixed 1:1 viewfinder, shutter, Retake, and Use Photo only. No pinch, zoom, drag, or crop controls.
+- Existing collection records remain unchanged; older photos continue to display and can be replaced over time.
