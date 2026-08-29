@@ -81,9 +81,17 @@
 
     const homeImg = homeCard.querySelector('img[data-private-photo-path]')
     const cloneImg = clone.querySelector('img[data-private-photo-path]')
-    if (cloneImg) {
-      if (homeImg?.src) cloneImg.src = homeImg.src
-      else if (oldImg?.src) cloneImg.src = oldImg.src
+    if (cloneImg && oldImg) {
+      // Preserve the Showcase image element that app.js is actively loading.
+      // Replacing it would orphan the in-flight photo load and make Showcase
+      // wait for Home's lazy-loaded copy before a photo appears.
+      oldImg.className = cloneImg.className
+      if (homeImg) copyComputedStyle(homeImg, oldImg)
+      else copyComputedStyle(cloneImg, oldImg)
+      if (!oldImg.src && homeImg?.src) oldImg.src = homeImg.src
+      cloneImg.replaceWith(oldImg)
+    } else if (cloneImg && homeImg?.src) {
+      cloneImg.src = homeImg.src
     }
 
     const qty = clone.querySelector('.card-quantity-control')

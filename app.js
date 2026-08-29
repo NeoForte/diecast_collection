@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.2.8'
+const APP_VERSION = '3.2.9'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -1765,11 +1765,15 @@ function renderShowcase() {
     card.querySelector('.car-title').textContent = displayTitle(car)
     card.querySelector('.car-sub').textContent = displaySubtitle(car)
     const photoBox = card.querySelector('.car-photo')
+    let showcaseImg = null
     if (car.photo_path) {
       const img = document.createElement('img')
       img.alt = displayTitle(car)
+      img.loading = 'eager'
+      img.decoding = 'async'
+      img.dataset.privatePhotoPath = car.photo_path
       photoBox.replaceChildren(img)
-      lazyLoadPrivatePhoto(car.photo_path, img)
+      showcaseImg = img
     }
     const remove = document.createElement('button')
     remove.type = 'button'
@@ -1786,6 +1790,7 @@ function renderShowcase() {
     card.querySelector('.car-body').append(remove)
     card.addEventListener('click', () => showEditor(car))
     grid.append(card)
+    if (car.photo_path && showcaseImg) loadPrivatePhoto(car.photo_path, showcaseImg)
   }
 }
 
