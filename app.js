@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.2.4'
+const APP_VERSION = '3.2.8'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -144,7 +144,7 @@ let catalogSuggestionRequest = 0
 let duplicateScanGroups = []
 let collectionExtrasSupported = false
 
-const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v1'
+const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const photoUrlCache = new Map()
 const photoLoadPromises = new Map()
 const photoObserver = 'IntersectionObserver' in window
@@ -1064,7 +1064,7 @@ async function getPrivatePhotoBlob(path) {
   const { data, error } = await supabase.storage.from('car-photos').createSignedUrl(path, 3600)
   if (error || !data?.signedUrl) return null
 
-  const response = await fetch(data.signedUrl, { cache: 'force-cache' })
+  const response = await fetch(data.signedUrl, { cache: 'no-store' })
   if (!response.ok) return null
   const responseForCache = response.clone()
   const blob = await response.blob()
@@ -1102,6 +1102,36 @@ async function invalidatePrivatePhotoCache(path) {
     await cache.delete(privatePhotoCacheRequest(path))
   } catch (err) {
     console.warn('Photo cache invalidation failed', err)
+  }
+}
+
+async function prunePrivatePhotoCache(validPaths = []) {
+  if (!('caches' in window)) return
+  const valid = new Set(validPaths.filter(Boolean))
+  try {
+    const cache = await caches.open(privatePhotoCacheName())
+    const requests = await cache.keys()
+    const marker = '/__p64_photo_cache__/'
+    await Promise.all(requests.map(async (request) => {
+      try {
+        const url = new URL(request.url)
+        const markerIndex = url.pathname.indexOf(marker)
+        if (markerIndex < 0) return
+        const encodedPath = url.pathname.slice(markerIndex + marker.length)
+        const path = decodeURIComponent(encodedPath)
+        if (!valid.has(path)) {
+          await cache.delete(request)
+          const cached = photoUrlCache.get(path)
+          if (cached?.url?.startsWith('blob:')) URL.revokeObjectURL(cached.url)
+          photoUrlCache.delete(path)
+          photoLoadPromises.delete(path)
+        }
+      } catch (err) {
+        console.warn('Could not inspect cached photo entry', err)
+      }
+    }))
+  } catch (err) {
+    console.warn('Photo cache cleanup failed', err)
   }
 }
 
@@ -1149,6 +1179,10 @@ async function loadCars() {
     if (session?.user?.id !== userId) return
     cars = data ?? []
     loadedCarsUserId = userId
+    await prunePrivatePhotoCache([
+      ...cars.map((car) => car.photo_path).filter(Boolean),
+      `${userId}/profile-icon.jpg`,
+    ])
     applySearch()
     renderStats()
     updateBackupReminder()
@@ -1976,13 +2010,13 @@ async function compressImage(file, maxDimension = 1600, quality = 0.78) {
 
 async function uploadPhoto(carId, file) {
   const compressed = await compressImage(file)
-  const path = `${session.user.id}/${carId}.jpg`
+  const version = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const path = `${session.user.id}/${carId}-${version}.jpg`
   const { error } = await supabase.storage.from('car-photos').upload(path, compressed, {
     contentType: 'image/jpeg',
-    upsert: true,
+    upsert: false,
   })
   if (error) throw error
-  await invalidatePrivatePhotoCache(path)
   return path
 }
 
@@ -2089,13 +2123,23 @@ async function saveCar() {
     }
 
     if (selectedPhotoFile) {
+      const oldPhotoPath = editingCar?.photo_path || car?.photo_path || ''
       const path = await uploadPhoto(car.id, selectedPhotoFile)
       const { error } = await supabase
         .from('cars')
         .update({ photo_path: path })
         .eq('id', car.id)
         .eq('user_id', session.user.id)
-      if (error) throw error
+      if (error) {
+        await supabase.storage.from('car-photos').remove([path])
+        await invalidatePrivatePhotoCache(path)
+        throw error
+      }
+      if (oldPhotoPath && oldPhotoPath !== path) {
+        const { error: removeOldError } = await supabase.storage.from('car-photos').remove([oldPhotoPath])
+        if (removeOldError) console.warn('Old photo could not be deleted from storage', removeOldError)
+        await invalidatePrivatePhotoCache(oldPhotoPath)
+      }
     }
 
     await loadCars()

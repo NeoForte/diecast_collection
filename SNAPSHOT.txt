@@ -1,0 +1,4 @@
+Pocket 64 v3.2.6
+Historical rollback snapshot matching the live v3.2.6 release.
+Includes Showcase/Home card mirroring fix and v3.2.6 cache/version bump.
+Created 2026-08-29.
