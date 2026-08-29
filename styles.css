@@ -4058,7 +4058,7 @@ html[data-theme="light"] .photo-source-actions button { background:#fff; color:#
 }
 
 
-/* Pocket 64 v3.2.2 — clean square Home tiles + square camera */
+/* Pocket 64 v3.2.3 — clean square Home tiles + square camera */
 #collection-screen .cars-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
@@ -4297,7 +4297,7 @@ body.camera-open { overflow: hidden; }
   display: block;
 }
 
-/* Pocket 64 v3.2.2 — 2:3 portrait collection cards with dedicated footer */
+/* Pocket 64 v3.2.3 — 2:3 portrait collection cards with dedicated footer */
 #collection-screen .square-car-card {
   aspect-ratio: 2 / 3 !important;
   border-radius: 15px !important;
@@ -4429,7 +4429,7 @@ body.camera-open { overflow: hidden; }
 }
 
 
-/* Pocket 64 v3.2.2 — uniform silver-style borders, badge-led classification, no in-app camera */
+/* Pocket 64 v3.2.3 — uniform silver-style borders, badge-led classification, no in-app camera */
 .photo-source-actions { justify-content: center; }
 .photo-source-actions #choose-photo-button { min-width: 140px; }
 
@@ -4567,3 +4567,95 @@ html[data-theme="light"] #collection-screen .square-car-card.custom-car-card {
   color: #ffe6f1;
   border-color: rgba(231,118,162,.78);
 }
+
+
+/* Pocket 64 v3.2.3 — card cleanup + faster matching */
+.quantity-badge { display:none !important; }
+
+/* Always-visible favorite marker: white when normal, metallic blue when favorite. */
+.favorite-card-toggle,
+#collection-screen .square-car-card .favorite-card-toggle,
+html[data-theme="light"] .favorite-card-toggle:not(.is-favorite) {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  text-shadow:0 1px 4px rgba(0,0,0,.96), 0 0 2px rgba(0,0,0,.9) !important;
+}
+.favorite-card-toggle.is-favorite,
+#collection-screen .square-car-card .favorite-card-toggle.is-favorite {
+  color:#6db7ff !important;
+  -webkit-text-fill-color:#6db7ff !important;
+  text-shadow:0 0 7px rgba(55,145,255,.95),0 1px 3px rgba(0,0,0,.92) !important;
+}
+
+/* Stretch possible matches almost edge-to-edge and let the image do more work. */
+#model-suggestions,
+#toy-number-suggestions,
+.duplicate-warning {
+  width:calc(100% + 20px) !important;
+  margin-left:-10px !important;
+  margin-right:-10px !important;
+}
+.model-suggestion {
+  grid-template-columns:82px minmax(0,1fr) !important;
+  gap:10px !important;
+  min-height:72px !important;
+  padding:5px 8px !important;
+}
+.model-suggestion-thumb {
+  width:82px !important;
+  height:64px !important;
+  border-radius:8px !important;
+}
+#toy-number-suggestions .garage-sku-suggestion {
+  grid-template-columns:82px minmax(0,1fr) auto !important;
+}
+.duplicate-match-list { gap:6px !important; }
+.duplicate-match-row {
+  grid-template-columns:94px minmax(0,1fr) !important;
+  gap:11px !important;
+  min-height:78px !important;
+  padding:5px 8px !important;
+}
+.duplicate-match-thumb {
+  width:94px !important;
+  height:68px !important;
+  border-radius:8px !important;
+}
+.duplicate-match-title { font-size:12px !important; }
+.duplicate-match-meta { font-size:9.5px !important; margin-top:2px !important; }
+@media (max-width:560px) {
+  #model-suggestions,
+  #toy-number-suggestions,
+  .duplicate-warning { width:calc(100% + 16px) !important; margin-left:-8px !important; margin-right:-8px !important; }
+  .model-suggestion { grid-template-columns:76px minmax(0,1fr) !important; min-height:68px !important; gap:9px !important; }
+  .model-suggestion-thumb { width:76px !important; height:60px !important; }
+  #toy-number-suggestions .garage-sku-suggestion { grid-template-columns:76px minmax(0,1fr) auto !important; }
+  .duplicate-match-row { grid-template-columns:88px minmax(0,1fr) !important; min-height:72px !important; gap:9px !important; padding:5px 7px !important; }
+  .duplicate-match-thumb { width:88px !important; height:64px !important; }
+}
+
+.series-category-row { grid-template-columns:minmax(0,1.35fr) minmax(105px,.65fr) !important; }
+@media (max-width:560px) { .series-category-row { grid-template-columns:minmax(0,1.3fr) minmax(92px,.7fr) !important; } }
+
+.back-to-top-button {
+  position:fixed;
+  right:max(14px, env(safe-area-inset-right));
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  z-index:45;
+  width:42px;
+  height:42px;
+  border:1px solid rgba(210,216,224,.72);
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  background:rgba(16,16,16,.88);
+  color:#f4f6f8;
+  font-size:23px;
+  font-weight:900;
+  line-height:1;
+  box-shadow:0 5px 18px rgba(0,0,0,.42),0 0 10px rgba(192,192,192,.12);
+  backdrop-filter:blur(8px);
+}
+.back-to-top-button:active { transform:translateY(1px); }
+html[data-theme="light"] .back-to-top-button { background:rgba(255,255,255,.92); color:#222; border-color:#aeb5bf; }

@@ -5,12 +5,12 @@ const APP_URL = 'https://neoforte.github.io/diecast_collection/'
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
-const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Other']
+const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Pink Slips', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Multipack']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.2.2'
+const APP_VERSION = '3.2.3'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -325,11 +325,13 @@ function showCollection() {
   collectionScreen.classList.add('active')
   mainNav.classList.remove('hidden')
   setActiveNav('collection')
+  syncBackToTopButton?.()
 }
 
 
 function showSocial() {
   hideScreens()
+  backToTopButton?.classList.add('hidden')
   socialScreen.classList.add('active')
   mainNav.classList.remove('hidden')
   setActiveNav('social')
@@ -338,6 +340,7 @@ function showSocial() {
 
 function showStats() {
   hideScreens()
+  backToTopButton?.classList.add('hidden')
   statsScreen.classList.add('active')
   mainNav.classList.remove('hidden')
   setActiveNav('stats')
@@ -389,6 +392,7 @@ function recordSuccessfulBackup() {
 
 function showSettings() {
   hideScreens()
+  backToTopButton?.classList.add('hidden')
   settingsScreen.classList.add('active')
   mainNav.classList.remove('hidden')
   setActiveNav(null)
@@ -523,7 +527,7 @@ async function renderModelSuggestions() {
     title.textContent = car.model || 'Untitled Car'
     const meta = document.createElement('span')
     meta.className = 'model-suggestion-meta'
-    meta.textContent = [car.model_year, car.series_collection, car.general_number, car.hotwheels_toy_number, car.special_status].filter(Boolean).join(' · ')
+    meta.textContent = [car.model_year, car.series_collection, car.category, car.general_number, car.hotwheels_toy_number, car.special_status].filter(Boolean).join(' · ')
     text.append(title, meta)
     option.append(thumb, text)
 
@@ -958,6 +962,7 @@ function fillEditor(car) {
   setColorValue(car?.color ?? '')
   $('hotwheels-toy-number').value = String(car?.hotwheels_toy_number ?? '').toUpperCase()
   $('series').value = car?.series_collection ?? ''
+  if ($('category')) $('category').value = car?.category ?? ''
   $('general-number').value = car?.general_number ?? ''
   $('series-collection-number').value = car?.series_collection_number ?? ''
   $('quantity').value = String(car?.quantity ?? 1)
@@ -1301,6 +1306,7 @@ function restorePayload(car, targetId, initialPhotoPath) {
     model_year: nullableText(car.model_year),
     scale: nullableText(car.scale),
     series_collection: nullableText(car.series_collection),
+    category: nullableText(car.category),
     quantity: restoreQuantity(car.quantity),
     notes: nullableText(car.notes),
     created_at: restoreDate(car.created_at, now),
@@ -1597,7 +1603,7 @@ function applySearch() {
   }
   if (q) {
     matches = matches.filter((car) => {
-      const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.general_number, car.series_collection_number, car.special_status, car.exclusive_retailer, car.exclusive_type, car.notes]
+      const values = [car.diecast_brand, car.model, car.model_year, car.color, car.hotwheels_toy_number, car.scale, car.series_collection, car.category, car.general_number, car.series_collection_number, car.special_status, car.exclusive_retailer, car.exclusive_type, car.notes]
       if (car.is_custom) values.push('custom')
       if (car.is_favorite) values.push('favorite')
       return values.filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
@@ -1664,20 +1670,6 @@ function updateRenderedCardQuantity(car, controls) {
   if (quantityButtons[1]) quantityButtons[1].disabled = false
   quantityControls?.classList.remove('saving')
 
-  const photoBox = card.querySelector('.car-photo')
-  let badge = photoBox?.querySelector('.quantity-badge')
-  if (qty > 1) {
-    if (!badge && photoBox) {
-      badge = document.createElement('div')
-      badge.className = 'quantity-badge'
-      const badgeStack = photoBox.querySelector('.badge-stack')
-      if (badgeStack) photoBox.insertBefore(badge, badgeStack)
-      else photoBox.append(badge)
-    }
-    if (badge) badge.textContent = String(qty)
-  } else {
-    badge?.remove()
-  }
 }
 
 function reorderRenderedCardsIfNeeded() {
@@ -1800,7 +1792,7 @@ function renderCars() {
       const favoriteButton = document.createElement('button')
       favoriteButton.type = 'button'
       favoriteButton.className = `favorite-card-toggle${car.is_favorite ? ' is-favorite' : ''}`
-      favoriteButton.textContent = car.is_favorite ? '★' : '☆'
+      favoriteButton.textContent = '★'
       favoriteButton.setAttribute('aria-label', car.is_favorite ? 'Remove from favorites' : 'Add to favorites')
       favoriteButton.title = car.is_favorite ? 'Remove from favorites' : 'Add to favorites'
       favoriteButton.addEventListener('click', async (event) => {
@@ -1818,7 +1810,7 @@ function renderCars() {
           if (error) throw error
           car.is_favorite = nextValue
           favoriteButton.classList.toggle('is-favorite', nextValue)
-          favoriteButton.textContent = nextValue ? '★' : '☆'
+          favoriteButton.textContent = '★'
           favoriteButton.setAttribute('aria-label', nextValue ? 'Remove from favorites' : 'Add to favorites')
           favoriteButton.title = nextValue ? 'Remove from favorites' : 'Add to favorites'
           renderStats()
@@ -1991,6 +1983,7 @@ function editorPayload() {
     color: colorRaw ? String(colorRaw).toUpperCase() : null,
     hotwheels_toy_number: $('hotwheels-toy-number').value.trim().toUpperCase() || null,
     series_collection: $('series').value.trim().toUpperCase() || null,
+    category: $('category')?.value || null,
     general_number: $('general-number').value.trim().toUpperCase() || null,
     series_collection_number: $('series-collection-number').value.trim().toUpperCase() || null,
     quantity: Math.max(1, Math.floor(Number(qtyRaw) || 1)),
@@ -2787,6 +2780,16 @@ photoInput.addEventListener('change', () => {
   useSelectedPhotoFile(photoInput.files?.[0])
   photoInput.value = ''
 })
+
+const backToTopButton = $('back-to-top-button')
+function syncBackToTopButton() {
+  if (!backToTopButton) return
+  const onCollection = collectionScreen?.classList.contains('active')
+  backToTopButton.classList.toggle('hidden', !onCollection || window.scrollY < 520)
+}
+backToTopButton?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }))
+window.addEventListener('scroll', syncBackToTopButton, { passive: true })
+syncBackToTopButton()
 
 populateYearOptions()
 applySortPreference()
