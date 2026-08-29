@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.1.5" />
+  <link rel="manifest" href="manifest.webmanifest?v=3.1.6" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=3.1.5" />
+  <link rel="stylesheet" href="styles.css?v=3.1.6" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -184,7 +184,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 3.1.5</span>
+              <span class="version-badge">Version 3.1.6</span>
             </div>
           </div>
         </section>
@@ -221,8 +221,10 @@
               <span>ADD PHOTO</span>
             </div>
             <div class="photo-source-actions">
+              <button id="take-photo-button" type="button">Take Photo</button>
               <button id="choose-photo-button" type="button">Choose Photo</button>
             </div>
+            <input id="camera-input" class="hidden" type="file" accept="image/*" capture="environment" />
             <input id="photo-input" class="hidden" type="file" accept="image/*" />
           </div>
 
@@ -362,7 +364,7 @@
     </section>
   </div>
 
-  <script src="jszip.min.js?v=3.1.5"></script>
-  <script type="module" src="app.js?v=3.1.5"></script>
+  <script src="jszip.min.js?v=3.1.6"></script>
+  <script type="module" src="app.js?v=3.1.6"></script>
 </body>
 </html>

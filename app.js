@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.1.5'
+const APP_VERSION = '3.1.6'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -2643,14 +2643,26 @@ $('more-details-toggle').addEventListener('click', () => {
   const collapsed = section.classList.toggle('quick-collapsed')
   $('more-details-toggle').textContent = collapsed ? 'More Details ▾' : 'Fewer Details ▴'
 })
-$('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
+const cameraInput = $('camera-input')
 
-photoInput.addEventListener('change', () => {
-  selectedPhotoFile = photoInput.files?.[0] ?? null
+function useSelectedPhotoFile(file) {
+  selectedPhotoFile = file ?? null
   if (!selectedPhotoFile) return
   if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
   previewObjectUrl = URL.createObjectURL(selectedPhotoFile)
   setPhotoPreview(previewObjectUrl)
+}
+
+$('take-photo-button')?.addEventListener('click', () => cameraInput?.click())
+$('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
+
+cameraInput?.addEventListener('change', () => {
+  useSelectedPhotoFile(cameraInput.files?.[0])
+  cameraInput.value = ''
+})
+
+photoInput.addEventListener('change', () => {
+  useSelectedPhotoFile(photoInput.files?.[0])
   photoInput.value = ''
 })
 

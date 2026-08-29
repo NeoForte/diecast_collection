@@ -71,7 +71,7 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   box-shadow: 0 0 0 1px rgba(255,90,90,.16), 0 6px 22px rgba(0,0,0,.48), 0 0 18px rgba(179,38,46,.34);
 }
 
-.car-photo { position: relative; aspect-ratio: 1 / 1; background: #0d0d0d; display: grid; place-items: center; overflow: hidden; font-size: 30px; }
+.car-photo { position: relative; aspect-ratio: 3 / 4; background: #0d0d0d; display: grid; place-items: center; overflow: hidden; font-size: 30px; }
 .quantity-badge { position: absolute; top: 8px; right: 8px; z-index: 2; min-width: 30px; height: 30px; padding: 0 9px; display: grid; place-items: center; border-radius: 999px; background: rgba(0,0,0,.84); color: #fff; border: 1px solid rgba(255,255,255,.34); font-size: 14px; font-weight: 900; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
 .special-badge { position: absolute; top: 8px; left: 8px; z-index: 2; min-height: 27px; padding: 5px 9px; display: grid; place-items: center; border-radius: 8px; background: rgba(0,0,0,.84); color: #f7e7ad; border: 1px solid currentColor; font-size: 11px; letter-spacing: .06em; font-weight: 950; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
 .car-photo img { width: 100%; height: 100%; object-fit: contain; display: block; background: #0d0d0d; }
@@ -330,7 +330,7 @@ main { padding: 0 16px calc(28px + env(safe-area-inset-bottom)); max-width: 900p
   border-radius: 12px;
 }
 .car-photo {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3 / 4;
 }
 .car-body {
   padding: 6px 7px 7px;
@@ -4046,4 +4046,13 @@ html[data-theme="light"] .photo-source-actions button { background:#fff; color:#
 /* Prevent iOS Safari focus zoom on the Home search field. */
 @media (max-width:768px) {
   .collection-controls-grid #search-input { font-size:16px !important; }
+}
+
+
+/* Pocket 64 v3.1.6 — restore portrait collection photos and simple direct camera capture */
+.photo-source-actions #take-photo-button,
+.photo-source-actions #choose-photo-button { min-width:112px; }
+@media (max-width:560px) {
+  .photo-source-actions #take-photo-button,
+  .photo-source-actions #choose-photo-button { min-width:104px; }
 }

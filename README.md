@@ -1,4 +1,4 @@
-Pocket 64 v3.1.5
+Pocket 64 v3.1.6
 
 Changes: Added Color A–Z sorting. Added dedicated camera capture with a fixed square framing screen, 1.5× default zoom, pinch-to-zoom, drag repositioning, Retake, and Use Photo. Photo Library selection remains direct. Preserves v3.0.8 verified backup/restore logic.
 
@@ -712,3 +712,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Simplified photo entry for faster, more consistent collection input: removed the in-app Take Photo/camera capture path. Add/Edit now uses Choose Photo only, so photos can be taken in the normal Camera app first and then selected in Pocket 64.
 - Increased Add Car possible-match thumbnails and match-row width so existing cars are easier to identify at a glance.
 - Prevented iPhone Safari from auto-zooming when the Home search field receives focus by keeping its mobile font size at 16px.
+
+
+## v3.1.6
+- Restored the taller 3:4 portrait photo area on collection cards so carded diecast photos display larger and more consistently.
+- Restored Take Photo beside Choose Photo. Take Photo opens the device camera directly and uses the captured image as-is.
+- No crop, pinch, zoom, or framing screen.
