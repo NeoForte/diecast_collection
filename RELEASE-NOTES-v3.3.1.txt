@@ -1,0 +1,9 @@
+Pocket 64 v3.3.1 — Collection Layout & Photo Quality
+
+Changes from v3.3.0:
+- Restored three Collection cards per row on the Home screen.
+- Home photos scale proportionally with object-fit: contain; no zoom, stretching, or crop.
+- Added Premium Car Culture to the existing Special Category dropdown.
+- Colored special borders are limited to RLC (red), STH (gold), and TH (green).
+- Improved normal car-photo JPEG quality from 0.78 to 0.86 while retaining the 1600 px maximum dimension to balance detail with Supabase storage/egress.
+- Preserved v3.3.0 stability, backup verification, caching, lazy loading, database behavior, Showcase, Favorites, multipacks, and retailer exclusives.

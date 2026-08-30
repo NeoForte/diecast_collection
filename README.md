@@ -1,3 +1,7 @@
+Pocket 64 v3.3.1 — Collection Layout & Photo Quality
+
+See RELEASE-NOTES-v3.3.1.txt for this patch.
+
 Pocket 64 v3.3.0 — Stability Release
 
 This release focuses on integrity, crash resistance, photo safety, backup verification, safe updates, and backend hardening. See RELEASE-NOTES-v3.3.0.txt.

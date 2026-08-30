@@ -1,6 +1,6 @@
-const CACHE = 'pocket64-v3.3.0'
+const CACHE = 'pocket64-v3.3.1'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
-const ASSETS = ['./', './index.html', './styles.css?v=3.3.0', './app.js?v=3.3.0', './showcase-sync.js?v=3.3.0', './manifest.webmanifest?v=3.3.0', './jszip.min.js?v=3.3.0', './black-brick-wall.svg', './icon-192.png', './icon-512.png', './pocket64-speedline-v251.png']
+const ASSETS = ['./', './index.html', './styles.css?v=3.3.1', './app.js?v=3.3.1', './showcase-sync.js?v=3.3.1', './manifest.webmanifest?v=3.3.1', './jszip.min.js?v=3.3.1', './black-brick-wall.svg', './icon-192.png', './icon-512.png', './pocket64-speedline-v251.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)))

@@ -4670,3 +4670,52 @@ html[data-theme="light"] .back-to-top-button { background:rgba(255,255,255,.92);
   .stats-overview:has(#jdm-stat) .stat-summary-card span { font-size:10px !important; }
   .stats-overview:has(#jdm-stat) .stat-summary-card strong { font-size:24px !important; }
 }
+
+
+/* Pocket 64 v3.3.1 — 3-wide Home grid, full-photo fit, selective special borders */
+#collection-screen .cars-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+}
+#collection-screen .square-car-photo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  image-rendering: auto !important;
+}
+/* Only RLC, STH and TH receive colored special borders. */
+#collection-screen .square-car-card.special-red-line-club {
+  border-color: #c62832 !important;
+  box-shadow: 0 0 0 1px rgba(255,90,90,.16), 0 6px 22px rgba(0,0,0,.48), 0 0 18px rgba(198,40,50,.34) !important;
+}
+#collection-screen .square-car-card.special-sth {
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 1px rgba(255,224,120,.18), 0 6px 22px rgba(0,0,0,.48), 0 0 18px rgba(212,175,55,.32) !important;
+}
+#collection-screen .square-car-card.special-th {
+  border-color: #4f9f5f !important;
+  box-shadow: 0 0 0 1px rgba(116,210,130,.16), 0 6px 22px rgba(0,0,0,.48), 0 0 18px rgba(79,159,95,.30) !important;
+}
+/* Compact the existing footer controls just enough for three-across phones. */
+@media (max-width: 699px) {
+  #collection-screen .square-car-card { border-radius: 12px !important; }
+  #collection-screen .square-card-info {
+    height: 50px !important;
+    min-height: 50px !important;
+    padding: 6px 5px 6px 6px !important;
+    gap: 4px !important;
+  }
+  #collection-screen .square-car-photo { inset: 0 0 50px 0 !important; }
+  #collection-screen .square-card-gradient { inset: auto 0 50px 0 !important; }
+  #collection-screen .square-card-info .car-title { font-size: 9.2px !important; }
+  #collection-screen .square-card-info .car-sub { font-size: 7.2px !important; }
+  #collection-screen .square-qty-control { grid-template-columns: 18px 18px 18px !important; border-radius: 8px !important; }
+  #collection-screen .square-qty-control .card-quantity-button {
+    width: 18px !important; min-width: 18px !important; height: 25px !important; min-height: 25px !important; font-size: 13px !important;
+  }
+  #collection-screen .square-qty-control .card-quantity-value { font-size: 9px !important; }
+  #collection-screen .square-badge-stack { top: 5px !important; left: 5px !important; max-width: calc(100% - 34px) !important; }
+  #collection-screen .square-badge-stack .special-badge { font-size: 6.8px !important; padding: 2px 4px !important; min-height: 16px !important; }
+  #collection-screen .square-car-card .favorite-card-toggle { top: 5px !important; right: 5px !important; font-size: 18px !important; }
+}
