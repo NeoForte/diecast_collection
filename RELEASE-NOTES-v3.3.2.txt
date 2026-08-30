@@ -1,0 +1,7 @@
+Pocket 64 v3.3.2 — UI Cleanup
+
+- Corrected the Special Category name from Premium Car Culture to Premium Pop Culture.
+- Reduced the Home search field font to better match the rest of the interface.
+- Replaced the large Choose Photo button with a compact circular camera control in the top-left of the photo area.
+- Preserves v3.3.1 three-wide Home layout, full-photo contain behavior, photo quality, caching, and selective RLC/STH/TH borders.
+- No database or schema changes.

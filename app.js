@@ -6,11 +6,11 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Pink Slips', 'Other']
-const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Premium Car Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Multipack']
+const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Premium Pop Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Multipack']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.3.1'
+const APP_VERSION = '3.3.2'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -78,7 +78,7 @@ function specialClassForStatus(status) {
     'Silver Series': 'special-silver-series',
     'Premium': 'special-premium',
     'Car Culture': 'special-car-culture',
-    'Premium Car Culture': 'special-car-culture',
+    'Premium Pop Culture': 'special-car-culture',
     'Elite 64': 'special-elite-64',
     'Red Line Club': 'special-red-line-club',
     'Chase': 'special-chase',
@@ -95,7 +95,7 @@ function badgeClassForStatus(status) {
     'Silver Series': 'badge-silver-series',
     'Premium': 'badge-premium',
     'Car Culture': 'badge-car-culture',
-    'Premium Car Culture': 'badge-car-culture',
+    'Premium Pop Culture': 'badge-car-culture',
     'Elite 64': 'badge-elite-64',
     'Red Line Club': 'badge-red-line-club',
     'Chase': 'badge-chase',

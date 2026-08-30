@@ -1,6 +1,6 @@
-Pocket 64 v3.3.1 — Collection Layout & Photo Quality
+Pocket 64 v3.3.2 — Collection Layout & Photo Quality
 
-See RELEASE-NOTES-v3.3.1.txt for this patch.
+See RELEASE-NOTES-v3.3.2.txt for this patch.
 
 Pocket 64 v3.3.0 — Stability Release
 

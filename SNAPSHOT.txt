@@ -1,4 +1,4 @@
-Pocket 64 v3.3.1 — based directly on the v3.3.0 Stability Release.
+Pocket 64 v3.3.2 — based directly on the v3.3.0 Stability Release.
 
 Pocket 64 v3.3.0 — Stability Release
 Created 2026-08-29.
