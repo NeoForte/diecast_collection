@@ -7,14 +7,20 @@
     const style = document.createElement('style')
     style.id = STYLE_ID
     style.textContent = `
-      #social-nav { display:none !important; }
-      #social-screen { display:none !important; }
-      .custom-toggle[for="is-showcase"] { display:none !important; }
       #main-nav { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
       #search-input { text-transform:uppercase; }
-      .entry-options-row:has(#is-showcase) { grid-template-columns:auto 1fr !important; }
     `
     document.head.append(style)
+  }
+
+  function removeShowcaseUi() {
+    document.getElementById('social-nav')?.remove()
+    document.getElementById('social-screen')?.remove()
+    const showcaseToggle = document.querySelector('.custom-toggle[for="is-showcase"]')
+    showcaseToggle?.remove()
+
+    const optionsRow = document.querySelector('.entry-options-row')
+    if (optionsRow) optionsRow.style.gridTemplateColumns = 'auto 1fr'
   }
 
   function installUppercaseSearch() {
@@ -76,6 +82,7 @@
 
   function init() {
     installStyles()
+    removeShowcaseUi()
     installUppercaseSearch()
     updateVisibleVersion()
     installRestoreRetryGuard()
