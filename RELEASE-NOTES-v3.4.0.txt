@@ -1,0 +1,7 @@
+Pocket 64 v3.4.0 — Add/Edit visual refresh
+- Premium blue-black Add/Edit Car styling inspired by the selected bluish mobile UI direction.
+- Muted labels, brighter entered values, subtle blue focus glow, cleaner field surfaces.
+- More breathing room and intentionally comfortable vertical scrolling on mobile.
+- Cleaner photo frame and calmer secondary controls.
+- No fields removed, no data/schema changes, and no Add/Edit functionality changed.
+- Main Collection behavior from v3.3.7 is preserved.
