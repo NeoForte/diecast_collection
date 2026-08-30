@@ -5051,3 +5051,24 @@ html:not([data-theme="light"]) #editor-screen .car-form textarea:focus {
 }
 #editor-screen .model-row #model,
 #editor-screen .special-row #special-status { width:100% !important; }
+
+/* Pocket 64 v3.4.3 — Model true full width */
+#editor-screen .car-form .model-row {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+}
+#editor-screen .car-form .model-row .model-field {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:100% !important;
+  box-sizing:border-box !important;
+}
+#editor-screen .car-form .model-row #model {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:100% !important;
+  box-sizing:border-box !important;
+}
