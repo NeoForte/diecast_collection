@@ -1,0 +1,7 @@
+Pocket 64 v3.4.1
+- Richer blue/steel gradient field treatment on Add/Edit.
+- Brand and Model promoted to full-width stacked primary fields.
+- Special Category promoted to full width using the existing field/control.
+- Cleaner top-bar alignment and spacing.
+- Secondary fields remain compact for efficient scrolling.
+- No schema, data, or Add/Edit behavior changes.

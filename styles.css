@@ -4946,3 +4946,89 @@ html:not([data-theme="light"]) #editor-screen .exclusive-field {
   #editor-screen .editor-row { gap: 9px !important; }
   #editor-screen .car-form label { font-size: 10.5px !important; }
 }
+
+
+/* Pocket 64 v3.4.1 — premium blue gradient + calmer primary-field hierarchy */
+html:not([data-theme="light"]) #editor-screen {
+  --edit-blue: #64b7ff;
+  --edit-blue-bright: #8bcbff;
+  --edit-field-top: rgba(27,55,82,.97);
+  --edit-field-mid: rgba(17,38,58,.97);
+  --edit-field-bottom: rgba(11,25,39,.98);
+  --edit-line: rgba(112,188,255,.27);
+}
+
+/* Cleaner, richer automotive-dashboard field surfaces. */
+html:not([data-theme="light"]) #editor-screen .car-form input:not([type="checkbox"]),
+html:not([data-theme="light"]) #editor-screen .car-form select,
+html:not([data-theme="light"]) #editor-screen .car-form textarea {
+  background:
+    linear-gradient(180deg,
+      var(--edit-field-top) 0%,
+      var(--edit-field-mid) 42%,
+      var(--edit-field-bottom) 100%) !important;
+  border-color: var(--edit-line) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(190,225,255,.10),
+    inset 0 -1px 0 rgba(0,0,0,.28),
+    0 4px 12px rgba(0,0,0,.12) !important;
+}
+html:not([data-theme="light"]) #editor-screen .car-form input:not([type="checkbox"]):focus,
+html:not([data-theme="light"]) #editor-screen .car-form select:focus,
+html:not([data-theme="light"]) #editor-screen .car-form textarea:focus {
+  border-color: rgba(103,190,255,.78) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(215,239,255,.14),
+    0 0 0 3px rgba(71,157,230,.15),
+    0 0 18px rgba(52,143,220,.13) !important;
+}
+
+/* Top identity fields: Brand, Model and Special Category get their own full rows.
+   Uses existing field wrappers; no data/JS changes. */
+#editor-screen .brand-model-row {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+}
+#editor-screen .brand-model-row > label {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* Special Category wrapper is promoted to full width wherever it sits. */
+#editor-screen .special-field,
+#editor-screen label:has(#special-status),
+#editor-screen label:has(#special-category) {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Calm the upper chrome and align it with the form/photo edges. */
+#editor-screen .editor-topbar {
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  align-items: center !important;
+}
+#editor-screen .editor-topbar #editor-title {
+  text-align: center !important;
+  margin: 0 !important;
+}
+#editor-screen .photo-picker {
+  margin-top: 4px !important;
+}
+
+/* Keep secondary information compact and efficient below the identity block. */
+@media (max-width: 560px) {
+  #editor-screen .brand-model-row {
+    gap: 13px !important;
+    margin-bottom: 3px !important;
+  }
+  #editor-screen .brand-model-row input,
+  #editor-screen .brand-model-row select,
+  #editor-screen label:has(#special-status) select,
+  #editor-screen label:has(#special-category) select {
+    min-height: 45px !important;
+  }
+}
