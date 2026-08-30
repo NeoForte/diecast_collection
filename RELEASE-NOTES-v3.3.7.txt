@@ -1,0 +1,4 @@
+Pocket 64 v3.3.7
+- Main Collection search placeholder shortened to 'Search'.
+- Keeps the 16px search input size required to prevent iOS/Safari focus zoom.
+- No Add Car or other UI behavior changed.
