@@ -1,0 +1,6 @@
+Pocket 64 v3.3.4 — Update Delivery Fix
+- Fixes the PWA update blocker: the prior service worker was still pinned to the v3.3.2 cache and asset URLs.
+- Bumps the service-worker cache and core asset versions to v3.3.4.
+- Corrects the visible Settings version badge.
+- Includes the smaller Search font and compact circular camera-button fixes.
+- Preserves private-photo caches and the safe service-worker lifecycle.
