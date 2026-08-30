@@ -1,0 +1,6 @@
+Pocket 64 v3.4.2
+- Diecast Brand and Quantity now share the first row.
+- Model remains full width.
+- Special Category is full width.
+- Exclusive blank/default no longer displays NONE.
+- Remaining Add/Edit layout stays as established in v3.4.1.

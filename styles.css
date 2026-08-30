@@ -5032,3 +5032,22 @@ html:not([data-theme="light"]) #editor-screen .car-form textarea:focus {
     min-height: 45px !important;
   }
 }
+
+/* Pocket 64 v3.4.2 — top form cleanup */
+#editor-screen .brand-quantity-row {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:end !important;
+  gap:11px !important;
+}
+#editor-screen .brand-quantity-row .brand-field { min-width:0 !important; }
+#editor-screen .brand-quantity-row .quantity-field { width:auto !important; min-width:0 !important; }
+#editor-screen .brand-quantity-row .quantity-control { margin:0 !important; }
+#editor-screen .model-row,
+#editor-screen .special-row { display:block !important; width:100% !important; }
+#editor-screen .model-row .model-field,
+#editor-screen .special-row .special-category-field {
+  display:block !important; width:100% !important; max-width:none !important;
+}
+#editor-screen .model-row #model,
+#editor-screen .special-row #special-status { width:100% !important; }

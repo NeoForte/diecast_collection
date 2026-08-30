@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.4.1" />
+  <link rel="manifest" href="manifest.webmanifest?v=3.4.2" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=3.4.1" />
+  <link rel="stylesheet" href="styles.css?v=3.4.2" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -191,7 +191,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 3.4.1</span>
+              <span class="version-badge">Version 3.4.2</span>
             </div>
           </div>
         </section>
@@ -235,7 +235,7 @@
           </div>
 
           <form id="car-form" class="car-form compact-editor-form">
-            <div class="editor-row brand-model-row">
+            <div class="editor-row brand-quantity-row">
               <label class="brand-field">Diecast Brand
                 <select id="diecast-brand">
                   <option value=""></option>
@@ -251,6 +251,17 @@
                   <option value="Other">Type your own…</option>
                 </select>
               </label>
+              <div class="quantity-field">
+                <label for="quantity">Quantity</label>
+                <div class="quantity-control">
+                  <button id="quantity-minus" class="quantity-step" type="button" aria-label="Decrease quantity">−</button>
+                  <input id="quantity" type="hidden" value="1" />
+                  <div id="quantity-display" class="quantity-display" aria-live="polite" aria-label="Quantity">QTY 1</div>
+                  <button id="quantity-plus" class="quantity-step" type="button" aria-label="Increase quantity">+</button>
+                </div>
+              </div>
+            </div>
+            <div class="editor-row model-row">
               <label class="model-field">Model
                 <input id="model" type="text" placeholder="911 GT3, Mustang, Camaro…" autocomplete="off" aria-autocomplete="list" aria-controls="model-suggestions" />
                 <div id="model-suggestions" class="model-suggestions hidden" role="listbox" aria-label="Matching cars in your garage and catalog"></div>
@@ -269,17 +280,8 @@
               </div>
             </div>
 
-            <div class="editor-row quantity-special-row">
-              <div class="quantity-field">
-                <label for="quantity">Quantity</label>
-                <div class="quantity-control">
-                  <button id="quantity-minus" class="quantity-step" type="button" aria-label="Decrease quantity">−</button>
-                  <input id="quantity" type="hidden" value="1" />
-                  <div id="quantity-display" class="quantity-display" aria-live="polite" aria-label="Quantity">QTY 1</div>
-                  <button id="quantity-plus" class="quantity-step" type="button" aria-label="Increase quantity">+</button>
-                </div>
-              </div>
-              <label>Special Category
+            <div class="editor-row special-row">
+              <label class="special-category-field">Special Category
                 <select id="special-status">
                   <option value=""></option>
                   <option value="TH">Treasure Hunt (TH)</option>
@@ -334,7 +336,7 @@
               </label>
               <label>Exclusive
                 <select id="exclusive-retailer">
-                  <option value="">None</option><option value="Walmart">Walmart</option><option value="Target">Target</option><option value="Walgreens">Walgreens</option><option value="Dollar General">Dollar General</option><option value="Kroger">Kroger</option><option value="Other">Other</option>
+                  <option value=""></option><option value="Walmart">Walmart</option><option value="Target">Target</option><option value="Walgreens">Walgreens</option><option value="Dollar General">Dollar General</option><option value="Kroger">Kroger</option><option value="Other">Other</option>
                 </select>
               </label>
             </div>
@@ -388,8 +390,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=3.4.1"></script>
-  <script type="module" src="app.js?v=3.4.1"></script>
-  <script src="showcase-sync.js?v=3.4.1"></script>
+  <script src="jszip.min.js?v=3.4.2"></script>
+  <script type="module" src="app.js?v=3.4.2"></script>
+  <script src="showcase-sync.js?v=3.4.2"></script>
 </body>
 </html>
