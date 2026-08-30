@@ -1,0 +1,4 @@
+Pocket 64 v3.3.6
+- Prevents iOS/Safari auto-zoom when focusing the main Collection search field by using a 16px computed input font.
+- Add/Edit Car typing behavior is intentionally unchanged.
+- Preserves all v3.3.5 layout, camera, photo, caching, and category changes.

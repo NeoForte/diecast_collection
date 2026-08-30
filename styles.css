@@ -4826,3 +4826,13 @@ label[for="photo-input"].photo-camera-button {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+
+/* Pocket 64 v3.3.6 — prevent iOS focus zoom on MAIN Collection search only.
+   Safari requires a 16px computed input font to avoid automatic zoom. */
+#collection-screen .collection-controls-grid .search-shell #search-input {
+  font-size: 16px !important;
+}
+#collection-screen .collection-controls-grid .search-shell #search-input::placeholder {
+  font-size: 16px !important;
+}
