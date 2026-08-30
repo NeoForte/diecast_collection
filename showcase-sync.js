@@ -1,34 +1,27 @@
 (() => {
-  const STYLE_ID = 'p64-v345-cleanup-style'
   const RESTORE_FINGERPRINT_KEY = 'pocket64-last-restore-file-v345'
 
-  function installStyles() {
-    if (document.getElementById(STYLE_ID)) return
-    const style = document.createElement('style')
-    style.id = STYLE_ID
-    style.textContent = `
-      #social-nav { display:none !important; }
-      #social-screen { display:none !important; }
-      .custom-toggle[for="is-showcase"] { display:none !important; }
-      #main-nav { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
-      #search-input { text-transform:uppercase; }
-      .entry-options-row:has(#is-showcase) { grid-template-columns:auto 1fr !important; }
-      #p64-signed-in-email {
-        display:block;
-        margin-top:4px;
-        font-size:12px;
-        line-height:1.35;
-        color:#9ca3af;
-        overflow-wrap:anywhere;
-      }
-    `
-    document.head.append(style)
+  function forceHideShowcase() {
+    const nav = document.getElementById('social-nav')
+    const screen = document.getElementById('social-screen')
+    const toggle = document.querySelector('.custom-toggle[for="is-showcase"]')
+
+    if (nav) nav.style.setProperty('display', 'none', 'important')
+    if (screen) screen.style.setProperty('display', 'none', 'important')
+    if (toggle) toggle.style.setProperty('display', 'none', 'important')
+
+    const mainNav = document.getElementById('main-nav')
+    if (mainNav) mainNav.style.setProperty('grid-template-columns', 'repeat(3,minmax(0,1fr))', 'important')
+
+    const optionsRow = toggle?.closest('.entry-options-row') || document.querySelector('.entry-options-row')
+    if (optionsRow) optionsRow.style.setProperty('grid-template-columns', 'auto 1fr', 'important')
   }
 
   function installUppercaseSearch() {
     const input = document.getElementById('search-input')
     if (!input || input.dataset.uppercaseSearch === '1') return
     input.dataset.uppercaseSearch = '1'
+    input.style.textTransform = 'uppercase'
     input.addEventListener('input', () => {
       const start = input.selectionStart
       const end = input.selectionEnd
@@ -52,14 +45,18 @@
       for (let i = 0; i < localStorage.length; i += 1) {
         const key = localStorage.key(i) || ''
         if (!key.includes('auth-token')) continue
+
         const raw = localStorage.getItem(key)
         if (!raw) continue
+
         const parsed = JSON.parse(raw)
-        const email =
-          parsed?.user?.email ||
-          parsed?.currentSession?.user?.email ||
-          parsed?.session?.user?.email ||
-          ''
+        const candidates = [
+          parsed?.user?.email,
+          parsed?.currentSession?.user?.email,
+          parsed?.session?.user?.email,
+          parsed?.data?.session?.user?.email,
+        ]
+        const email = candidates.find(Boolean)
         if (email) return String(email)
       }
     } catch {}
@@ -71,9 +68,9 @@
     return typed || authEmailFromStorage()
   }
 
-  function ensureSignedInEmail() {
-    const accountButton = document.getElementById('logout-btn')
-    const card = accountButton?.closest('.settings-card')
+  function forceAccountEmailLine() {
+    const logout = document.getElementById('logout-btn')
+    const card = logout?.parentElement
     const copy = card?.querySelector('.settings-copy')
     if (!copy) return
 
@@ -81,30 +78,17 @@
     if (!line) {
       line = document.createElement('span')
       line.id = 'p64-signed-in-email'
-      copy.append(line)
+      line.style.display = 'block'
+      line.style.marginTop = '4px'
+      line.style.fontSize = '12px'
+      line.style.lineHeight = '1.35'
+      line.style.color = '#9ca3af'
+      line.style.overflowWrap = 'anywhere'
+      copy.appendChild(line)
     }
 
     const email = currentSignedInEmail()
-    line.textContent = email ? `Signed in as: ${email}` : 'Signed in account: loading…'
-  }
-
-  function watchSignedInEmail() {
-    ensureSignedInEmail()
-
-    const emailInput = document.getElementById('email')
-    emailInput?.addEventListener('input', ensureSignedInEmail)
-
-    const mainView = document.getElementById('main-view')
-    if (mainView) {
-      new MutationObserver(() => {
-        if (!mainView.classList.contains('hidden')) {
-          setTimeout(ensureSignedInEmail, 0)
-          setTimeout(ensureSignedInEmail, 400)
-        }
-      }).observe(mainView, { attributes:true, attributeFilter:['class'] })
-    }
-
-    window.addEventListener('pageshow', () => setTimeout(ensureSignedInEmail, 0))
+    line.textContent = email ? `Signed in as: ${email}` : 'Signed in'
   }
 
   function restoreFingerprint(file) {
@@ -144,12 +128,24 @@
     }, true)
   }
 
-  function init() {
-    installStyles()
+  function applyPatch() {
+    forceHideShowcase()
     installUppercaseSearch()
     updateVisibleVersion()
     installRestoreRetryGuard()
-    watchSignedInEmail()
+    forceAccountEmailLine()
+  }
+
+  function init() {
+    applyPatch()
+
+    // Re-apply after auth/view changes and delayed mobile rendering.
+    const observer = new MutationObserver(() => applyPatch())
+    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] })
+
+    setTimeout(applyPatch, 250)
+    setTimeout(applyPatch, 1000)
+    window.addEventListener('pageshow', applyPatch)
   }
 
   if (document.readyState === 'loading') {
