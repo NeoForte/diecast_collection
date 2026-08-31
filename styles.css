@@ -5194,6 +5194,19 @@ html:not([data-theme="light"]) #editor-screen .car-form textarea:focus {
     0 7px 18px rgba(0,0,0,.30) !important;
 }
 #main-nav.premium-nav .sets-nav::before { display:none !important; content:none !important; }
+#main-nav.premium-nav .sets-nav:active {
+  color:#78bdff !important;
+  border-color:rgba(72,158,244,.62) !important;
+  background:
+    radial-gradient(circle at 50% 118%,rgba(38,134,234,.22),transparent 48%),
+    linear-gradient(180deg,rgba(117,193,255,.07),rgba(255,255,255,0) 37%),
+    linear-gradient(145deg,#17212b 0%,#0a1119 58%,#050608 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(196,229,255,.10),
+    inset 0 0 16px rgba(35,132,229,.08),
+    0 0 0 1px rgba(45,135,226,.08),
+    0 7px 18px rgba(0,0,0,.30) !important;
+}
 #main-nav.premium-nav .nav-button:active { transform:translateY(1px); }
 
 /* Sets gets its own showroom surface instead of the garage brick wall. */
@@ -5285,4 +5298,73 @@ html:not([data-theme="light"]) #editor-screen .car-form textarea {
 @media (max-width:390px) {
   #main-nav.premium-nav .nav-button { min-height:50px; }
   #main-nav.premium-nav .nav-button svg { width:23px; height:23px; }
+}
+
+/* Pocket 64 v4.0.2 — full Sets showroom, no garage bricks beneath it. */
+body.sets-active {
+  background:#020407 !important;
+}
+body.sets-active #main-view {
+  background:
+    radial-gradient(ellipse at 50% 0%,rgba(40,126,216,.16) 0%,rgba(7,22,39,.10) 34%,transparent 62%),
+    linear-gradient(180deg,#03070c 0%,#010204 100%) !important;
+}
+body.sets-active main {
+  position:relative;
+}
+#sets-screen.active {
+  position:relative;
+  margin:0 -16px;
+  padding:4px 16px max(44px, env(safe-area-inset-bottom));
+  min-height:calc(100vh - 92px);
+  overflow:hidden;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 50% -10%,rgba(93,178,255,.22) 0%,rgba(31,101,170,.10) 22%,transparent 53%),
+    radial-gradient(ellipse at 8% 18%,rgba(42,120,205,.13),transparent 34%),
+    radial-gradient(ellipse at 92% 18%,rgba(42,120,205,.13),transparent 34%),
+    linear-gradient(180deg,#08111b 0%,#050a10 34%,#020407 67%,#010203 100%) !important;
+}
+#sets-screen.active::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  pointer-events:none;
+  opacity:.82;
+  background:
+    linear-gradient(113deg,transparent 0 13%,rgba(125,197,255,.055) 13.3%,transparent 24%),
+    linear-gradient(247deg,transparent 0 13%,rgba(125,197,255,.055) 13.3%,transparent 24%),
+    radial-gradient(ellipse at 50% 76%,rgba(40,126,216,.10),transparent 46%);
+}
+#sets-screen.active::after {
+  content:"";
+  position:absolute;
+  left:-16%;
+  right:-16%;
+  bottom:-12px;
+  height:42%;
+  z-index:-1;
+  pointer-events:none;
+  opacity:.58;
+  background:
+    linear-gradient(90deg,transparent 0 49.75%,rgba(88,161,231,.10) 50%,transparent 50.25%),
+    repeating-linear-gradient(90deg,transparent 0 18%,rgba(93,165,230,.045) 18.2% 18.5%,transparent 18.7% 36%),
+    repeating-linear-gradient(0deg,transparent 0 28px,rgba(112,178,236,.035) 29px,transparent 30px 59px);
+  transform:perspective(340px) rotateX(63deg);
+  transform-origin:50% 100%;
+  mask-image:linear-gradient(to top,#000 12%,transparent 100%);
+}
+.sets-page-top,
+.sets-years,
+.sets-empty,
+.set-cars-grid { position:relative; z-index:2; }
+.set-year-card {
+  background:linear-gradient(145deg,rgba(14,24,34,.94),rgba(5,9,14,.96)) !important;
+  border-color:rgba(85,145,202,.31) !important;
+  box-shadow:inset 0 1px rgba(218,239,255,.035),0 10px 26px rgba(0,0,0,.30) !important;
+}
+.set-year-card.expanded {
+  border-color:rgba(70,154,235,.52) !important;
+  box-shadow:inset 0 1px rgba(218,239,255,.05),0 0 0 1px rgba(35,113,188,.06),0 12px 30px rgba(0,0,0,.36) !important;
 }

@@ -1,0 +1,8 @@
+Pocket 64 v4.0.2
+
+- Sets now sync to the signed-in Pocket 64 account through Supabase, so the same Sets appear in Safari, Chrome, and the installed Home Screen app.
+- Existing Safari-local Sets are migrated into account sync on first 4.0.2 sign-in/load.
+- Set records store only lightweight metadata and car references; no duplicate car photos are uploaded.
+- Reworked the Sets landing/detail background into a full-height dark automotive showroom with restrained metallic-blue spotlights and floor treatment.
+- Removed brick-wall bleed-through at the bottom of Sets.
+- Preserves the 4.0.1 navigation, empty-slot design, set delete controls, and Add/Edit styling.

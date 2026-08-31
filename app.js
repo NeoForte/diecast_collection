@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.1'
+const APP_VERSION = '4.0.2'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -366,6 +366,7 @@ function setActiveNav(active) {
 }
 
 function hideScreens() {
+  document.body.classList.remove('sets-active')
   collectionScreen.classList.remove('active')
   socialScreen.classList.remove('active')
   statsScreen.classList.remove('active')
@@ -471,6 +472,7 @@ function showSettings() {
 
 
 const SETS_STORAGE_PREFIX = 'pocket64-sets-v1'
+const SETS_CLOUD_MIGRATION_PREFIX = 'pocket64-sets-cloud-migrated-v1'
 let openSetId = null
 let editorReturnSetId = null
 
@@ -501,6 +503,93 @@ function readSetsState() {
 
 function writeSetsState(state) {
   try { localStorage.setItem(setsStorageKey(), JSON.stringify(state)) } catch {}
+}
+
+function normalizeSetsState(state) {
+  const safe = state && Array.isArray(state.sets) && state.assignments && typeof state.assignments === 'object' ? state : emptySetsState()
+  return {
+    version:1,
+    sets:safe.sets.map((set) => ({
+      id:String(set.id || ''),
+      year:String(set.year || '').replace(/[^0-9]/g,'').slice(0,4),
+      name:String(set.name || '').trim().toUpperCase(),
+      total:Math.max(1, Math.min(99, Math.floor(Number(set.total) || 1))),
+    })).filter((set) => set.id && set.year && set.name),
+    assignments:{...safe.assignments},
+  }
+}
+
+async function fetchSetsFromCloud() {
+  if (!session?.user) return emptySetsState()
+  const [{ data:setRows, error:setError }, { data:assignmentRows, error:assignmentError }] = await Promise.all([
+    supabase.from('pocket64_sets').select('id,year,name,total').eq('user_id', session.user.id),
+    supabase.from('pocket64_set_assignments').select('set_id,car_id,position').eq('user_id', session.user.id),
+  ])
+  if (setError) throw setError
+  if (assignmentError) throw assignmentError
+  const next = { version:1, sets:[], assignments:{} }
+  for (const row of setRows || []) next.sets.push({ id:String(row.id), year:String(row.year), name:String(row.name || '').trim().toUpperCase(), total:Number(row.total) })
+  for (const row of assignmentRows || []) next.assignments[String(row.car_id)] = { setId:String(row.set_id), position:Number(row.position) }
+  return normalizeSetsState(next)
+}
+
+async function pushLocalSetsToCloud(localState) {
+  if (!session?.user) return
+  const state = normalizeSetsState(localState)
+  if (!state.sets.length) return
+  const rows = state.sets.map((set) => ({ id:set.id, user_id:session.user.id, year:Number(set.year), name:set.name, total:set.total, updated_at:new Date().toISOString() }))
+  const { error:setError } = await supabase.from('pocket64_sets').upsert(rows, { onConflict:'id' })
+  if (setError) throw setError
+  const validSetIds = new Set(state.sets.map((set) => set.id))
+  const assignments = Object.entries(state.assignments).filter(([,a]) => a && validSetIds.has(String(a.setId))).map(([carId,a]) => ({ user_id:session.user.id, set_id:String(a.setId), car_id:String(carId), position:Number(a.position), updated_at:new Date().toISOString() }))
+  if (assignments.length) {
+    const { error:assignmentError } = await supabase.from('pocket64_set_assignments').upsert(assignments, { onConflict:'user_id,car_id' })
+    if (assignmentError) throw assignmentError
+  }
+}
+
+async function syncSetsFromCloud({ migrateLocal=true } = {}) {
+  if (!session?.user) return emptySetsState()
+  const local = readSetsState()
+  let remote = await fetchSetsFromCloud()
+  const migrationKey = `${SETS_CLOUD_MIGRATION_PREFIX}-${session.user.id}`
+  let alreadyMigrated = false
+  try { alreadyMigrated = localStorage.getItem(migrationKey) === '1' } catch {}
+  if (migrateLocal && !alreadyMigrated && local.sets.length) {
+    const remoteIds = new Set(remote.sets.map((set) => set.id))
+    const remoteKeys = new Set(remote.sets.map((set) => `${set.year}\u0000${set.name}`))
+    const localOnly = local.sets.filter((set) => !remoteIds.has(set.id) && !remoteKeys.has(`${set.year}\u0000${set.name}`))
+    if (localOnly.length || (!remote.sets.length && local.sets.length)) {
+      const merged = normalizeSetsState({ version:1, sets:[...remote.sets, ...localOnly], assignments:{...remote.assignments, ...local.assignments} })
+      await pushLocalSetsToCloud(merged)
+      remote = await fetchSetsFromCloud()
+    }
+  }
+  try { localStorage.setItem(migrationKey, '1') } catch {}
+  writeSetsState(remote)
+  refreshSetEditorOptions()
+  if (setsScreen?.classList.contains('active')) {
+    if (openSetId && setForId(openSetId, remote)) openSetDetail(openSetId)
+    else renderSetsLanding()
+  }
+  return remote
+}
+
+async function replaceCloudSets(state) {
+  if (!session?.user) return
+  const normalized = normalizeSetsState(state)
+  const { error:deleteError } = await supabase.from('pocket64_sets').delete().eq('user_id', session.user.id)
+  if (deleteError) throw deleteError
+  if (normalized.sets.length) await pushLocalSetsToCloud(normalized)
+  const migrationKey = `${SETS_CLOUD_MIGRATION_PREFIX}-${session.user.id}`
+  try { localStorage.setItem(migrationKey, '1') } catch {}
+}
+
+function syncSetsSoon() {
+  syncSetsFromCloud({ migrateLocal:true }).catch((error) => {
+    console.warn('Sets sync failed', error)
+    recordDiagnostic('sets-sync', error?.message || error)
+  })
 }
 
 function setForId(id, state = readSetsState()) {
@@ -581,6 +670,11 @@ function createSetModal(defaultYear = '') {
     const set = { id:crypto.randomUUID(), year, name, total }
     state.sets.push(set)
     writeSetsState(state)
+    if (session?.user) {
+      supabase.from('pocket64_sets').insert({ id:set.id, user_id:session.user.id, year:Number(set.year), name:set.name, total:set.total }).then(({ error }) => {
+        if (error) { console.warn('Set cloud save failed', error); syncSetsSoon() }
+      })
+    }
     close()
     refreshSetEditorOptions(set.id, '')
     renderSetsLanding()
@@ -589,7 +683,9 @@ function createSetModal(defaultYear = '') {
 }
 
 function showSets() {
+  setActiveNav('sets')
   hideScreens()
+  document.body.classList.add('sets-active')
   setsScreen?.classList.add('active')
   mainNav.classList.add('hidden')
   backToTopButton?.classList.add('hidden')
@@ -597,6 +693,7 @@ function showSets() {
   $('sets-landing')?.classList.remove('hidden')
   $('set-detail')?.classList.add('hidden')
   renderSetsLanding()
+  syncSetsSoon()
 }
 
 function renderSetsLanding() {
@@ -661,6 +758,9 @@ function deleteOpenSet() {
     if (assignment?.setId === set.id) delete state.assignments[carId]
   }
   writeSetsState(state)
+  if (session?.user) {
+    supabase.from('pocket64_sets').delete().eq('id', set.id).eq('user_id', session.user.id).then(({ error }) => { if (error) { console.warn('Set cloud delete failed', error); syncSetsSoon() } })
+  }
   openSetId = null
   $('set-more-menu')?.classList.add('hidden')
   $('set-detail')?.classList.add('hidden')
@@ -725,12 +825,28 @@ function saveSetAssignment(carId, setId, position) {
     state.assignments[id] = { setId:set.id, position:pos }
   }
   writeSetsState(state)
+  if (session?.user) {
+    ;(async () => {
+      const { error:carDeleteError } = await supabase.from('pocket64_set_assignments').delete().eq('user_id', session.user.id).eq('car_id', id)
+      if (carDeleteError) throw carDeleteError
+      if (set && pos >= 1 && pos <= set.total) {
+        const { error:setSaveError } = await supabase.from('pocket64_sets').upsert({ id:set.id, user_id:session.user.id, year:Number(set.year), name:set.name, total:set.total, updated_at:new Date().toISOString() }, { onConflict:'id' })
+        if (setSaveError) throw setSaveError
+        const { error:slotDeleteError } = await supabase.from('pocket64_set_assignments').delete().eq('user_id', session.user.id).eq('set_id', set.id).eq('position', pos)
+        if (slotDeleteError) throw slotDeleteError
+        const { error:insertError } = await supabase.from('pocket64_set_assignments').insert({ user_id:session.user.id, set_id:set.id, car_id:id, position:pos })
+        if (insertError) throw insertError
+      }
+    })().catch((error) => { console.warn('Set assignment cloud save failed', error); syncSetsSoon() })
+  }
 }
 
 function removeSetAssignment(carId) {
+  const id = String(carId || '')
   const state = readSetsState()
-  delete state.assignments[String(carId || '')]
+  delete state.assignments[id]
   writeSetsState(state)
+  if (session?.user && id) supabase.from('pocket64_set_assignments').delete().eq('user_id', session.user.id).eq('car_id', id).then(({ error }) => { if (error) { console.warn('Set assignment cloud delete failed', error); syncSetsSoon() } })
 }
 
 function remapAndRestoreSets(backupSets, restoreItems) {
@@ -746,6 +862,7 @@ function remapAndRestoreSets(backupSets, restoreItems) {
     if (mapped) next.assignments[mapped] = assignment
   }
   writeSetsState(next)
+  replaceCloudSets(next).catch((error) => { console.warn('Sets restore sync failed', error); recordDiagnostic('sets-restore-sync', error?.message || error) })
 }
 
 function returnFromEditor() {
@@ -753,6 +870,7 @@ function returnFromEditor() {
   editorReturnSetId = null
   if (targetSetId && setForId(targetSetId)) {
     hideScreens()
+    document.body.classList.add('sets-active')
     setsScreen?.classList.add('active')
     mainNav.classList.add('hidden')
     $('sets-landing')?.classList.add('hidden')
@@ -2622,6 +2740,10 @@ async function clearCollection() {
     }
 
     clearPrivatePhotoMemoryCache()
+    if (session?.user) {
+      const { error:setsDeleteError } = await supabase.from('pocket64_sets').delete().eq('user_id', session.user.id)
+      if (setsDeleteError) console.warn('Collection cleared but Sets cleanup failed', setsDeleteError)
+    }
     writeSetsState(emptySetsState())
     await loadCars()
     alert(storageCleanupFailures.length ? 'Collection cleared. Some old photo files could not be removed from Storage, but no car records were left broken.' : 'Collection cleared. This account is ready for a clean restore test.')
@@ -3332,6 +3454,7 @@ supabase.auth.onAuthStateChange((event, newSession) => {
   if (session) {
     showMain()
     setTimeout(() => loadProfileIcon(), 0)
+    setTimeout(() => syncSetsFromCloud({ migrateLocal:true }).catch((error) => console.warn('Sets sync failed', error)), 0)
     // Mobile browsers commonly emit TOKEN_REFRESHED after returning from another app.
     // Keep the current collection mounted unless this is actually a different/new user.
     if (loadedCarsUserId !== nextUserId && previousUserId !== nextUserId) {
@@ -3358,6 +3481,7 @@ if (session) {
   showMain()
   await loadProfileIcon()
   if (loadedCarsUserId !== session.user.id) await loadCars()
+  await syncSetsFromCloud({ migrateLocal:true }).catch((error) => console.warn('Sets sync failed', error))
 } else {
   showAuth()
 }
