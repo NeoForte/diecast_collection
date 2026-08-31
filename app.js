@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.5'
+const APP_VERSION = '4.0.7'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -795,7 +795,8 @@ function renderSetsLanding() {
       const row = document.createElement('button')
       row.type = 'button'
       row.className = 'set-list-row'
-      row.innerHTML = `<span>${set.name}</span><strong>(${set.total})</strong><i aria-hidden="true">›</i>`
+      const occupiedPositions = new Set(Object.values(state.assignments || {}).filter((assignment) => assignment?.setId === set.id).map((assignment) => Number(assignment.position)).filter((position) => position >= 1 && position <= set.total))
+      row.innerHTML = `<span>${set.name}</span><strong>(${occupiedPositions.size}/${set.total})</strong><i aria-hidden="true">›</i>`
       row.addEventListener('click', () => openSetDetail(set.id))
       list.append(row)
     }
@@ -850,36 +851,42 @@ function renderSetCards(set, state = readSetsState()) {
   for (const [carId, assignment] of Object.entries(state.assignments)) {
     if (assignment?.setId !== set.id) continue
     const car = cars.find((item) => String(item.id) === String(carId))
-    if (car) byPosition.set(Number(assignment.position), car)
+    if (!car) continue
+    const position = Number(assignment.position)
+    if (!byPosition.has(position)) byPosition.set(position, [])
+    byPosition.get(position).push(car)
   }
   for (let position=1; position<=set.total; position+=1) {
-    const car = byPosition.get(position)
-    const card = document.createElement('article')
-    card.className = `set-slot-card${car ? ' occupied' : ' empty'}`
-    card.innerHTML = `<div class="set-slot-photo"></div><div class="set-slot-info"><div class="set-slot-copy"><strong></strong><span></span></div><div class="set-slot-number">${position}/${set.total}</div></div>`
-    const photo = card.querySelector('.set-slot-photo')
-    const title = card.querySelector('.set-slot-copy strong')
-    const sub = card.querySelector('.set-slot-copy span')
-    if (car) {
-      title.textContent = displayTitle(car).toUpperCase()
-      sub.textContent = [car.diecast_brand, car.model_year].filter(Boolean).join(' · ').toUpperCase()
-      if (car.photo_path) {
-        const img = document.createElement('img')
-        img.alt = displayTitle(car)
-        photo.append(img)
-        lazyLoadPrivatePhoto(car.photo_path, img)
+    const positionCars = byPosition.get(position) || []
+    const cardsToRender = positionCars.length ? positionCars : [null]
+    for (const car of cardsToRender) {
+      const card = document.createElement('article')
+      card.className = `set-slot-card${car ? ' occupied' : ' empty'}`
+      card.innerHTML = `<div class="set-slot-photo"></div><div class="set-slot-info"><div class="set-slot-copy"><strong></strong><span></span></div><div class="set-slot-number">${position}/${set.total}</div></div>`
+      const photo = card.querySelector('.set-slot-photo')
+      const title = card.querySelector('.set-slot-copy strong')
+      const sub = card.querySelector('.set-slot-copy span')
+      if (car) {
+        title.textContent = displayTitle(car).toUpperCase()
+        sub.textContent = [car.diecast_brand, car.model_year].filter(Boolean).join(' · ').toUpperCase()
+        if (car.photo_path) {
+          const img = document.createElement('img')
+          img.alt = displayTitle(car)
+          photo.append(img)
+          lazyLoadPrivatePhoto(car.photo_path, img)
+        } else {
+          photo.innerHTML = '<span class="set-no-photo">🚗</span>'
+        }
+        card.tabIndex = 0
+        card.addEventListener('click', () => showEditor(car, { returnSetId:set.id }))
+        card.addEventListener('keydown', (event) => { if (event.key === 'Enter') showEditor(car, { returnSetId:set.id }) })
       } else {
-        photo.innerHTML = '<span class="set-no-photo">🚗</span>'
+        photo.classList.add('set-empty-photo')
+        title.textContent = 'EMPTY SLOT'
+        sub.textContent = 'NOT IN THE GARAGE YET'
       }
-      card.tabIndex = 0
-      card.addEventListener('click', () => showEditor(car, { returnSetId:set.id }))
-      card.addEventListener('keydown', (event) => { if (event.key === 'Enter') showEditor(car, { returnSetId:set.id }) })
-    } else {
-      photo.classList.add('set-empty-photo')
-      title.textContent = 'EMPTY SLOT'
-      sub.textContent = 'NOT IN THE GARAGE YET'
+      grid.append(card)
     }
-    grid.append(card)
   }
 }
 
@@ -890,12 +897,7 @@ function saveSetAssignment(carId, setId, position) {
   delete state.assignments[id]
   const set = setForId(setId, state)
   const pos = Math.floor(Number(position) || 0)
-  if (set && pos >= 1 && pos <= set.total) {
-    for (const [otherCarId, assignment] of Object.entries(state.assignments)) {
-      if (assignment?.setId === set.id && Number(assignment.position) === pos && otherCarId !== id) delete state.assignments[otherCarId]
-    }
-    state.assignments[id] = { setId:set.id, position:pos }
-  }
+  if (set && pos >= 1 && pos <= set.total) state.assignments[id] = { setId:set.id, position:pos }
   writeSetsState(state)
   if (session?.user) {
     ;(async () => {
@@ -904,8 +906,6 @@ function saveSetAssignment(carId, setId, position) {
       if (set && pos >= 1 && pos <= set.total) {
         const { error:setSaveError } = await supabase.from('pocket64_sets').upsert({ id:set.id, user_id:session.user.id, year:Number(set.year), name:set.name, total:set.total, updated_at:new Date().toISOString() }, { onConflict:'id' })
         if (setSaveError) throw setSaveError
-        const { error:slotDeleteError } = await supabase.from('pocket64_set_assignments').delete().eq('user_id', session.user.id).eq('set_id', set.id).eq('position', pos)
-        if (slotDeleteError) throw slotDeleteError
         const { error:insertError } = await supabase.from('pocket64_set_assignments').insert({ user_id:session.user.id, set_id:set.id, car_id:id, position:pos })
         if (insertError) throw insertError
       }
@@ -1097,6 +1097,37 @@ function hideToyNumberSuggestions() {
   toyNumberSuggestions.replaceChildren()
 }
 
+function autoSelectSetFromCatalog(car) {
+  const year = String(car?.model_year || '').replace(/[^0-9]/g, '').slice(0, 4)
+  const name = String(car?.series_collection || '').trim().toUpperCase()
+  const match = String(car?.series_collection_number || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
+  if (year.length !== 4 || !name || !match) return
+  const position = Math.max(1, Math.floor(Number(match[1]) || 0))
+  const total = Math.max(position, Math.min(99, Math.floor(Number(match[2]) || 0)))
+  if (!position || !total) return
+  const state = readSetsState()
+  let set = state.sets.find((item) => item.year === year && item.name === name)
+  if (!set) {
+    set = { id:crypto.randomUUID(), year, name, total }
+    state.sets.push(set)
+    writeSetsState(state)
+    if (session?.user) {
+      supabase.from('pocket64_sets').insert({ id:set.id, user_id:session.user.id, year:Number(year), name, total }).then(({ error }) => {
+        if (error) { console.warn('Automatic Set creation failed', error); syncSetsSoon() }
+      })
+    }
+  } else if (position > set.total) {
+    set.total = Math.min(99, Math.max(set.total, total, position))
+    writeSetsState(state)
+    if (session?.user) {
+      supabase.from('pocket64_sets').update({ total:set.total, updated_at:new Date().toISOString() }).eq('id', set.id).eq('user_id', session.user.id).then(({ error }) => {
+        if (error) { console.warn('Automatic Set expansion failed', error); syncSetsSoon() }
+      })
+    }
+  }
+  refreshSetEditorOptions(set.id, String(position))
+}
+
 function applyCatalogCarToEditor(car, focusTarget = null, options = {}) {
   const { applyExclusive = false } = options
   setBrandValue(car.diecast_brand || 'Hot Wheels')
@@ -1106,6 +1137,7 @@ function applyCatalogCarToEditor(car, focusTarget = null, options = {}) {
   $('series').value = String(car.series_collection || '').toUpperCase()
   $('general-number').value = String(car.general_number || '').toUpperCase()
   $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
+  autoSelectSetFromCatalog(car)
   setSpecialValue(car.special_status || '')
   if (applyExclusive) applyCatalogExclusive(car)
   // Exclusive detection is intentionally limited to Toy Number / SKU matching.
@@ -3318,10 +3350,30 @@ $('clear-collection-button')?.addEventListener('click', clearCollection)
 $('active-filter-pill').addEventListener('click', clearBrandFilter)
 $('profile-icon-button').addEventListener('click', () => $('profile-icon-input').click())
 $('profile-icon-input').addEventListener('change', () => saveProfileIcon($('profile-icon-input').files?.[0]))
-searchInput.addEventListener('input', () => {
-  updateSearchClearButton()
-  applySearch()
+let searchInputComposing = false
+let searchInputFrame = 0
+function refreshMainSearchFromTyping(event) {
+  // iOS QuickType/replacement text can arrive as a composition/replacement transaction.
+  // Do not redraw the collection in the middle of that transaction or Safari can cancel it.
+  if (searchInputComposing || event?.isComposing) return
+  if (searchInputFrame) cancelAnimationFrame(searchInputFrame)
+  searchInputFrame = requestAnimationFrame(() => {
+    searchInputFrame = 0
+    updateSearchClearButton()
+    applySearch()
+  })
+}
+searchInput.addEventListener('compositionstart', () => { searchInputComposing = true })
+searchInput.addEventListener('compositionend', () => {
+  searchInputComposing = false
+  if (searchInputFrame) cancelAnimationFrame(searchInputFrame)
+  searchInputFrame = requestAnimationFrame(() => {
+    searchInputFrame = 0
+    updateSearchClearButton()
+    applySearch()
+  })
 })
+searchInput.addEventListener('input', refreshMainSearchFromTyping)
 $('search-clear-button')?.addEventListener('click', () => {
   searchInput.value = ''
   updateSearchClearButton()
@@ -3480,6 +3532,9 @@ function useSquareCameraPhoto() {
 }
 
 $('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
+photoPlaceholder?.addEventListener('click', () => photoInput?.click())
+photoPlaceholder?.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); photoInput?.click() } })
+photoPreview?.addEventListener('click', () => photoInput?.click())
 $('square-camera-cancel')?.addEventListener('click', closeSquareCamera)
 $('square-camera-shutter')?.addEventListener('click', captureSquareCameraFrame)
 $('square-camera-retake')?.addEventListener('click', retakeSquareCameraPhoto)
@@ -3551,7 +3606,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.5', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.6', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

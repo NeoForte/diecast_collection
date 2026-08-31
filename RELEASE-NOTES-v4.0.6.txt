@@ -1,0 +1,5 @@
+Pocket 64 v4.0.6
+
+- Fixed iPhone QuickType/predictive-text selection in the main Collection search field.
+- Main search now waits for iOS text replacement/composition to finish before redrawing/filtering.
+- Preserves live search, normal pinch zoom, Sets sync, and all v4.0.5 behavior.

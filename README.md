@@ -757,7 +757,7 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Preserves v3.3.2 collection layout, photo quality, caching, and special-category behavior.
 
 
-## v4.0.5
+## v4.0.7
 - Removed the JDM Stats tile.
 - Restored normal pinch zoom.
 - Polished occupied Set-card photo rendering.

@@ -1,0 +1,8 @@
+Pocket 64 v4.0.7
+
+- Sets can now hold multiple car variants in the same numbered position (for example, several 1/5 cars).
+- Set cards render each owned variant as its own full card while missing positions still show one placeholder.
+- Sets landing count now shows unique-position progress such as (4/5), not total variant count.
+- Catalog suggestions auto-select/create the matching year + Series/Collection Set and position when a value such as 3/10 is available.
+- ADD PHOTO / the photo area is now the photo picker target; the separate camera button is removed.
+- Includes the v4.0.6 main-search iPhone QuickType fix.
