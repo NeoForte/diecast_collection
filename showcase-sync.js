@@ -1,16 +1,14 @@
 (() => {
-  const RESTORE_FINGERPRINT_KEY = 'pocket64-last-restore-file-v346'
+  const RESTORE_FINGERPRINT_KEY = 'pocket64-last-restore-file-v400'
 
   function hideShowcase() {
-    const nav = document.getElementById('social-nav')
-    const screen = document.getElementById('social-screen')
+        const screen = document.getElementById('social-screen')
     const toggle = document.querySelector('.custom-toggle[for="is-showcase"]')
     const mainNav = document.getElementById('main-nav')
 
-    if (nav) nav.style.setProperty('display', 'none', 'important')
     if (screen) screen.style.setProperty('display', 'none', 'important')
     if (toggle) toggle.style.setProperty('display', 'none', 'important')
-    if (mainNav) mainNav.style.setProperty('grid-template-columns', 'repeat(3,minmax(0,1fr))', 'important')
+    if (mainNav) mainNav.style.setProperty('grid-template-columns', 'repeat(4,minmax(0,1fr))', 'important')
   }
 
   function installUppercaseSearch() {
@@ -32,7 +30,7 @@
 
   function updateVisibleVersion() {
     document.querySelectorAll('.version-badge').forEach((badge) => {
-      if (badge.textContent !== 'Version 3.4.6') badge.textContent = 'Version 3.4.6'
+      if (badge.textContent !== 'Version 4.0.0') badge.textContent = 'Version 4.0.0'
     })
   }
 

@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '3.4.3'
+const APP_VERSION = '4.0.0'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -119,6 +119,7 @@ const socialScreen = $('social-screen')
 const statsScreen = $('stats-screen')
 const editorScreen = $('editor-screen')
 const settingsScreen = $('settings-screen')
+const setsScreen = $('sets-screen')
 const carsGrid = $('cars-grid')
 const emptyState = $('empty-state')
 const statsTotal = $('stats-total')
@@ -358,9 +359,10 @@ function setColorValue(value) {
 }
 
 function setActiveNav(active) {
-  $('collection-nav').classList.toggle('active', active === 'collection')
-  $('social-nav').classList.toggle('active', active === 'social')
-  $('stats-nav').classList.toggle('active', active === 'stats')
+  $('collection-nav')?.classList.toggle('active', active === 'collection')
+  $('sets-nav')?.classList.toggle('active', active === 'sets')
+  $('stats-nav')?.classList.toggle('active', active === 'stats')
+  $('settings-row-button')?.classList.toggle('active', active === 'settings')
 }
 
 function hideScreens() {
@@ -368,6 +370,7 @@ function hideScreens() {
   socialScreen.classList.remove('active')
   statsScreen.classList.remove('active')
   settingsScreen.classList.remove('active')
+  setsScreen?.classList.remove('active')
   editorScreen.classList.remove('active')
 }
 
@@ -383,6 +386,7 @@ function showMain() {
 }
 
 function showCollection() {
+  openSetId = null
   hideScreens()
   collectionScreen.classList.add('active')
   mainNav.classList.remove('hidden')
@@ -457,13 +461,285 @@ function showSettings() {
   backToTopButton?.classList.add('hidden')
   settingsScreen.classList.add('active')
   mainNav.classList.remove('hidden')
-  setActiveNav(null)
+  setActiveNav('settings')
   const appearanceSelect = $('appearance-select')
   if (appearanceSelect) appearanceSelect.value = getSavedAppearance()
   updateBackupStatus()
   hideDuplicateScanResults()
 }
 
+
+
+const SETS_STORAGE_PREFIX = 'pocket64-sets-v1'
+let openSetId = null
+let editorReturnSetId = null
+
+function setsStorageKey() {
+  return `${SETS_STORAGE_PREFIX}-${session?.user?.id || 'signed-out'}`
+}
+
+function emptySetsState() {
+  return { version:1, sets:[], assignments:{} }
+}
+
+function readSetsState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(setsStorageKey()) || 'null')
+    if (!parsed || !Array.isArray(parsed.sets) || !parsed.assignments || typeof parsed.assignments !== 'object') return emptySetsState()
+    return {
+      version:1,
+      sets: parsed.sets.map((set) => ({
+        id:String(set.id || ''),
+        year:String(set.year || '').replace(/[^0-9]/g,'').slice(0,4),
+        name:String(set.name || '').trim().toUpperCase(),
+        total:Math.max(1, Math.min(99, Math.floor(Number(set.total) || 1))),
+      })).filter((set) => set.id && set.year && set.name),
+      assignments:{...parsed.assignments},
+    }
+  } catch { return emptySetsState() }
+}
+
+function writeSetsState(state) {
+  try { localStorage.setItem(setsStorageKey(), JSON.stringify(state)) } catch {}
+}
+
+function setForId(id, state = readSetsState()) {
+  return state.sets.find((set) => set.id === id) || null
+}
+
+function assignmentForCar(carId, state = readSetsState()) {
+  const assignment = state.assignments?.[String(carId)]
+  if (!assignment || !setForId(String(assignment.setId || ''), state)) return null
+  return { setId:String(assignment.setId), position:Math.max(1, Math.floor(Number(assignment.position) || 1)) }
+}
+
+function sortSetRecords(list) {
+  return [...list].sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }))
+}
+
+function refreshSetEditorOptions(selectedSetId = '', selectedPosition = '') {
+  const select = $('set-select')
+  const pos = $('set-position')
+  const label = $('set-position-label')
+  if (!select || !pos || !label) return
+  const state = readSetsState()
+  const previous = selectedSetId || select.value
+  select.replaceChildren(new Option('', ''), new Option('+ NEW SET', '__new__'))
+  const groups = new Map()
+  for (const set of state.sets) {
+    if (!groups.has(set.year)) groups.set(set.year, [])
+    groups.get(set.year).push(set)
+  }
+  const years = [...groups.keys()].sort((a,b) => Number(b)-Number(a))
+  for (const year of years) {
+    const group = document.createElement('optgroup')
+    group.label = year
+    for (const set of sortSetRecords(groups.get(year))) group.append(new Option(`${set.name} (${set.total})`, set.id))
+    select.append(group)
+  }
+  if ([...select.options].some((option) => option.value === previous)) select.value = previous
+  const active = setForId(select.value, state)
+  pos.replaceChildren(new Option('', ''))
+  if (active) {
+    for (let i=1; i<=active.total; i+=1) pos.append(new Option(`${i}/${active.total}`, String(i)))
+    if (selectedPosition && Number(selectedPosition) <= active.total) pos.value = String(selectedPosition)
+  }
+  label.classList.toggle('hidden', !active)
+}
+
+function createSetModal(defaultYear = '') {
+  const old = $('set-modal-backdrop')
+  if (old) old.remove()
+  const overlay = document.createElement('div')
+  overlay.id = 'set-modal-backdrop'
+  overlay.className = 'set-modal-backdrop'
+  overlay.innerHTML = `
+    <form class="set-modal" id="set-create-form">
+      <div class="set-modal-head"><strong>NEW SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
+      <label>YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${String(defaultYear || new Date().getFullYear())}"></label>
+      <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder="THEN AND NOW"></label>
+      <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value="10"></label>
+      <button class="set-modal-create" type="submit">CREATE SET</button>
+    </form>`
+  document.body.append(overlay)
+  const close = () => overlay.remove()
+  $('set-modal-close').addEventListener('click', close)
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+  $('set-create-form').addEventListener('submit', (event) => {
+    event.preventDefault()
+    const year = $('set-new-year').value.replace(/[^0-9]/g,'').slice(0,4)
+    const name = $('set-new-name').value.trim().toUpperCase()
+    const total = Math.max(1, Math.min(99, Math.floor(Number($('set-new-total').value) || 0)))
+    if (year.length !== 4 || !name || !total) return
+    const state = readSetsState()
+    const duplicate = state.sets.find((set) => set.year === year && set.name === name)
+    if (duplicate) {
+      alert('That set already exists for this year.')
+      return
+    }
+    const set = { id:crypto.randomUUID(), year, name, total }
+    state.sets.push(set)
+    writeSetsState(state)
+    close()
+    refreshSetEditorOptions(set.id, '')
+    renderSetsLanding()
+  })
+  setTimeout(() => $('set-new-name')?.focus(), 50)
+}
+
+function showSets() {
+  hideScreens()
+  setsScreen?.classList.add('active')
+  mainNav.classList.add('hidden')
+  backToTopButton?.classList.add('hidden')
+  openSetId = null
+  $('sets-landing')?.classList.remove('hidden')
+  $('set-detail')?.classList.add('hidden')
+  renderSetsLanding()
+}
+
+function renderSetsLanding() {
+  const host = $('sets-years')
+  const empty = $('sets-empty')
+  if (!host || !empty) return
+  const state = readSetsState()
+  host.replaceChildren()
+  empty.classList.toggle('hidden', state.sets.length > 0)
+  const grouped = new Map()
+  for (const set of state.sets) {
+    if (!grouped.has(set.year)) grouped.set(set.year, [])
+    grouped.get(set.year).push(set)
+  }
+  const years = [...grouped.keys()].sort((a,b) => Number(b)-Number(a))
+  years.forEach((year, yearIndex) => {
+    const section = document.createElement('section')
+    section.className = `set-year-card${yearIndex === 0 ? ' expanded' : ''}`
+    const sets = sortSetRecords(grouped.get(year))
+    const head = document.createElement('button')
+    head.type = 'button'
+    head.className = 'set-year-header'
+    head.innerHTML = `<span class="set-wheel" aria-hidden="true"><span>${String(year).slice(-2)}</span></span><span class="set-year-copy"><strong>${year}</strong><small>${sets.length} SET${sets.length === 1 ? '' : 'S'}</small></span><span class="set-year-chevron" aria-hidden="true">⌄</span>`
+    const list = document.createElement('div')
+    list.className = 'set-year-list'
+    for (const set of sets) {
+      const row = document.createElement('button')
+      row.type = 'button'
+      row.className = 'set-list-row'
+      row.innerHTML = `<span>${set.name}</span><strong>(${set.total})</strong><i aria-hidden="true">›</i>`
+      row.addEventListener('click', () => openSetDetail(set.id))
+      list.append(row)
+    }
+    head.addEventListener('click', () => section.classList.toggle('expanded'))
+    section.append(head, list)
+    host.append(section)
+  })
+}
+
+function openSetDetail(setId) {
+  const state = readSetsState()
+  const set = setForId(setId, state)
+  if (!set) return
+  openSetId = set.id
+  $('sets-landing')?.classList.add('hidden')
+  $('set-detail')?.classList.remove('hidden')
+  $('set-detail-title').textContent = set.name
+  $('set-detail-meta').textContent = `${set.year} · ${set.total} CARS`
+  renderSetCards(set, state)
+  window.scrollTo({ top:0, behavior:'auto' })
+}
+
+function renderSetCards(set, state = readSetsState()) {
+  const grid = $('set-cars-grid')
+  if (!grid) return
+  grid.replaceChildren()
+  const byPosition = new Map()
+  for (const [carId, assignment] of Object.entries(state.assignments)) {
+    if (assignment?.setId !== set.id) continue
+    const car = cars.find((item) => String(item.id) === String(carId))
+    if (car) byPosition.set(Number(assignment.position), car)
+  }
+  for (let position=1; position<=set.total; position+=1) {
+    const car = byPosition.get(position)
+    const card = document.createElement('article')
+    card.className = `set-slot-card${car ? ' occupied' : ' empty'}`
+    card.innerHTML = `<div class="set-slot-photo"></div><div class="set-slot-info"><div class="set-slot-copy"><strong></strong><span></span></div><div class="set-slot-number">${position}/${set.total}</div></div>`
+    const photo = card.querySelector('.set-slot-photo')
+    const title = card.querySelector('.set-slot-copy strong')
+    const sub = card.querySelector('.set-slot-copy span')
+    if (car) {
+      title.textContent = displayTitle(car).toUpperCase()
+      sub.textContent = [car.diecast_brand, car.model_year].filter(Boolean).join(' · ').toUpperCase()
+      if (car.photo_path) {
+        const img = document.createElement('img')
+        img.alt = displayTitle(car)
+        photo.append(img)
+        lazyLoadPrivatePhoto(car.photo_path, img)
+      } else {
+        photo.innerHTML = '<span class="set-no-photo">🚗</span>'
+      }
+      card.tabIndex = 0
+      card.addEventListener('click', () => showEditor(car, { returnSetId:set.id }))
+      card.addEventListener('keydown', (event) => { if (event.key === 'Enter') showEditor(car, { returnSetId:set.id }) })
+    } else {
+      photo.classList.add('set-empty-photo')
+      title.textContent = 'EMPTY SLOT'
+      sub.textContent = 'NOT IN THE GARAGE YET'
+    }
+    grid.append(card)
+  }
+}
+
+function saveSetAssignment(carId, setId, position) {
+  const state = readSetsState()
+  const id = String(carId || '')
+  if (!id) return
+  delete state.assignments[id]
+  const set = setForId(setId, state)
+  const pos = Math.floor(Number(position) || 0)
+  if (set && pos >= 1 && pos <= set.total) {
+    for (const [otherCarId, assignment] of Object.entries(state.assignments)) {
+      if (assignment?.setId === set.id && Number(assignment.position) === pos && otherCarId !== id) delete state.assignments[otherCarId]
+    }
+    state.assignments[id] = { setId:set.id, position:pos }
+  }
+  writeSetsState(state)
+}
+
+function removeSetAssignment(carId) {
+  const state = readSetsState()
+  delete state.assignments[String(carId || '')]
+  writeSetsState(state)
+}
+
+function remapAndRestoreSets(backupSets, restoreItems) {
+  if (!backupSets || !Array.isArray(backupSets.sets) || !backupSets.assignments) return
+  const idMap = new Map(restoreItems.map((item) => [String(item.originalId), String(item.targetId)]))
+  const next = {
+    version:1,
+    sets:backupSets.sets,
+    assignments:{},
+  }
+  for (const [oldId, assignment] of Object.entries(backupSets.assignments)) {
+    const mapped = idMap.get(String(oldId))
+    if (mapped) next.assignments[mapped] = assignment
+  }
+  writeSetsState(next)
+}
+
+function returnFromEditor() {
+  const targetSetId = editorReturnSetId
+  editorReturnSetId = null
+  if (targetSetId && setForId(targetSetId)) {
+    hideScreens()
+    setsScreen?.classList.add('active')
+    mainNav.classList.add('hidden')
+    $('sets-landing')?.classList.add('hidden')
+    $('set-detail')?.classList.remove('hidden')
+    openSetDetail(targetSetId)
+    return
+  }
+  showCollection()
+}
 
 function normalizeModel(value) {
   return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
@@ -988,6 +1264,7 @@ async function increaseDuplicateQuantity() {
 }
 
 function showEditor(car = null, options = {}) {
+  editorReturnSetId = options.returnSetId ?? openSetId ?? null
   hideScreens()
   editorScreen.classList.add('active')
   mainNav.classList.add('hidden')
@@ -1044,6 +1321,8 @@ function fillEditor(car) {
   photoInput.value = ''
   setPhotoPreview(null)
   if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder)
+  const setAssignment = car?.id ? assignmentForCar(car.id) : null
+  refreshSetEditorOptions(setAssignment?.setId || '', setAssignment?.position || '')
 }
 
 function setPhotoPreview(src) {
@@ -1341,6 +1620,7 @@ async function exportBackup() {
       photo_count: Object.keys(photoMap).length,
       note: 'Self-contained Pocket 64 backup. backup.json contains all current collection fields and the photos folder contains the actual private car images.',
       photos: photoMap,
+      sets: readSetsState(),
       cars: backupCars,
     }
 
@@ -1362,7 +1642,7 @@ async function exportBackup() {
       `Photos: ${backup.photo_count}`,
       '',
       'Keep this ZIP file somewhere safe. Do not unzip or modify it before restoring in Pocket 64.',
-      'The backup contains collection data plus the actual stored car images.',
+      'The backup contains collection data, Sets, and the actual stored car images.',
       'Pocket 64 v3.3.0+ also validates SHA-256 checksums before a restore changes your collection.',
     ].join('\n'))
 
@@ -1642,6 +1922,7 @@ async function restoreBackupFile(file) {
       }
     }
 
+    remapAndRestoreSets(backup.sets, restoreItems)
     await loadCars()
     showCollection()
 
@@ -2196,6 +2477,8 @@ async function saveCar() {
   saveButton.textContent = 'Saving…'
   saveButton.disabled = true
   try {
+    const pendingSetId = $('set-select')?.value || ''
+    const pendingSetPosition = $('set-position')?.value || ''
     const payload = editorPayload()
     let car
     if (editingCar) {
@@ -2247,6 +2530,7 @@ async function saveCar() {
       }
     }
 
+    saveSetAssignment(car.id, pendingSetId, pendingSetPosition)
     await loadCars()
     if (quickAddMode && !editingCar) {
       quickAddKeepBrand = $('diecast-brand').value
@@ -2255,7 +2539,7 @@ async function saveCar() {
       editorMessage.textContent = 'Saved ✓ Ready for the next car.'
       setTimeout(() => { if (quickAddMode) editorMessage.textContent = '' }, 1400)
     } else {
-      showCollection()
+      returnFromEditor()
     }
   } catch (err) {
     console.error(err)
@@ -2316,6 +2600,7 @@ async function clearCollection() {
     }
 
     clearPrivatePhotoMemoryCache()
+    writeSetsState(emptySetsState())
     await loadCars()
     alert(storageCleanupFailures.length ? 'Collection cleared. Some old photo files could not be removed from Storage, but no car records were left broken.' : 'Collection cleared. This account is ready for a clean restore test.')
     showCollection()
@@ -2341,6 +2626,7 @@ async function deleteCar() {
       .eq('id', editingCar.id)
       .eq('user_id', session.user.id)
     if (error) throw error
+    removeSetAssignment(editingCar.id)
 
     if (photoPath) {
       const { error: storageError } = await supabase.storage.from('car-photos').remove([photoPath])
@@ -2348,7 +2634,7 @@ async function deleteCar() {
       await invalidatePrivatePhotoCache(photoPath)
     }
     await loadCars()
-    showCollection()
+    returnFromEditor()
   } catch (err) {
     console.error(err)
     editorMessage.textContent = err.message || 'Could not delete car.'
@@ -2782,9 +3068,14 @@ $('logout-btn').addEventListener('click', async () => {
   await supabase.auth.signOut()
 })
 $('collection-nav').addEventListener('click', showCollection)
-$('social-nav').addEventListener('click', showSocial)
+$('sets-nav')?.addEventListener('click', showSets)
 $('stats-nav').addEventListener('click', showStats)
 $('settings-row-button')?.addEventListener('click', showSettings)
+$('sets-home-button')?.addEventListener('click', showCollection)
+$('sets-detail-home-button')?.addEventListener('click', showCollection)
+$('sets-back-button')?.addEventListener('click', () => { $('set-detail')?.classList.add('hidden'); $('sets-landing')?.classList.remove('hidden'); openSetId = null; renderSetsLanding() })
+$('sets-add-button')?.addEventListener('click', () => createSetModal())
+$('set-select')?.addEventListener('change', () => { if ($('set-select').value === '__new__') { $('set-select').value = ''; createSetModal($('model-year')?.value || '') } else refreshSetEditorOptions($('set-select').value, '') })
 $('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
 $('settings-profile-icon').addEventListener('click', () => $('profile-icon-input').click())
 $('diagnostics-button')?.addEventListener('click', () => {
@@ -2798,7 +3089,7 @@ $('diagnostics-button')?.addEventListener('click', () => {
 })
 $('add-button').addEventListener('click', () => showEditor())
 $('empty-add-button').addEventListener('click', () => showEditor())
-$('cancel-button').addEventListener('click', showCollection)
+$('cancel-button').addEventListener('click', returnFromEditor)
 $('save-button').addEventListener('click', saveCar)
 $('share-button').addEventListener('click', shareCurrentCar)
 $('quantity-minus').addEventListener('click', () => stepQuantity(-1))

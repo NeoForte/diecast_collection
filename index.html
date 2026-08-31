@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.4.3" />
+  <link rel="manifest" href="manifest.webmanifest?v=4.0.0" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=3.4.3" />
+  <link rel="stylesheet" href="styles.css?v=4.0.0" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -45,7 +45,7 @@
       <main>
         <nav id="main-nav" class="main-nav" aria-label="App pages">
           <button id="collection-nav" class="nav-button active" type="button">Home</button>
-          <button id="social-nav" class="nav-button showcase-nav" type="button"><span>Showcase</span><svg class="showcase-trophy" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v3h3v2c0 3-2 5-5 5h-.2A6.1 6.1 0 0 1 13 16.7V19h4v2H7v-2h4v-2.3A6.1 6.1 0 0 1 9.2 14H9C6 14 4 12 4 9V7h3V4Zm0 5H6v.2C6 10.8 7 12 8.4 12c-.8-.8-1.3-1.8-1.4-3Zm10 0c-.1 1.2-.6 2.2-1.4 3C17 12 18 10.8 18 9.2V9h-1Z"/></svg></button>
+          <button id="sets-nav" class="nav-button sets-nav" type="button" aria-label="Open Sets">Sets</button>
           <button id="stats-nav" class="nav-button" type="button">Stats</button>
           <button id="settings-row-button" class="nav-button" type="button" aria-label="Open Settings">Settings</button>
         </nav>
@@ -103,6 +103,30 @@
             <h2>No cars yet</h2>
             <p>Add your first diecast car. Every field is optional.</p>
             <button id="empty-add-button">Add Car</button>
+          </div>
+        </section>
+
+        <section id="sets-screen" class="screen sets-screen">
+          <div id="sets-landing" class="sets-landing">
+            <div class="sets-page-top">
+              <button id="sets-home-button" class="sets-icon-button" type="button" aria-label="Back home" title="Home">⌂</button>
+              <h2>SETS</h2>
+              <button id="sets-add-button" class="sets-icon-button sets-add-button" type="button" aria-label="Create new set" title="New Set">+</button>
+            </div>
+            <div id="sets-years" class="sets-years"></div>
+            <div id="sets-empty" class="sets-empty hidden">NO SETS YET</div>
+          </div>
+
+          <div id="set-detail" class="set-detail hidden">
+            <div class="sets-page-top set-detail-top">
+              <button id="sets-back-button" class="sets-back-button" type="button" aria-label="Back to sets">‹ SETS</button>
+              <div class="set-detail-heading">
+                <h2 id="set-detail-title">SET</h2>
+                <span id="set-detail-meta"></span>
+              </div>
+              <button id="sets-detail-home-button" class="sets-icon-button" type="button" aria-label="Back home" title="Home">⌂</button>
+            </div>
+            <div id="set-cars-grid" class="set-cars-grid"></div>
           </div>
         </section>
 
@@ -191,7 +215,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 3.4.3</span>
+              <span class="version-badge">Version 4.0.0</span>
             </div>
           </div>
         </section>
@@ -370,6 +394,18 @@
               </label>
             </div>
 
+            <div class="editor-row set-assignment-row">
+              <label>Add to Set
+                <select id="set-select">
+                  <option value=""></option>
+                  <option value="__new__">+ NEW SET</option>
+                </select>
+              </label>
+              <label id="set-position-label" class="hidden">Set Position
+                <select id="set-position"><option value=""></option></select>
+              </label>
+            </div>
+
             <div class="entry-options-row" aria-label="Car options">
               <span class="entry-options-label">Options</span>
               <label class="custom-toggle" for="is-showcase"><input id="is-showcase" type="checkbox" /><span>Showcase</span></label>
@@ -390,8 +426,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=3.4.3"></script>
-  <script type="module" src="app.js?v=3.4.3"></script>
-  <script src="showcase-sync.js?v=3.4.6"></script>
+  <script src="jszip.min.js?v=4.0.0"></script>
+  <script type="module" src="app.js?v=4.0.0"></script>
+  <script src="showcase-sync.js?v=4.0.0"></script>
 </body>
 </html>

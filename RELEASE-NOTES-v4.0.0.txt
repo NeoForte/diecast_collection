@@ -1,0 +1,29 @@
+Pocket 64 v4.0.0 — Sets
+
+NEW
+- Adds a dedicated Sets feature from the main navigation.
+- Sets are user-created and grouped by year, newest first.
+- The newest year opens by default; older years stay collapsed until tapped.
+- Set names display in ALL CAPS, alphabetically, with total set size such as THEN AND NOW (10).
+- Create a new set with Year, Set Name, and Cars in Set.
+- Add/Edit Car now includes Add to Set and Set Position.
+- A set opens into numbered card slots using the same stored car photo already used in the main collection.
+- Empty slots use the new covered-car “NOT IN THE GARAGE YET” Pocket 64 placeholder.
+- Slot numbering such as 3/10 is in the card info area, never over the car photo.
+- Main collection cards are unchanged by Sets.
+- Sets are stored locally per signed-in account to avoid adding database/photo-storage load.
+- Sets and car-to-set assignments are included in Pocket 64 ZIP backups and restored with car ID remapping when needed.
+
+PRESERVED FROM v3.4.6
+- Safari stability fixes.
+- Showcase remains hidden.
+- Signed-in account line retained.
+- Uppercase search behavior retained.
+- Duplicate restore retry guard retained.
+- Private photo caching behavior retained.
+
+UI
+- Premium dark metallic / blue Sets page with subtle showroom lighting.
+- Minimal Sets navigation: Home, + New Set, year accordions, set rows.
+- No bottom navigation inside Sets.
+- iPhone viewport zoom disabled per app preference.
