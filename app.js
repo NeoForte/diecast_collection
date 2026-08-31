@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.4'
+const APP_VERSION = '4.0.5'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -1053,8 +1053,6 @@ async function renderModelSuggestions() {
       event.stopPropagation()
       input.value = car.model || ''
       hideModelSuggestions()
-      duplicateDismissedModel = ''
-      checkDuplicateModel()
       input.focus()
     })
     modelSuggestions.append(option)
@@ -1115,8 +1113,6 @@ function applyCatalogCarToEditor(car, focusTarget = null, options = {}) {
   setColorValue('')
   hideModelSuggestions()
   hideToyNumberSuggestions()
-  duplicateDismissedModel = ''
-  checkDuplicateModel()
   if (focusTarget) focusTarget.focus()
 }
 
@@ -1270,8 +1266,6 @@ async function renderToyNumberSuggestions() {
       $('series-collection-number').value = String(car.series_collection_number || '').toUpperCase()
       setColorValue(car.color || '')
       hideToyNumberSuggestions()
-      duplicateDismissedModel = ''
-      checkDuplicateModel()
       input.focus()
     })
 
@@ -3032,6 +3026,9 @@ const UPPERCASE_EDITOR_INPUT_IDS = [
 
 function uppercaseEditorInput(event) {
   const input = event.currentTarget
+  // Do not rewrite the value while iOS/IME is committing predictive or replacement text.
+  // Rewriting mid-composition can cancel the suggested word and leave only its trailing space.
+  if (event?.isComposing || modelInputComposing && input.id === 'model') return
   const start = input.selectionStart
   const end = input.selectionEnd
   const upper = input.value.toUpperCase()
@@ -3280,7 +3277,6 @@ $('collection-nav').addEventListener('click', showCollection)
 $('sets-nav')?.addEventListener('click', showSets)
 $('stats-nav').addEventListener('click', showStats)
 $('settings-row-button')?.addEventListener('click', showSettings)
-$('sets-home-button')?.addEventListener('click', showCollection)
 $('sets-back-button')?.addEventListener('click', () => { $('set-more-menu')?.classList.add('hidden'); $('set-detail')?.classList.add('hidden'); $('sets-landing')?.classList.remove('hidden'); openSetId = null; renderSetsLanding() })
 $('sets-add-button')?.addEventListener('click', () => createSetModal())
 $('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))
@@ -3342,27 +3338,27 @@ sortSelect.addEventListener('change', () => {
   try { localStorage.setItem(SORT_STORAGE_KEY, sortSelect.value) } catch {}
   applySearch()
 })
-$('model').addEventListener('input', () => {
-  duplicateDismissedModel = ''
+const modelInput = $('model')
+let modelInputComposing = false
+function refreshModelSuggestionsFromTyping(event) {
+  if (modelInputComposing || event?.isComposing) return
   renderModelSuggestions()
-  clearTimeout(duplicateCheckTimer)
-  duplicateCheckTimer = setTimeout(checkDuplicateModel, 280)
+}
+modelInput.addEventListener('compositionstart', () => { modelInputComposing = true })
+modelInput.addEventListener('compositionend', () => {
+  modelInputComposing = false
+  // Let iOS finish committing QuickType replacement text before we redraw suggestions.
+  requestAnimationFrame(() => renderModelSuggestions())
 })
-$('model').addEventListener('focus', renderModelSuggestions)
-$('model').addEventListener('blur', () => {
-  clearTimeout(duplicateCheckTimer)
+modelInput.addEventListener('input', refreshModelSuggestionsFromTyping)
+modelInput.addEventListener('focus', renderModelSuggestions)
+modelInput.addEventListener('blur', () => {
   setTimeout(hideModelSuggestions, 120)
-  checkDuplicateModel()
 })
 $('hotwheels-toy-number').addEventListener('input', renderToyNumberSuggestions)
 $('hotwheels-toy-number').addEventListener('focus', renderToyNumberSuggestions)
 $('hotwheels-toy-number').addEventListener('blur', () => {
   setTimeout(hideToyNumberSuggestions, 120)
-})
-duplicateIncreaseBtn.addEventListener('click', increaseDuplicateQuantity)
-duplicateAnywayBtn.addEventListener('click', () => {
-  duplicateDismissedModel = normalizeModel($('model').value)
-  hideDuplicateWarning()
 })
 $('diecast-brand').addEventListener('change', syncBrandCustomField)
 $('color').addEventListener('change', syncColorCustomField)
@@ -3555,7 +3551,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.4', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.5', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

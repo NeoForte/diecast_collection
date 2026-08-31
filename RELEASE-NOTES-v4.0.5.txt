@@ -1,0 +1,6 @@
+Pocket 64 v4.0.5
+
+- Removed the redundant Home button from the Sets landing header.
+- Retired the old gold Possible Duplicate panel and its Add 1 / Add Anyway actions; the black YOUR GARAGE suggestion list is now the single match/duplicate UI.
+- Improved iPhone predictive-text / QuickType handling in Model by avoiding value rewrites during composition/replacement commits.
+- Preserves pinch zoom, synced Sets, premium nav icons, Set edit/delete, and all v4.0.4 behavior.
