@@ -1,0 +1,8 @@
+Pocket 64 v4.0.4
+
+- Added EDIT SET to the Set options menu.
+- Edit year, set name, and total slot count.
+- Safely warns before shrinking a Set past occupied positions; only Set assignments are removed, never cars/photos.
+- Corrected the empty-slot garage artwork by removing the baked-in outer card frame.
+- Strengthened service-worker version refresh and runtime version display.
+- Preserves 4.0.3 pinch zoom, Sets sync, delete menu layering, showroom styling, and premium nav icons.

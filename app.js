@@ -10,7 +10,8 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.3'
+const APP_VERSION = '4.0.4'
+queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -680,6 +681,77 @@ function createSetModal(defaultYear = '') {
     renderSetsLanding()
   })
   setTimeout(() => $('set-new-name')?.focus(), 50)
+}
+
+function editOpenSet() {
+  if (!openSetId) return
+  const state = readSetsState()
+  const set = setForId(openSetId, state)
+  if (!set) return
+  $('set-more-menu')?.classList.add('hidden')
+
+  const old = $('set-modal-backdrop')
+  if (old) old.remove()
+  const overlay = document.createElement('div')
+  overlay.id = 'set-modal-backdrop'
+  overlay.className = 'set-modal-backdrop'
+  overlay.innerHTML = `
+    <form class="set-modal" id="set-edit-form">
+      <div class="set-modal-head"><strong>EDIT SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
+      <label>YEAR<input id="set-edit-year" type="text" inputmode="numeric" maxlength="4" value="${set.year}"></label>
+      <label>SET NAME<input id="set-edit-name" type="text" autocomplete="off" value="${escapeHtml(set.name)}"></label>
+      <label>CARS IN SET<input id="set-edit-total" type="number" inputmode="numeric" min="1" max="99" value="${set.total}"></label>
+      <button class="set-modal-create" type="submit">SAVE CHANGES</button>
+    </form>`
+  document.body.append(overlay)
+  const close = () => overlay.remove()
+  $('set-modal-close').addEventListener('click', close)
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+  $('set-edit-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const year = $('set-edit-year').value.replace(/[^0-9]/g,'').slice(0,4)
+    const name = $('set-edit-name').value.trim().toUpperCase()
+    const totalRaw = Math.floor(Number($('set-edit-total').value))
+    if (year.length !== 4 || !name || !Number.isFinite(totalRaw) || totalRaw < 1) return
+    const total = Math.min(99, totalRaw)
+    const latest = readSetsState()
+    const current = setForId(set.id, latest)
+    if (!current) { close(); return }
+    const duplicate = latest.sets.find((item) => item.id !== current.id && item.year === year && item.name === name)
+    if (duplicate) { alert('That set already exists for this year.'); return }
+
+    const removedCarIds = []
+    if (total < current.total) {
+      for (const [carId, assignment] of Object.entries(latest.assignments)) {
+        if (assignment?.setId === current.id && Number(assignment.position) > total) removedCarIds.push(carId)
+      }
+      if (removedCarIds.length) {
+        const ok = confirm(`This set has ${removedCarIds.length} car${removedCarIds.length === 1 ? '' : 's'} assigned above slot ${total}.\n\nThose Set assignments will be removed. The cars and photos will stay in your garage.\n\nContinue?`)
+        if (!ok) return
+      }
+    }
+
+    current.year = year
+    current.name = name
+    current.total = total
+    for (const carId of removedCarIds) delete latest.assignments[carId]
+    writeSetsState(latest)
+
+    if (session?.user) {
+      const { error:setError } = await supabase.from('pocket64_sets').update({ year:Number(year), name, total, updated_at:new Date().toISOString() }).eq('id', current.id).eq('user_id', session.user.id)
+      if (setError) console.warn('Set cloud edit failed', setError)
+      if (removedCarIds.length) {
+        const { error:assignmentError } = await supabase.from('pocket64_set_assignments').delete().eq('user_id', session.user.id).eq('set_id', current.id).gt('position', total)
+        if (assignmentError) console.warn('Set assignment trim failed', assignmentError)
+      }
+      if (setError) syncSetsSoon()
+    }
+
+    close()
+    refreshSetEditorOptions(current.id, '')
+    openSetDetail(current.id)
+  })
+  setTimeout(() => $('set-edit-name')?.focus(), 50)
 }
 
 function showSets() {
@@ -3212,6 +3284,7 @@ $('sets-home-button')?.addEventListener('click', showCollection)
 $('sets-back-button')?.addEventListener('click', () => { $('set-more-menu')?.classList.add('hidden'); $('set-detail')?.classList.add('hidden'); $('sets-landing')?.classList.remove('hidden'); openSetId = null; renderSetsLanding() })
 $('sets-add-button')?.addEventListener('click', () => createSetModal())
 $('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))
+$('set-edit-button')?.addEventListener('click', editOpenSet)
 $('set-delete-button')?.addEventListener('click', deleteOpenSet)
 $('set-select')?.addEventListener('change', () => { if ($('set-select').value === '__new__') { $('set-select').value = ''; createSetModal($('model-year')?.value || '') } else refreshSetEditorOptions($('set-select').value, '') })
 $('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
@@ -3482,7 +3555,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js')
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.4', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

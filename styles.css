@@ -5370,7 +5370,7 @@ body.sets-active main {
 }
 
 
-/* Pocket 64 v4.0.3 — Sets card polish, menu layering, and user pinch zoom. */
+/* Pocket 64 v4.0.4 — Sets card polish, menu layering, and user pinch zoom. */
 /* Occupied Set slots use the same full-photo treatment as the main garage cards. */
 .set-slot-card.occupied .set-slot-photo {
   display:grid;
@@ -5406,4 +5406,17 @@ body.sets-active main {
 /* With JDM removed, the three useful summary cards share one clean row when Favorites is available. */
 .stats-overview:has(#favorites-stat:not(.hidden)) {
   grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+
+
+/* Pocket 64 v4.0.4 — edit Sets + corrected empty-slot scene. */
+.set-more-menu #set-edit-button { color:#b9d9f5; }
+.set-more-menu #set-delete-button { color:#f0a3a3; }
+.set-more-menu #set-edit-button:active { background:rgba(39,111,173,.16); }
+.set-more-menu #set-delete-button:active { background:rgba(128,28,28,.18); }
+.set-empty-photo {
+  background-image:url('pocket64-empty-slot.jpg') !important;
+  background-position:center center !important;
+  background-size:cover !important;
+  background-repeat:no-repeat !important;
 }
