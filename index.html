@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=4.0.0" />
+  <link rel="manifest" href="manifest.webmanifest?v=4.0.1" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=4.0.0" />
+  <link rel="stylesheet" href="styles.css?v=4.0.1" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -43,11 +43,11 @@
       </header>
 
       <main>
-        <nav id="main-nav" class="main-nav" aria-label="App pages">
-          <button id="collection-nav" class="nav-button active" type="button">Home</button>
-          <button id="sets-nav" class="nav-button sets-nav" type="button" aria-label="Open Sets">Sets</button>
-          <button id="stats-nav" class="nav-button" type="button">Stats</button>
-          <button id="settings-row-button" class="nav-button" type="button" aria-label="Open Settings">Settings</button>
+        <nav id="main-nav" class="main-nav premium-nav" aria-label="App pages">
+          <button id="collection-nav" class="nav-button active" type="button" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.8 12 3.7l8.5 7.1v8.6a1.6 1.6 0 0 1-1.6 1.6h-4.5v-6.1H9.6V21H5.1a1.6 1.6 0 0 1-1.6-1.6z"/></svg></button>
+          <button id="sets-nav" class="nav-button sets-nav" type="button" aria-label="Sets" title="Sets"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="3.2" width="7.1" height="7.1" rx="1.7"/><rect x="13.7" y="3.2" width="7.1" height="7.1" rx="1.7"/><rect x="3.2" y="13.7" width="7.1" height="7.1" rx="1.7"/><rect x="13.7" y="13.7" width="7.1" height="7.1" rx="1.7"/></svg></button>
+          <button id="stats-nav" class="nav-button" type="button" aria-label="Stats" title="Stats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11.5h3.6V20M10.2 20V6.5h3.6V20M15.4 20V3.5H19V20M3.5 20.5h17"/></svg></button>
+          <button id="settings-row-button" class="nav-button" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.7 3.7h4.6l.7 2.1 1.7 1 2.2-.4 2.3 4-1.5 1.7v1.9l1.5 1.7-2.3 4-2.2-.4-1.7 1-.7 2.1H9.7L9 20.3l-1.7-1-2.2.4-2.3-4 1.5-1.7v-1.9l-1.5-1.7 2.3-4 2.2.4 1.7-1z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
         </nav>
 
         <section id="collection-screen" class="screen active">
@@ -109,7 +109,7 @@
         <section id="sets-screen" class="screen sets-screen">
           <div id="sets-landing" class="sets-landing">
             <div class="sets-page-top">
-              <button id="sets-home-button" class="sets-icon-button" type="button" aria-label="Back home" title="Home">⌂</button>
+              <button id="sets-home-button" class="sets-icon-button sets-home-icon" type="button" aria-label="Back home" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.8 12 3.7l8.5 7.1v8.6a1.6 1.6 0 0 1-1.6 1.6h-4.5v-6.1H9.6V21H5.1a1.6 1.6 0 0 1-1.6-1.6z"/></svg></button>
               <h2>SETS</h2>
               <button id="sets-add-button" class="sets-icon-button sets-add-button" type="button" aria-label="Create new set" title="New Set">+</button>
             </div>
@@ -119,12 +119,15 @@
 
           <div id="set-detail" class="set-detail hidden">
             <div class="sets-page-top set-detail-top">
-              <button id="sets-back-button" class="sets-back-button" type="button" aria-label="Back to sets">‹ SETS</button>
+              <button id="sets-back-button" class="sets-back-button sets-back-arrow" type="button" aria-label="Back to sets" title="Back">‹</button>
               <div class="set-detail-heading">
                 <h2 id="set-detail-title">SET</h2>
                 <span id="set-detail-meta"></span>
               </div>
-              <button id="sets-detail-home-button" class="sets-icon-button" type="button" aria-label="Back home" title="Home">⌂</button>
+              <div class="set-detail-actions">
+                <button id="set-more-button" class="sets-icon-button set-more-button" type="button" aria-label="Set options" title="Set options">•••</button>
+                <div id="set-more-menu" class="set-more-menu hidden"><button id="set-delete-button" type="button">DELETE SET</button></div>
+              </div>
             </div>
             <div id="set-cars-grid" class="set-cars-grid"></div>
           </div>
@@ -215,7 +218,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 4.0.0</span>
+              <span class="version-badge">Version 4.0.1</span>
             </div>
           </div>
         </section>
@@ -426,8 +429,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=4.0.0"></script>
-  <script type="module" src="app.js?v=4.0.0"></script>
-  <script src="showcase-sync.js?v=4.0.0"></script>
+  <script src="jszip.min.js?v=4.0.1"></script>
+  <script type="module" src="app.js?v=4.0.1"></script>
+  <script src="showcase-sync.js?v=4.0.1"></script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+Pocket 64 v4.0.1
+
+Polish release for Sets and navigation.
+
+- Replaced Home / Sets / Stats / Settings text tabs with a unified premium icon-only navigation system.
+- Sets icon is now a clean 2x2 grouped-block symbol; Home uses a house, Stats a bar chart, Settings a gear.
+- Active navigation uses a restrained metallic-blue accent; inactive icons remain satin silver/gray.
+- Removed the garage brick background from Sets and added the approved dark showroom / spotlight treatment.
+- Removed the redundant SETS text from the individual-set back control; back is now arrow-only.
+- Added a compact set-options menu with Delete Set. Deleting a set never deletes collection cars or photos.
+- Removed example placeholder/default content from New Set setup.
+- Standardized Add/Edit Car entered text to a softer gray for visual consistency.
+- Empty-slot artwork and stored car photos are unchanged.

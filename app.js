@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.0'
+const APP_VERSION = '4.0.1'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -557,8 +557,8 @@ function createSetModal(defaultYear = '') {
     <form class="set-modal" id="set-create-form">
       <div class="set-modal-head"><strong>NEW SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
       <label>YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${String(defaultYear || new Date().getFullYear())}"></label>
-      <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder="THEN AND NOW"></label>
-      <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value="10"></label>
+      <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder=""></label>
+      <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
       <button class="set-modal-create" type="submit">CREATE SET</button>
     </form>`
   document.body.append(overlay)
@@ -569,8 +569,9 @@ function createSetModal(defaultYear = '') {
     event.preventDefault()
     const year = $('set-new-year').value.replace(/[^0-9]/g,'').slice(0,4)
     const name = $('set-new-name').value.trim().toUpperCase()
-    const total = Math.max(1, Math.min(99, Math.floor(Number($('set-new-total').value) || 0)))
-    if (year.length !== 4 || !name || !total) return
+    const totalRaw = Math.floor(Number($('set-new-total').value))
+    if (year.length !== 4 || !name || !Number.isFinite(totalRaw) || totalRaw < 1) return
+    const total = Math.min(99, totalRaw)
     const state = readSetsState()
     const duplicate = state.sets.find((set) => set.year === year && set.name === name)
     if (duplicate) {
@@ -645,6 +646,27 @@ function openSetDetail(setId) {
   $('set-detail-title').textContent = set.name
   $('set-detail-meta').textContent = `${set.year} · ${set.total} CARS`
   renderSetCards(set, state)
+  window.scrollTo({ top:0, behavior:'auto' })
+}
+
+function deleteOpenSet() {
+  if (!openSetId) return
+  const state = readSetsState()
+  const set = setForId(openSetId, state)
+  if (!set) return
+  const ok = confirm(`Delete ${set.name}?\n\nYour cars and photos will NOT be deleted.`)
+  if (!ok) return
+  state.sets = state.sets.filter((item) => item.id !== set.id)
+  for (const [carId, assignment] of Object.entries(state.assignments)) {
+    if (assignment?.setId === set.id) delete state.assignments[carId]
+  }
+  writeSetsState(state)
+  openSetId = null
+  $('set-more-menu')?.classList.add('hidden')
+  $('set-detail')?.classList.add('hidden')
+  $('sets-landing')?.classList.remove('hidden')
+  refreshSetEditorOptions()
+  renderSetsLanding()
   window.scrollTo({ top:0, behavior:'auto' })
 }
 
@@ -3072,9 +3094,10 @@ $('sets-nav')?.addEventListener('click', showSets)
 $('stats-nav').addEventListener('click', showStats)
 $('settings-row-button')?.addEventListener('click', showSettings)
 $('sets-home-button')?.addEventListener('click', showCollection)
-$('sets-detail-home-button')?.addEventListener('click', showCollection)
-$('sets-back-button')?.addEventListener('click', () => { $('set-detail')?.classList.add('hidden'); $('sets-landing')?.classList.remove('hidden'); openSetId = null; renderSetsLanding() })
+$('sets-back-button')?.addEventListener('click', () => { $('set-more-menu')?.classList.add('hidden'); $('set-detail')?.classList.add('hidden'); $('sets-landing')?.classList.remove('hidden'); openSetId = null; renderSetsLanding() })
 $('sets-add-button')?.addEventListener('click', () => createSetModal())
+$('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))
+$('set-delete-button')?.addEventListener('click', deleteOpenSet)
 $('set-select')?.addEventListener('change', () => { if ($('set-select').value === '__new__') { $('set-select').value = ''; createSetModal($('model-year')?.value || '') } else refreshSetEditorOptions($('set-select').value, '') })
 $('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
 $('settings-profile-icon').addEventListener('click', () => $('profile-icon-input').click())
