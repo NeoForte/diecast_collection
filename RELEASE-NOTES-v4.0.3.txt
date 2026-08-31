@@ -1,0 +1,7 @@
+Pocket 64 v4.0.3
+
+- Removed the JDM summary stat from Stats while keeping JDM available as a car Category.
+- Restored normal user-controlled pinch zoom across the app; iPhone input-focus zoom prevention remains handled by form font sizing.
+- Cleaned occupied Set-slot photo rendering to use the same full-photo contain treatment as main collection cards, eliminating the cropped / nested-image appearance.
+- Fixed the Set options / Delete Set menu stacking so it always appears above Set cards.
+- Preserved v4.0.2 Sets sync, showroom background, premium navigation icons, and empty-slot design.

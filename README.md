@@ -755,3 +755,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Reduced Collection search typography to match the surrounding UI.
 - Corrected the photo picker presentation to a compact circular camera icon in the upper-left of the photo area.
 - Preserves v3.3.2 collection layout, photo quality, caching, and special-category behavior.
+
+
+## v4.0.3
+- Removed the JDM Stats tile.
+- Restored normal pinch zoom.
+- Polished occupied Set-card photo rendering.
+- Fixed Delete Set menu layering above Set cards.

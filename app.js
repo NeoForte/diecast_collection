@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.2'
+const APP_VERSION = '4.0.3'
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
 const BACKUP_REMINDER_DISMISSED_KEY = 'pocket64-backup-reminder-dismissed'
@@ -2450,7 +2450,6 @@ function renderStats() {
   const grandTotal = cars.reduce((sum, car) => sum + totalCarsFor(car), 0)
   statsGrandTotal.textContent = String(grandTotal)
   if (statsFavorites) statsFavorites.textContent = String(cars.filter((car) => car.is_favorite).length)
-  if (statsJdm) statsJdm.textContent = String(cars.filter((car) => String(car.category || '').trim().toUpperCase() === 'JDM').length)
   favoritesStat?.classList.toggle('hidden', !collectionExtrasSupported)
   brandStats.replaceChildren()
 
@@ -2999,12 +2998,6 @@ categorySelect?.addEventListener('change', syncCategoryCustomField)
 packSizeSelect?.addEventListener('change', syncMultipackFields)
 favoritesStat?.addEventListener('click', () => {
   activeBrandFilter = '__favorites__'
-  searchInput.value = ''
-  showCollection()
-  applySearch()
-})
-jdmStat?.addEventListener('click', () => {
-  activeBrandFilter = '__jdm__'
   searchInput.value = ''
   showCollection()
   applySearch()
