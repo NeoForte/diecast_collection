@@ -774,3 +774,11 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Added read-only Hot Wheels Set/Series reference metadata for 2020–2026 to streamline New Set creation.
 - Personal Sets remain opt-in; reference rows do not populate the Sets landing page until selected.
 - Release Year wording applied to Set creation/editing.
+
+
+## v4.1.2
+- Verified 2020–2026 Hot Wheels Sets library is now visible directly on the Sets landing page.
+- Every reference Set shows progress immediately, including empty 0/5 and 0/10 rows.
+- Reference rows materialize into the user's personal Sets only when opened or used by a car assignment.
+- Manual and older Sets blend into the same year-grouped list with no badge or special label.
+- Set rows use restrained alternating graphite/blue tones for visual separation without clutter.

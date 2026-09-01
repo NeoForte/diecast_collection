@@ -5491,10 +5491,16 @@ body.sets-active main {
 html[data-theme="light"] .extra-photo-slot{background:#eef1f4;color:#66717d;border-color:#cfd6dc}
 
 
-/* Pocket 64 v4.1.1 — curated Hot Wheels Set reference picker */
+/* Pocket 64 v4.1.2 — visible verified Sets library */
 .set-modal select { min-height:46px; width:100%; box-sizing:border-box; border:1px solid rgba(120,145,165,.35); border-radius:11px; background:linear-gradient(145deg,#0b1016,#05070a); color:#eaf3fb; padding:0 38px 0 12px; font-size:16px; font-weight:750; letter-spacing:.025em; }
 .set-reference-label { padding:9px 9px 8px; border:1px solid rgba(70,151,229,.23); border-radius:13px; background:linear-gradient(145deg,rgba(21,31,41,.68),rgba(6,9,13,.72)); }
 .set-reference-meta { min-height:14px; display:block; color:#6f9cc7; font-size:9px; font-weight:850; letter-spacing:.12em; }
 .set-reference-meta.exclusive { color:#82bfff; }
 .set-manual-fields { display:grid; gap:12px; }
 .set-manual-fields.hidden { display:none; }
+
+
+/* Pocket 64 v4.1.2 — subtle showroom row depth for the full Sets index. */
+.set-list-row-tone-1 { background:linear-gradient(145deg,rgba(19,28,37,.96),rgba(7,11,16,.99)) !important; }
+.set-list-row-tone-2 { background:linear-gradient(145deg,rgba(16,24,32,.96),rgba(6,10,15,.99)) !important; }
+.set-list-row-tone-3 { background:linear-gradient(145deg,rgba(13,21,29,.96),rgba(5,9,14,.99)) !important; }

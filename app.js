@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.1'
+const APP_VERSION = '4.1.2'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -1030,38 +1030,87 @@ function showSets() {
   syncSetsSoon()
 }
 
+function setKey(yearValue, nameValue) {
+  return `${String(yearValue || '').replace(/[^0-9]/g,'').slice(0,4)}\u0000${normalizeSetReferenceName(nameValue)}`
+}
+
+function ensureReferenceSet(yearValue, reference) {
+  const year = String(yearValue || '').replace(/[^0-9]/g,'').slice(0,4)
+  if (year.length !== 4 || !reference?.name || !reference?.total) return null
+  const state = readSetsState()
+  let set = state.sets.find((item) => setKey(item.year, item.name) === setKey(year, reference.name))
+  if (set) return set
+  set = { id:crypto.randomUUID(), year, name:String(reference.name).trim().toUpperCase(), total:Number(reference.total) }
+  state.sets.push(set)
+  writeSetsState(state)
+  refreshSetEditorOptions(set.id, '')
+  if (session?.user) {
+    supabase.from('pocket64_sets').insert({ id:set.id, user_id:session.user.id, year:Number(set.year), name:set.name, total:set.total }).then(({ error }) => {
+      if (error) { console.warn('Reference Set save failed', error); syncSetsSoon() }
+    })
+  }
+  return set
+}
+
 function renderSetsLanding() {
   const host = $('sets-years')
   const empty = $('sets-empty')
   if (!host || !empty) return
   const state = readSetsState()
   host.replaceChildren()
-  empty.classList.toggle('hidden', state.sets.length > 0)
+  empty.classList.add('hidden')
+
+  const personalByKey = new Map(state.sets.map((set) => [setKey(set.year, set.name), set]))
   const grouped = new Map()
-  for (const set of state.sets) {
-    if (!grouped.has(set.year)) grouped.set(set.year, [])
-    grouped.get(set.year).push(set)
+  const referenceYears = Object.keys(HOT_WHEELS_SET_REFERENCE)
+
+  // The verified 2020-current library is always visible, even before a personal Set exists.
+  for (const year of referenceYears) {
+    const rows = referenceSetsForYear(year).map((reference) => {
+      const personal = personalByKey.get(setKey(year, reference.name)) || null
+      return { year:String(year), name:reference.name, total:reference.total, reference, personal }
+    })
+    grouped.set(String(year), rows)
   }
+
+  // Manual/older Sets join the same list with no special badge or visual label.
+  for (const set of state.sets) {
+    const key = setKey(set.year, set.name)
+    const isReference = !!referenceSetFor(set.year, set.name)
+    if (isReference) continue
+    if (!grouped.has(set.year)) grouped.set(set.year, [])
+    grouped.get(set.year).push({ year:set.year, name:set.name, total:set.total, reference:null, personal:set })
+  }
+
   const years = [...grouped.keys()].sort((a,b) => Number(b)-Number(a))
   years.forEach((year, yearIndex) => {
     const section = document.createElement('section')
     section.className = `set-year-card${yearIndex === 0 ? ' expanded' : ''}`
-    const sets = sortSetRecords(grouped.get(year))
+    const rows = [...grouped.get(year)].sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }))
     const head = document.createElement('button')
     head.type = 'button'
     head.className = 'set-year-header'
-    head.innerHTML = `<span class="set-wheel" aria-hidden="true"><span>${String(year).slice(-2)}</span></span><span class="set-year-copy"><strong>${year}</strong><small>${sets.length} SET${sets.length === 1 ? '' : 'S'}</small></span><span class="set-year-chevron" aria-hidden="true">⌄</span>`
+    head.innerHTML = `<span class="set-wheel" aria-hidden="true"><span>${String(year).slice(-2)}</span></span><span class="set-year-copy"><strong>${year}</strong><small>${rows.length} SET${rows.length === 1 ? '' : 'S'}</small></span><span class="set-year-chevron" aria-hidden="true">⌄</span>`
     const list = document.createElement('div')
     list.className = 'set-year-list'
-    for (const set of sets) {
+
+    rows.forEach((entry, rowIndex) => {
       const row = document.createElement('button')
       row.type = 'button'
-      row.className = 'set-list-row'
-      const occupiedPositions = new Set(Object.values(state.assignments || {}).filter((assignment) => assignment?.setId === set.id).map((assignment) => Number(assignment.position)).filter((position) => position >= 1 && position <= set.total))
-      row.innerHTML = `<span>${set.name}</span><strong>(${occupiedPositions.size}/${set.total})</strong><i aria-hidden="true">›</i>`
-      row.addEventListener('click', () => openSetDetail(set.id))
+      row.className = `set-list-row set-list-row-tone-${(rowIndex % 3) + 1}`
+      const set = entry.personal
+      const total = Math.max(1, Number(set?.total || entry.total || 1))
+      const occupiedPositions = set
+        ? new Set(Object.values(state.assignments || {}).filter((assignment) => assignment?.setId === set.id).map((assignment) => Number(assignment.position)).filter((position) => position >= 1 && position <= total))
+        : new Set()
+      row.innerHTML = `<span>${entry.name}</span><strong>(${occupiedPositions.size}/${total})</strong><i aria-hidden="true">›</i>`
+      row.addEventListener('click', () => {
+        const target = set || ensureReferenceSet(year, entry.reference)
+        if (target) openSetDetail(target.id)
+      })
       list.append(row)
-    }
+    })
+
     head.addEventListener('click', () => section.classList.toggle('expanded'))
     section.append(head, list)
     host.append(section)
@@ -3993,7 +4042,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.1', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.2', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

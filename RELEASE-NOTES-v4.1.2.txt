@@ -1,0 +1,7 @@
+Pocket 64 v4.1.2
+
+- Makes the verified 2020–2026 Hot Wheels Sets reference library visible directly on the Sets landing page.
+- Empty reference Sets show 0/total progress before any cars are assigned.
+- Existing assignments automatically populate the matching reference row progress.
+- Manual Sets remain supported and blend into the same year sections.
+- Keeps the existing year accordion layout, alphabetical ordering, and premium showroom styling.
