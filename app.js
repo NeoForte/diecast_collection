@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.8'
+const APP_VERSION = '4.0.9'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -20,6 +20,99 @@ const BACKUP_REMINDER_DAYS = 30
 const BACKUP_REMINDER_SNOOZE_DAYS = 7
 const DIAGNOSTICS_STORAGE_KEY = 'pocket64-diagnostics-v1'
 const DIAGNOSTICS_MAX_ENTRIES = 25
+const UI_STATE_STORAGE_PREFIX = 'pocket64-ui-state-v1'
+
+function uiStateStorageKey() {
+  return `${UI_STATE_STORAGE_PREFIX}-${session?.user?.id || 'signed-out'}`
+}
+
+function readUiState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(uiStateStorageKey()) || 'null')
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch { return null }
+}
+
+function writeUiState(state) {
+  try { localStorage.setItem(uiStateStorageKey(), JSON.stringify({ ...state, savedAt:Date.now(), version:APP_VERSION })) } catch {}
+}
+
+function serializeEditorDraft() {
+  const form = $('editor-form')
+  if (!form) return null
+  const values = {}
+  for (const el of form.querySelectorAll('input, select, textarea')) {
+    if (!el.id || ['photo-input','camera-input'].includes(el.id) || el.type === 'file') continue
+    values[el.id] = el.type === 'checkbox' ? Boolean(el.checked) : el.value
+  }
+  return values
+}
+
+function applyEditorDraft(values) {
+  if (!values || typeof values !== 'object') return
+  const form = $('editor-form')
+  if (!form) return
+  for (const [id, value] of Object.entries(values)) {
+    const el = $(id)
+    if (!el || !form.contains(el) || el.type === 'file') continue
+    if (el.type === 'checkbox') el.checked = Boolean(value)
+    else el.value = value ?? ''
+  }
+  syncBrandCustomField()
+  syncColorCustomField()
+  syncYearCustomField()
+  syncMultipackFields()
+  syncExclusiveFields()
+  syncQuantityDisplay()
+  syncCategoryCustomField?.()
+  refreshSetEditorOptions($('set-select')?.value || '', $('set-position')?.value || '')
+}
+
+function persistCurrentUiState() {
+  if (!session?.user || mainView?.classList.contains('hidden')) return
+  if (editorScreen?.classList.contains('active')) {
+    writeUiState({ screen:'editor', carId:editingCar?.id || null, returnSetId:editorReturnSetId || null, draft:serializeEditorDraft() })
+    return
+  }
+  if (setsScreen?.classList.contains('active')) {
+    writeUiState({ screen:openSetId ? 'set-detail' : 'sets', setId:openSetId || null })
+    return
+  }
+  if (statsScreen?.classList.contains('active')) { writeUiState({ screen:'stats' }); return }
+  if (settingsScreen?.classList.contains('active')) { writeUiState({ screen:'settings' }); return }
+  writeUiState({ screen:'collection', search:searchInput?.value || '', brandFilter:activeBrandFilter || null, sort:sortSelect?.value || 'newest' })
+}
+
+async function restoreUiState() {
+  if (!session?.user) return false
+  const state = readUiState()
+  if (!state) return false
+  if (state.screen === 'editor') {
+    const car = state.carId ? cars.find((item) => String(item.id) === String(state.carId)) : null
+    if (state.carId && !car) return false
+    showEditor(car || null, { returnSetId:state.returnSetId || null })
+    applyEditorDraft(state.draft)
+    return true
+  }
+  if (state.screen === 'set-detail' && state.setId && setForId(state.setId)) {
+    showSets()
+    openSetDetail(state.setId)
+    return true
+  }
+  if (state.screen === 'sets') { showSets(); return true }
+  if (state.screen === 'stats') { showStats(); return true }
+  if (state.screen === 'settings') { showSettings(); return true }
+  if (state.screen === 'collection') {
+    showCollection()
+    searchInput.value = String(state.search || '')
+    activeBrandFilter = state.brandFilter || null
+    if (VALID_SORTS.has(state.sort)) sortSelect.value = state.sort
+    updateSearchClearButton()
+    applySearch()
+    return true
+  }
+  return false
+}
 
 function readDiagnostics() {
   try {
@@ -396,6 +489,18 @@ function showCollection() {
   syncBackToTopButton?.()
 }
 
+function resetAndShowCollection() {
+  searchInput.value = ''
+  activeBrandFilter = null
+  sortSelect.value = 'newest'
+  try { localStorage.setItem(SORT_STORAGE_KEY, 'newest') } catch {}
+  updateSearchClearButton()
+  showCollection()
+  applySearch()
+  window.scrollTo({ top:0, behavior:'auto' })
+  persistCurrentUiState()
+}
+
 
 function showSocial() {
   hideScreens()
@@ -569,6 +674,7 @@ async function syncSetsFromCloud({ migrateLocal=true } = {}) {
   try { localStorage.setItem(migrationKey, '1') } catch {}
   writeSetsState(remote)
   refreshSetEditorOptions()
+  if (collectionScreen?.classList.contains('active')) renderCars()
   if (setsScreen?.classList.contains('active')) {
     if (openSetId && setForId(openSetId, remote)) openSetDetail(openSetId)
     else renderSetsLanding()
@@ -607,86 +713,6 @@ function sortSetRecords(list) {
   return [...list].sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }))
 }
 
-// Hot Wheels mainline mini-set reference. The list itself is bundled so the picker
-// works immediately; known slot/model names are refreshed from Pocket 64's catalog
-// and cached locally so 2026 can continue filling in without an app revision.
-const HW_SET_REFERENCE_CACHE_PREFIX = 'pocket64-hw-set-reference-v1'
-const HW_MAINLINE_SET_REFERENCE = {
-  '2024': [
-    ['HW DREAM GARAGE',5],['BATMAN',5],['HW SCREEN TIME',10],['HW FAST TRANSIT',5],['HW FIRST RESPONSE',10],['HW MODIFIED',10],['FACTORY FRESH',10],['HW GREEN SPEED',10],['HW XTREME SPORTS',5],['HW MEGA BITE',5],['HW ROADSTERS',5],['COMPACT KINGS',5],['EXPERIMOTORS',5],['ROD SQUAD',5],['HW CELEBRATION RACERS',10],['HW REVERSE RAKE',5],['HW HOT TRUCKS',10],['HW J-IMPORTS',10],['HW TURBO',5],['HW ART CARS',10],['HW RACE DAY',10],["HOT WHEELS LET'S RACE",5],['HW RIDE-ONS',5],['HW METRO',10],['HW TRACK CHAMPS',5],['FAST FOODIE',5],['MUSCLE MANIA',5],['HW EXOTICS',10],['TOONED',5],['QUARTER MILE HEROES',5],["HW: THE '90S",10],['HW DIRT',10],['HW VANS',5],['HW ROLLING METAL',5],['THEN AND NOW',10],['RED EDITION',12],
-  ],
-  '2025': [
-    ['HW DREAM GARAGE',5],['BATMAN',5],['HW SCREEN TIME',10],['HW DESIGNED BY',5],['HW METRO',5],['HW EV',10],['HW ART CARS',10],['X-RAYCERS',10],['FACTORY FRESH',5],['HW FIRST RESPONSE',5],["HOT WHEELS LET'S RACE",5],['HW HOT TRUCKS',10],['HW RIDE-ONS',5],['ROD SQUAD',10],['HW J-IMPORTS',5],['HW CELEBRATION RACERS',10],["HW: '70S VS. '90S",10],['MUSTANG 60TH',5],['SAFARI MODE',5],['HW MODIFIED',5],['HW DIRT',10],['TRACK ACES',5],['HW RACE DAY',10],['COMPACT KINGS',10],['FAST FOODIE',5],['HW REVERSE RAKE',5],['HW EXOTICS',5],['EXPERIMOTORS',10],['THEN AND NOW',10],['MUSCLE MANIA',10],['HW MOTO',5],['HW WAGONS',5],['WILD WIDEBODY',5],['PEAK PURSUIT',10],['HW TRACK CHAMPS',5],['RED EDITION',12],
-  ],
-  '2026': [
-    ['HW DREAM GARAGE',5],['EXOTICARS',10],['BATMAN',5],['DROP TOPS',5],['X-RAYCERS',5],['HW EV',10],['NIGHTSPEED',10],['EXPERIMOTORS',5],["TRUCKIN' ALONG",5],['FACTORY FRESH',5],["LAYIN' LOW",5],['HW FAN DRIVEN',5],['FORMULA 1',5],['MATTEL',5],['HW STARTING GRID',10],['SCREEN TIME',10],['HW HEAVYWEIGHTS',5],['HW ALL DRIVERS WELCOME',5],['FERRARI',5],['HW MODS',5],['SWEET RIDES',5],['HW J-IMPORTS',10],['HW EURO',10],['THEN AND NOW',10],['DRAG RACERS',10],['COMPACT KINGS',10],['WAGONS',10],['ROD SQUAD',10],['TOONED',5],['HW DIRT',10],['TEAM WHEELS',5],["HOT WHEELS LET'S RACE",5],['COOL CLASSICS',10],['HW TORQUE',10],['RED EDITION',12],
-  ],
-}
-let hwSetReferenceSlots = {}
-let hwReferenceLoading = new Map()
-
-function hwReferenceCacheKey(year) {
-  return `${HW_SET_REFERENCE_CACHE_PREFIX}-${year}`
-}
-
-function readHwReferenceCache(year) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(hwReferenceCacheKey(year)) || 'null')
-    if (parsed && typeof parsed === 'object') hwSetReferenceSlots[year] = parsed
-  } catch {}
-}
-
-function hwReferenceTemplate(year, name) {
-  const y = String(year || '')
-  const n = String(name || '').trim().toUpperCase()
-  const base = (HW_MAINLINE_SET_REFERENCE[y] || []).find(([setName]) => setName === n)
-  if (!base) return null
-  return { year:y, name:n, total:Number(base[1]), slots:hwSetReferenceSlots?.[y]?.[n]?.slots || {} }
-}
-
-async function ensureHwReferenceYear(year, { force=false } = {}) {
-  const y = String(year || '')
-  if (!HW_MAINLINE_SET_REFERENCE[y]) return {}
-  if (!hwSetReferenceSlots[y]) readHwReferenceCache(y)
-  if (!force && hwSetReferenceSlots[y]) return hwSetReferenceSlots[y]
-  if (hwReferenceLoading.has(y)) return hwReferenceLoading.get(y)
-  if (!session?.user) return hwSetReferenceSlots[y] || {}
-  const promise = (async () => {
-    const { data, error } = await supabase.from('catalog_cars')
-      .select('series_collection,series_collection_number,model')
-      .ilike('diecast_brand','Hot Wheels')
-      .eq('model_year', y)
-      .not('series_collection','is',null)
-    if (error) throw error
-    const grouped = {}
-    for (const row of data || []) {
-      const name = String(row.series_collection || '').trim().toUpperCase()
-      const match = String(row.series_collection_number || '').match(/^(\d+)\/(\d+)$/)
-      if (!name || !match) continue
-      const pos = Number(match[1])
-      const total = Number(match[2])
-      if (!grouped[name]) grouped[name] = { total, slots:{} }
-      grouped[name].total = Math.max(grouped[name].total || 0, total)
-      const model = String(row.model || '').trim().toUpperCase()
-      if (!model) continue
-      const existing = grouped[name].slots[String(pos)] || ''
-      const models = new Set(existing ? existing.split(' / ') : [])
-      models.add(model)
-      grouped[name].slots[String(pos)] = [...models].filter(Boolean).join(' / ')
-    }
-    hwSetReferenceSlots[y] = grouped
-    try { localStorage.setItem(hwReferenceCacheKey(y), JSON.stringify(grouped)) } catch {}
-    return grouped
-  })().catch((error) => {
-    console.warn('Hot Wheels set reference refresh failed', error)
-    return hwSetReferenceSlots[y] || {}
-  }).finally(() => hwReferenceLoading.delete(y))
-  hwReferenceLoading.set(y, promise)
-  return promise
-}
-
-for (const year of Object.keys(HW_MAINLINE_SET_REFERENCE)) readHwReferenceCache(year)
-
 function refreshSetEditorOptions(selectedSetId = '', selectedPosition = '') {
   const select = $('set-select')
   const pos = $('set-position')
@@ -720,105 +746,32 @@ function refreshSetEditorOptions(selectedSetId = '', selectedPosition = '') {
 function createSetModal(defaultYear = '') {
   const old = $('set-modal-backdrop')
   if (old) old.remove()
-  const preferredYear = HW_MAINLINE_SET_REFERENCE[String(defaultYear)] ? String(defaultYear) : '2026'
   const overlay = document.createElement('div')
   overlay.id = 'set-modal-backdrop'
   overlay.className = 'set-modal-backdrop'
   overlay.innerHTML = `
-    <form class="set-modal set-modal-reference" id="set-create-form">
+    <form class="set-modal" id="set-create-form">
       <div class="set-modal-head"><strong>NEW SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
-      <div class="set-create-mode" role="group" aria-label="Set type">
-        <button type="button" class="active" id="set-mode-reference">HOT WHEELS 24–26</button>
-        <button type="button" id="set-mode-manual">MANUAL</button>
-      </div>
-      <div id="set-reference-fields" class="set-reference-fields">
-        <label>YEAR<select id="set-reference-year"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select></label>
-        <label>MINI SET<select id="set-reference-name"></select></label>
-        <div class="set-reference-summary" id="set-reference-summary"></div>
-        <div class="set-reference-preview" id="set-reference-preview" aria-live="polite"></div>
-      </div>
-      <div id="set-manual-fields" class="set-manual-fields hidden">
-        <label>YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${String(defaultYear || new Date().getFullYear())}"></label>
-        <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder=""></label>
-        <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
-      </div>
+      <label>YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${String(defaultYear || new Date().getFullYear())}"></label>
+      <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder=""></label>
+      <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
       <button class="set-modal-create" type="submit">CREATE SET</button>
     </form>`
   document.body.append(overlay)
   const close = () => overlay.remove()
   $('set-modal-close').addEventListener('click', close)
   overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
-
-  let mode = 'reference'
-  const referenceButton = $('set-mode-reference')
-  const manualButton = $('set-mode-manual')
-  const yearSelect = $('set-reference-year')
-  const nameSelect = $('set-reference-name')
-  yearSelect.value = preferredYear
-
-  const setMode = (nextMode) => {
-    mode = nextMode
-    const isReference = mode === 'reference'
-    referenceButton.classList.toggle('active', isReference)
-    manualButton.classList.toggle('active', !isReference)
-    $('set-reference-fields').classList.toggle('hidden', !isReference)
-    $('set-manual-fields').classList.toggle('hidden', isReference)
-    if (!isReference) setTimeout(() => $('set-new-name')?.focus(), 30)
-  }
-  referenceButton.addEventListener('click', () => setMode('reference'))
-  manualButton.addEventListener('click', () => setMode('manual'))
-
-  const renderReferencePreview = () => {
-    const template = hwReferenceTemplate(yearSelect.value, nameSelect.value)
-    if (!template) return
-    $('set-reference-summary').textContent = `${template.total} CARS · ${template.year}`
-    const preview = $('set-reference-preview')
-    preview.replaceChildren()
-    for (let i=1; i<=template.total; i+=1) {
-      const row = document.createElement('div')
-      row.className = 'set-reference-row'
-      const model = template.slots?.[String(i)] || 'SLOT NOT PUBLISHED YET'
-      row.innerHTML = `<span>${i}/${template.total}</span><strong>${escapeHtml(model)}</strong>`
-      preview.append(row)
-    }
-  }
-
-  const populateReferenceSets = async () => {
-    const year = yearSelect.value
-    const list = HW_MAINLINE_SET_REFERENCE[year] || []
-    const previous = nameSelect.value
-    nameSelect.replaceChildren()
-    for (const [name,total] of list) nameSelect.append(new Option(`${name} · ${total} CARS`, name))
-    if ([...nameSelect.options].some((option) => option.value === previous)) nameSelect.value = previous
-    renderReferencePreview()
-    await ensureHwReferenceYear(year)
-    if (document.body.contains(overlay) && yearSelect.value === year) renderReferencePreview()
-  }
-  yearSelect.addEventListener('change', populateReferenceSets)
-  nameSelect.addEventListener('change', renderReferencePreview)
-  populateReferenceSets()
-
   $('set-create-form').addEventListener('submit', (event) => {
     event.preventDefault()
-    let year, name, totalRaw
-    if (mode === 'reference') {
-      const template = hwReferenceTemplate(yearSelect.value, nameSelect.value)
-      if (!template) return
-      year = template.year
-      name = template.name
-      totalRaw = template.total
-    } else {
-      year = $('set-new-year').value.replace(/[^0-9]/g,'').slice(0,4)
-      name = $('set-new-name').value.trim().toUpperCase()
-      totalRaw = Math.floor(Number($('set-new-total').value))
-    }
+    const year = $('set-new-year').value.replace(/[^0-9]/g,'').slice(0,4)
+    const name = $('set-new-name').value.trim().toUpperCase()
+    const totalRaw = Math.floor(Number($('set-new-total').value))
     if (year.length !== 4 || !name || !Number.isFinite(totalRaw) || totalRaw < 1) return
     const total = Math.min(99, totalRaw)
     const state = readSetsState()
     const duplicate = state.sets.find((set) => set.year === year && set.name === name)
     if (duplicate) {
-      close()
-      openSetDetail(duplicate.id)
+      alert('That set already exists for this year.')
       return
     }
     const set = { id:crypto.randomUUID(), year, name, total }
@@ -831,8 +784,9 @@ function createSetModal(defaultYear = '') {
     }
     close()
     refreshSetEditorOptions(set.id, '')
-    openSetDetail(set.id)
+    renderSetsLanding()
   })
+  setTimeout(() => $('set-new-name')?.focus(), 50)
 }
 
 function editOpenSet() {
@@ -968,11 +922,6 @@ function openSetDetail(setId) {
   $('set-detail-title').textContent = set.name
   $('set-detail-meta').textContent = `${set.year} · ${set.total} CARS`
   renderSetCards(set, state)
-  if (HW_MAINLINE_SET_REFERENCE[set.year]) {
-    ensureHwReferenceYear(set.year).then(() => {
-      if (openSetId === set.id && $('set-detail') && !$('set-detail').classList.contains('hidden')) renderSetCards(set, readSetsState())
-    })
-  }
   window.scrollTo({ top:0, behavior:'auto' })
 }
 
@@ -1039,10 +988,8 @@ function renderSetCards(set, state = readSetsState()) {
         card.addEventListener('keydown', (event) => { if (event.key === 'Enter') showEditor(car, { returnSetId:set.id }) })
       } else {
         photo.classList.add('set-empty-photo')
-        const template = hwReferenceTemplate(set.year, set.name)
-        const expected = template?.slots?.[String(position)] || ''
-        title.textContent = expected || 'EMPTY SLOT'
-        sub.textContent = expected ? 'MISSING FROM YOUR GARAGE' : 'NOT IN THE GARAGE YET'
+        title.textContent = 'EMPTY SLOT'
+        sub.textContent = 'NOT IN THE GARAGE YET'
       }
       grid.append(card)
     }
@@ -1679,6 +1626,7 @@ function showEditor(car = null, options = {}) {
   $('more-details-section').classList.toggle('quick-collapsed', quickAddMode)
   $('more-details-toggle').textContent = 'More Details ▾'
   deleteButton.classList.toggle('hidden', !car)
+  $('bottom-save-button')?.classList.toggle('hidden', !car)
   $('share-button').classList.toggle('hidden', !car)
   fillEditor(car)
   if (quickAddMode && quickAddKeepBrand) {
@@ -2664,6 +2612,15 @@ function renderCars() {
       card.append(favoriteButton)
     }
 
+    if (assignmentForCar(car.id)) {
+      const setMarker = document.createElement('span')
+      setMarker.className = 'card-set-marker'
+      setMarker.setAttribute('aria-label', 'Added to a set')
+      setMarker.title = 'Added to a set'
+      setMarker.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="3.2" width="7.1" height="7.1" rx="1.7"/><rect x="13.7" y="3.2" width="7.1" height="7.1" rx="1.7"/><rect x="3.2" y="13.7" width="7.1" height="7.1" rx="1.7"/><rect x="13.7" y="13.7" width="7.1" height="7.1" rx="1.7"/></svg>'
+      card.append(setMarker)
+    }
+
     const qtyControls = card.querySelector('.card-quantity-control')
     const minusButton = document.createElement('button')
     minusButton.type = 'button'
@@ -2869,9 +2826,11 @@ async function saveCar() {
     return
   }
   const saveButton = $('save-button')
+  const bottomSaveButton = $('bottom-save-button')
   editorMessage.textContent = 'Saving…'
   saveButton.textContent = 'Saving…'
   saveButton.disabled = true
+  if (bottomSaveButton) { bottomSaveButton.textContent = 'Saving…'; bottomSaveButton.disabled = true }
   try {
     const pendingSetId = $('set-select')?.value || ''
     const pendingSetPosition = $('set-position')?.value || ''
@@ -2943,6 +2902,7 @@ async function saveCar() {
   } finally {
     saveButton.disabled = false
     saveButton.textContent = quickAddMode ? 'Save & Next' : 'Save'
+    if (bottomSaveButton) { bottomSaveButton.disabled = false; bottomSaveButton.textContent = 'Save' }
   }
 }
 
@@ -3464,7 +3424,7 @@ $('logout-btn').addEventListener('click', async () => {
   if (!window.confirm('Are you sure you want to sign out?')) return
   await supabase.auth.signOut()
 })
-$('collection-nav').addEventListener('click', showCollection)
+$('collection-nav').addEventListener('click', resetAndShowCollection)
 $('sets-nav')?.addEventListener('click', showSets)
 $('stats-nav').addEventListener('click', showStats)
 $('settings-row-button')?.addEventListener('click', showSettings)
@@ -3489,6 +3449,7 @@ $('add-button').addEventListener('click', () => showEditor())
 $('empty-add-button').addEventListener('click', () => showEditor())
 $('cancel-button').addEventListener('click', returnFromEditor)
 $('save-button').addEventListener('click', saveCar)
+$('bottom-save-button')?.addEventListener('click', saveCar)
 $('share-button').addEventListener('click', shareCurrentCar)
 $('quantity-minus').addEventListener('click', () => stepQuantity(-1))
 $('quantity-plus').addEventListener('click', () => stepQuantity(1))
@@ -3719,6 +3680,11 @@ backToTopButton?.addEventListener('click', () => window.scrollTo({ top: 0, behav
 window.addEventListener('scroll', syncBackToTopButton, { passive: true })
 syncBackToTopButton()
 
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') persistCurrentUiState() })
+window.addEventListener('pagehide', persistCurrentUiState)
+$('editor-form')?.addEventListener('input', () => { if (editorScreen?.classList.contains('active')) persistCurrentUiState() })
+$('editor-form')?.addEventListener('change', () => { if (editorScreen?.classList.contains('active')) persistCurrentUiState() })
+
 populateYearOptions()
 applySortPreference()
 
@@ -3728,14 +3694,13 @@ supabase.auth.onAuthStateChange((event, newSession) => {
   session = newSession
 
   if (session) {
-    showMain()
+    const sameUser = Boolean(previousUserId && previousUserId === nextUserId)
+    if (!sameUser || mainView.classList.contains('hidden')) showMain()
     setTimeout(() => loadProfileIcon(), 0)
     setTimeout(() => syncSetsFromCloud({ migrateLocal:true }).catch((error) => console.warn('Sets sync failed', error)), 0)
-    // Mobile browsers commonly emit TOKEN_REFRESHED after returning from another app.
-    // Keep the current collection mounted unless this is actually a different/new user.
-    if (loadedCarsUserId !== nextUserId && previousUserId !== nextUserId) {
-      setTimeout(() => loadCars(), 0)
-    }
+    // TOKEN_REFRESHED is common after returning from another iPhone app. Never
+    // reset the current Pocket 64 screen just because the auth token refreshed.
+    if (loadedCarsUserId !== nextUserId && !sameUser) setTimeout(() => loadCars(), 0)
   } else {
     cars = []
     filteredCars = []
@@ -3758,6 +3723,7 @@ if (session) {
   await loadProfileIcon()
   if (loadedCarsUserId !== session.user.id) await loadCars()
   await syncSetsFromCloud({ migrateLocal:true }).catch((error) => console.warn('Sets sync failed', error))
+  await restoreUiState()
 } else {
   showAuth()
 }
@@ -3765,7 +3731,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.8', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.9', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

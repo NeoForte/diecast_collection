@@ -5422,20 +5422,57 @@ body.sets-active main {
 }
 
 
-/* Pocket 64 v4.0.8 — streamlined Sets + one match UI only. */
+/* Pocket 64 v4.0.9 — streamlined Sets + one match UI only. */
 #sets-landing .sets-top-spacer { width:44px; height:44px; display:block; }
 #duplicate-warning.legacy-duplicate-disabled { display:none !important; }
 
 
-/* v4.0.8 Hot Wheels 2024-2026 mini-set reference */
-.set-modal-reference { max-height:min(88vh,760px); overflow:auto; }
-.set-create-mode { display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:4px; border:1px solid rgba(120,145,165,.22); border-radius:12px; background:#05070a; }
-.set-create-mode button { min-height:38px; border:0; border-radius:9px; background:transparent; color:#748697; font-size:10px; font-weight:900; letter-spacing:.08em; }
-.set-create-mode button.active { background:linear-gradient(145deg,#15375a,#07111d); color:#dff1ff; box-shadow:inset 0 0 0 1px rgba(65,161,255,.46); }
-.set-reference-fields,.set-manual-fields { display:grid; gap:12px; }
-.set-modal select { min-height:46px; width:100%; box-sizing:border-box; border:1px solid rgba(120,145,165,.35); border-radius:11px; background:#06080b; color:#fff; padding:0 36px 0 12px; font-size:15px; font-weight:800; text-transform:uppercase; }
-.set-reference-summary { margin-top:-4px; color:#68b7ff; font-size:10px; font-weight:900; letter-spacing:.10em; }
-.set-reference-preview { max-height:250px; overflow:auto; display:grid; gap:5px; padding:8px; border:1px solid rgba(120,145,165,.18); border-radius:11px; background:rgba(1,4,7,.56); }
-.set-reference-row { display:grid; grid-template-columns:42px minmax(0,1fr); align-items:start; gap:8px; min-height:28px; padding:5px 6px; border-radius:7px; background:rgba(255,255,255,.025); }
-.set-reference-row span { color:#5dafff; font-size:10px; font-weight:900; }
-.set-reference-row strong { color:#c9d3dc; font-size:10px; line-height:1.35; letter-spacing:.02em; }
+/* v4.0.9 quality-of-life polish */
+.editor-bottom-actions {
+  display:flex;
+  gap:10px;
+  align-items:stretch;
+  margin-top:12px;
+}
+.editor-bottom-actions > button {
+  flex:1 1 0;
+  min-width:0;
+  min-height:46px;
+}
+.editor-bottom-save {
+  border:1px solid rgba(105,185,255,.42);
+  border-radius:12px;
+  background:linear-gradient(180deg, rgba(28,75,112,.96), rgba(10,34,54,.98));
+  color:#eef8ff;
+  font-weight:850;
+  letter-spacing:.04em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 8px 20px rgba(0,0,0,.18);
+}
+.editor-bottom-save:active { transform:translateY(1px); }
+#collection-screen .square-car-card .card-set-marker {
+  position:absolute;
+  z-index:6;
+  right:8px;
+  bottom:42px;
+  width:20px;
+  height:20px;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  border-radius:6px;
+  border:1px solid rgba(142,205,255,.35);
+  background:rgba(5,15,24,.70);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), 0 2px 8px rgba(0,0,0,.40);
+  backdrop-filter:blur(4px);
+}
+#collection-screen .square-car-card .card-set-marker svg {
+  width:12px;
+  height:12px;
+  fill:none;
+  stroke:#9dd7ff;
+  stroke-width:1.65;
+}
+@media (max-width:430px) {
+  #collection-screen .square-car-card .card-set-marker { right:6px; bottom:38px; width:18px; height:18px; }
+  #collection-screen .square-car-card .card-set-marker svg { width:11px; height:11px; }
+}

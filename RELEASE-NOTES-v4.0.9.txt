@@ -1,0 +1,9 @@
+Pocket 64 v4.0.9
+
+- Keeps the current screen when iPhone suspends/resumes Pocket 64.
+- Restores Add/Edit Car drafts after a full PWA reload when possible.
+- Restores the open Set, Sets landing, Stats, Settings, or Collection state after reload.
+- Adds a second Save button beside Delete Car at the bottom of Edit Car.
+- Home now clears search, active filters, and resets sorting to Newest.
+- Adds a tiny Sets marker to the bottom-right of main cards only when that car belongs to a Set.
+- Preserves v4.0.7 Sets variant/progress behavior and existing photos.
