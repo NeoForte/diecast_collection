@@ -1,0 +1,4 @@
+Pocket 64 v4.1.7
+- reduced the initial photo-viewer image size substantially so the full card opens with comfortable black space around it
+- pinch zoom and pan remain available when a closer look is wanted
+- no other functional changes from v4.1.6
