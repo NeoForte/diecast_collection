@@ -1,13 +1,13 @@
-const CACHE = 'pocket64-v4.1.2'
+const CACHE = 'pocket64-v4.1.3'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=4.1.2',
-  './app.js?v=4.1.2',
-  './showcase-sync.js?v=4.1.2',
-  './manifest.webmanifest?v=4.1.2',
-  './jszip.min.js?v=4.1.2',
+  './styles.css?v=4.1.3',
+  './app.js?v=4.1.3',
+  './showcase-sync.js?v=4.1.3',
+  './manifest.webmanifest?v=4.1.3',
+  './jszip.min.js?v=4.1.3',
   './black-brick-wall.svg',
   './icon-192.png',
   './icon-512.png',
@@ -40,8 +40,8 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.endsWith('/showcase-sync.js')) {
     event.respondWith(
-      fetch('./showcase-sync.js?v=4.1.2', { cache:'no-store' })
-        .catch(() => caches.match('./showcase-sync.js?v=4.1.2'))
+      fetch('./showcase-sync.js?v=4.1.3', { cache:'no-store' })
+        .catch(() => caches.match('./showcase-sync.js?v=4.1.3'))
     )
     return
   }

@@ -1,0 +1,3 @@
+Pocket 64 v4.1.3
+- softened Sets landing-page set-name text to match the calmer progress-text tone
+- no functional changes from v4.1.2

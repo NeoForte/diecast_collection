@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.2'
+const APP_VERSION = '4.1.3'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -4042,7 +4042,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.2', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.3', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)
