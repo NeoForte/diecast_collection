@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.4'
+const APP_VERSION = '4.1.5'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -3965,6 +3965,11 @@ function useSquareCameraPhoto() {
 
 let photoViewerIndex = 0
 let photoViewerTouchX = null
+let photoViewerScale = 1
+let photoViewerTranslateX = 0
+let photoViewerTranslateY = 0
+let photoViewerPanStart = null
+let photoViewerPinchStart = null
 
 function editorPhotoItems() {
   const candidates = [
@@ -3975,6 +3980,37 @@ function editorPhotoItems() {
   return candidates.filter((item) => item.img?.src && !item.img.classList.contains('hidden'))
 }
 
+function photoViewerStageEl() { return $('photo-viewer-stage') }
+function photoViewerImageEl() { return $('photo-viewer-image') }
+function clampPhotoViewerScale(value) { return Math.max(1, Math.min(4, Number(value) || 1)) }
+function photoViewerDistance(a, b) { const dx = (a?.clientX || 0) - (b?.clientX || 0); const dy = (a?.clientY || 0) - (b?.clientY || 0); return Math.hypot(dx, dy) }
+function clampPhotoViewerPan() {
+  const stage = photoViewerStageEl()
+  const image = photoViewerImageEl()
+  if (!stage || !image) return
+  if (photoViewerScale <= 1) { photoViewerTranslateX = 0; photoViewerTranslateY = 0; return }
+  const baseWidth = image.clientWidth || 0
+  const baseHeight = image.clientHeight || 0
+  const maxX = Math.max(0, ((baseWidth * photoViewerScale) - stage.clientWidth) / 2)
+  const maxY = Math.max(0, ((baseHeight * photoViewerScale) - stage.clientHeight) / 2)
+  photoViewerTranslateX = Math.min(maxX, Math.max(-maxX, photoViewerTranslateX))
+  photoViewerTranslateY = Math.min(maxY, Math.max(-maxY, photoViewerTranslateY))
+}
+function applyPhotoViewerTransform() {
+  const image = photoViewerImageEl()
+  if (!image) return
+  photoViewerScale = clampPhotoViewerScale(photoViewerScale)
+  clampPhotoViewerPan()
+  image.style.transform = `translate(${photoViewerTranslateX}px, ${photoViewerTranslateY}px) scale(${photoViewerScale})`
+}
+function resetPhotoViewerTransform() {
+  photoViewerScale = 1
+  photoViewerTranslateX = 0
+  photoViewerTranslateY = 0
+  photoViewerPanStart = null
+  photoViewerPinchStart = null
+  requestAnimationFrame(applyPhotoViewerTransform)
+}
 function renderPhotoViewer() {
   const items = editorPhotoItems()
   const viewer = $('photo-viewer')
@@ -3989,6 +4025,7 @@ function renderPhotoViewer() {
   const single = items.length < 2
   $('photo-viewer-prev')?.classList.toggle('hidden', single)
   $('photo-viewer-next')?.classList.toggle('hidden', single)
+  resetPhotoViewerTransform()
 }
 
 function openPhotoViewer(slot = 1) {
@@ -4004,6 +4041,7 @@ function openPhotoViewer(slot = 1) {
 function closePhotoViewer() {
   $('photo-viewer')?.classList.add('hidden')
   document.body.classList.remove('photo-viewer-open')
+  resetPhotoViewerTransform()
 }
 
 function stepPhotoViewer(delta) {
@@ -4045,15 +4083,69 @@ $('photo3-remove')?.addEventListener('click', (event) => { event.stopPropagation
 $('photo-viewer-close')?.addEventListener('click', closePhotoViewer)
 $('photo-viewer-prev')?.addEventListener('click', () => stepPhotoViewer(-1))
 $('photo-viewer-next')?.addEventListener('click', () => stepPhotoViewer(1))
-$('photo-viewer-stage')?.addEventListener('click', (event) => { if (event.target === $('photo-viewer-stage')) closePhotoViewer() })
-$('photo-viewer-stage')?.addEventListener('touchstart', (event) => { photoViewerTouchX = event.changedTouches?.[0]?.clientX ?? null }, { passive:true })
+$('photo-viewer-stage')?.addEventListener('click', (event) => { if (event.target === $('photo-viewer-stage') && photoViewerScale === 1) closePhotoViewer() })
+$('photo-viewer-stage')?.addEventListener('touchstart', (event) => {
+  const touches = event.touches || []
+  if (touches.length >= 2) {
+    event.preventDefault()
+    photoViewerTouchX = null
+    photoViewerPanStart = null
+    photoViewerPinchStart = { distance:photoViewerDistance(touches[0], touches[1]), scale:photoViewerScale }
+    return
+  }
+  const touch = touches[0]
+  if (!touch) return
+  if (photoViewerScale > 1) {
+    event.preventDefault()
+    photoViewerTouchX = null
+    photoViewerPanStart = { clientX:touch.clientX, clientY:touch.clientY, startX:photoViewerTranslateX, startY:photoViewerTranslateY }
+    return
+  }
+  photoViewerPanStart = null
+  photoViewerPinchStart = null
+  photoViewerTouchX = touch.clientX
+}, { passive:false })
+$('photo-viewer-stage')?.addEventListener('touchmove', (event) => {
+  const touches = event.touches || []
+  if (touches.length >= 2 && photoViewerPinchStart) {
+    event.preventDefault()
+    const distance = photoViewerDistance(touches[0], touches[1])
+    if (photoViewerPinchStart.distance > 0) {
+      photoViewerScale = clampPhotoViewerScale(photoViewerPinchStart.scale * (distance / photoViewerPinchStart.distance))
+      applyPhotoViewerTransform()
+    }
+    return
+  }
+  if (touches.length === 1 && photoViewerScale > 1 && photoViewerPanStart) {
+    event.preventDefault()
+    photoViewerTranslateX = photoViewerPanStart.startX + (touches[0].clientX - photoViewerPanStart.clientX)
+    photoViewerTranslateY = photoViewerPanStart.startY + (touches[0].clientY - photoViewerPanStart.clientY)
+    applyPhotoViewerTransform()
+  }
+}, { passive:false })
 $('photo-viewer-stage')?.addEventListener('touchend', (event) => {
-  if (photoViewerTouchX == null) return
-  const endX = event.changedTouches?.[0]?.clientX ?? photoViewerTouchX
-  const delta = endX - photoViewerTouchX
+  if (photoViewerPinchStart && event.touches?.length >= 2) return
+  if (photoViewerPinchStart && event.touches?.length === 1 && photoViewerScale > 1) {
+    const touch = event.touches[0]
+    photoViewerPanStart = { clientX:touch.clientX, clientY:touch.clientY, startX:photoViewerTranslateX, startY:photoViewerTranslateY }
+    photoViewerPinchStart = null
+    return
+  }
+  if (photoViewerScale <= 1.02) {
+    photoViewerScale = 1
+    photoViewerTranslateX = 0
+    photoViewerTranslateY = 0
+    applyPhotoViewerTransform()
+  }
+  if (photoViewerScale === 1 && photoViewerTouchX != null) {
+    const endX = event.changedTouches?.[0]?.clientX ?? photoViewerTouchX
+    const delta = endX - photoViewerTouchX
+    if (Math.abs(delta) >= 42) stepPhotoViewer(delta < 0 ? 1 : -1)
+  }
   photoViewerTouchX = null
-  if (Math.abs(delta) >= 42) stepPhotoViewer(delta < 0 ? 1 : -1)
-}, { passive:true })
+  photoViewerPanStart = null
+  if (!event.touches?.length) photoViewerPinchStart = null
+}, { passive:false })
 document.addEventListener('keydown', (event) => {
   if ($('photo-viewer')?.classList.contains('hidden')) return
   if (event.key === 'Escape') closePhotoViewer()
@@ -4122,7 +4214,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.4', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.5', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

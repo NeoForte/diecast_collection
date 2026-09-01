@@ -1,0 +1,4 @@
+Pocket 64 v4.1.5
+- replaced the sets-year wheel badge art with a cleaner premium 5-spoke wheel look
+- improved the photo viewer so photos open fit-to-screen instead of feeling oversized
+- added pinch-zoom and pan behavior in the photo viewer while keeping left/right photo navigation
