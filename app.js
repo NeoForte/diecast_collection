@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.3'
+const APP_VERSION = '4.1.4'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -1090,7 +1090,7 @@ function renderSetsLanding() {
     const head = document.createElement('button')
     head.type = 'button'
     head.className = 'set-year-header'
-    head.innerHTML = `<span class="set-wheel" aria-hidden="true"><span>${String(year).slice(-2)}</span></span><span class="set-year-copy"><strong>${year}</strong><small>${rows.length} SET${rows.length === 1 ? '' : 'S'}</small></span><span class="set-year-chevron" aria-hidden="true">⌄</span>`
+    head.innerHTML = `<span class="set-wheel" data-year="${year}" aria-hidden="true"><span>${String(year).slice(-2)}</span></span><span class="set-year-copy"><strong>${year}</strong><small>${rows.length} SET${rows.length === 1 ? '' : 'S'}</small></span><span class="set-year-chevron" aria-hidden="true">⌄</span>`
     const list = document.createElement('div')
     list.className = 'set-year-list'
 
@@ -1887,11 +1887,15 @@ function fillEditor(car) {
   setPhotoPreview(null)
   setExtraPhotoPreview(2, null)
   setExtraPhotoPreview(3, null)
-  if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder)
+  if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder).then(() => syncMainPhotoControls(true))
   if (car?.photo2_path) loadPrivatePhoto(car.photo2_path, photo2Preview).then(() => markExtraPhotoPresent(2, true))
   if (car?.photo3_path) loadPrivatePhoto(car.photo3_path, photo3Preview).then(() => markExtraPhotoPresent(3, true))
   const setAssignment = car?.id ? assignmentForCar(car.id) : null
   refreshSetEditorOptions(setAssignment?.setId || '', setAssignment?.position || '')
+}
+
+function syncMainPhotoControls(present) {
+  $('photo1-replace')?.classList.toggle('hidden', !present)
 }
 
 function setPhotoPreview(src) {
@@ -1899,10 +1903,12 @@ function setPhotoPreview(src) {
     photoPreview.src = src
     photoPreview.classList.remove('hidden')
     photoPlaceholder.classList.add('hidden')
+    syncMainPhotoControls(true)
   } else {
     photoPreview.removeAttribute('src')
     photoPreview.classList.add('hidden')
     photoPlaceholder.classList.remove('hidden')
+    syncMainPhotoControls(false)
   }
 }
 
@@ -1910,9 +1916,11 @@ function markExtraPhotoPresent(slot, present) {
   const button = $(slot === 2 ? 'photo2-slot' : 'photo3-slot')
   const preview = slot === 2 ? photo2Preview : photo3Preview
   const remove = $(slot === 2 ? 'photo2-remove' : 'photo3-remove')
+  const replace = $(slot === 2 ? 'photo2-replace' : 'photo3-replace')
   button?.classList.toggle('has-photo', Boolean(present))
   preview?.classList.toggle('hidden', !present)
   remove?.classList.toggle('hidden', !present)
+  replace?.classList.toggle('hidden', !present)
 }
 
 function setExtraPhotoPreview(slot, src) {
@@ -3955,10 +3963,61 @@ function useSquareCameraPhoto() {
   closeSquareCamera()
 }
 
+let photoViewerIndex = 0
+let photoViewerTouchX = null
+
+function editorPhotoItems() {
+  const candidates = [
+    { slot:1, img:photoPreview, label:'MAIN' },
+    { slot:2, img:photo2Preview, label:'PHOTO 2' },
+    { slot:3, img:photo3Preview, label:'PHOTO 3' },
+  ]
+  return candidates.filter((item) => item.img?.src && !item.img.classList.contains('hidden'))
+}
+
+function renderPhotoViewer() {
+  const items = editorPhotoItems()
+  const viewer = $('photo-viewer')
+  const image = $('photo-viewer-image')
+  const count = $('photo-viewer-count')
+  if (!viewer || !image || !items.length) return closePhotoViewer()
+  photoViewerIndex = Math.max(0, Math.min(photoViewerIndex, items.length - 1))
+  const current = items[photoViewerIndex]
+  image.src = current.img.src
+  image.alt = `${current.label} car photo`
+  if (count) count.textContent = `${current.label} · ${photoViewerIndex + 1}/${items.length}`
+  const single = items.length < 2
+  $('photo-viewer-prev')?.classList.toggle('hidden', single)
+  $('photo-viewer-next')?.classList.toggle('hidden', single)
+}
+
+function openPhotoViewer(slot = 1) {
+  const items = editorPhotoItems()
+  const target = items.findIndex((item) => item.slot === Number(slot))
+  if (target < 0) return
+  photoViewerIndex = target
+  $('photo-viewer')?.classList.remove('hidden')
+  document.body.classList.add('photo-viewer-open')
+  renderPhotoViewer()
+}
+
+function closePhotoViewer() {
+  $('photo-viewer')?.classList.add('hidden')
+  document.body.classList.remove('photo-viewer-open')
+}
+
+function stepPhotoViewer(delta) {
+  const items = editorPhotoItems()
+  if (items.length < 2) return
+  photoViewerIndex = (photoViewerIndex + delta + items.length) % items.length
+  renderPhotoViewer()
+}
+
 $('choose-photo-button')?.addEventListener('click', () => photoInput?.click())
 photoPlaceholder?.addEventListener('click', () => photoInput?.click())
 photoPlaceholder?.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); photoInput?.click() } })
-photoPreview?.addEventListener('click', () => photoInput?.click())
+photoPreview?.addEventListener('click', () => openPhotoViewer(1))
+$('photo1-replace')?.addEventListener('click', (event) => { event.stopPropagation(); photoInput?.click() })
 $('square-camera-cancel')?.addEventListener('click', closeSquareCamera)
 $('square-camera-shutter')?.addEventListener('click', captureSquareCameraFrame)
 $('square-camera-retake')?.addEventListener('click', retakeSquareCameraPhoto)
@@ -3974,12 +4033,33 @@ photoInput.addEventListener('change', () => {
   photoInput.value = ''
 })
 
-$('photo2-slot')?.addEventListener('click', () => photo2Input?.click())
-$('photo3-slot')?.addEventListener('click', () => photo3Input?.click())
+$('photo2-slot')?.addEventListener('click', () => { if (photo2Preview?.src && !photo2Preview.classList.contains('hidden')) openPhotoViewer(2); else photo2Input?.click() })
+$('photo3-slot')?.addEventListener('click', () => { if (photo3Preview?.src && !photo3Preview.classList.contains('hidden')) openPhotoViewer(3); else photo3Input?.click() })
+$('photo2-replace')?.addEventListener('click', (event) => { event.stopPropagation(); photo2Input?.click() })
+$('photo3-replace')?.addEventListener('click', (event) => { event.stopPropagation(); photo3Input?.click() })
 photo2Input?.addEventListener('change', () => { useSelectedExtraPhotoFile(2, photo2Input.files?.[0]); photo2Input.value = '' })
 photo3Input?.addEventListener('change', () => { useSelectedExtraPhotoFile(3, photo3Input.files?.[0]); photo3Input.value = '' })
 $('photo2-remove')?.addEventListener('click', (event) => { event.stopPropagation(); clearExtraPhoto(2) })
 $('photo3-remove')?.addEventListener('click', (event) => { event.stopPropagation(); clearExtraPhoto(3) })
+
+$('photo-viewer-close')?.addEventListener('click', closePhotoViewer)
+$('photo-viewer-prev')?.addEventListener('click', () => stepPhotoViewer(-1))
+$('photo-viewer-next')?.addEventListener('click', () => stepPhotoViewer(1))
+$('photo-viewer-stage')?.addEventListener('click', (event) => { if (event.target === $('photo-viewer-stage')) closePhotoViewer() })
+$('photo-viewer-stage')?.addEventListener('touchstart', (event) => { photoViewerTouchX = event.changedTouches?.[0]?.clientX ?? null }, { passive:true })
+$('photo-viewer-stage')?.addEventListener('touchend', (event) => {
+  if (photoViewerTouchX == null) return
+  const endX = event.changedTouches?.[0]?.clientX ?? photoViewerTouchX
+  const delta = endX - photoViewerTouchX
+  photoViewerTouchX = null
+  if (Math.abs(delta) >= 42) stepPhotoViewer(delta < 0 ? 1 : -1)
+}, { passive:true })
+document.addEventListener('keydown', (event) => {
+  if ($('photo-viewer')?.classList.contains('hidden')) return
+  if (event.key === 'Escape') closePhotoViewer()
+  if (event.key === 'ArrowLeft') stepPhotoViewer(-1)
+  if (event.key === 'ArrowRight') stepPhotoViewer(1)
+})
 
 const backToTopButton = $('back-to-top-button')
 function syncBackToTopButton() {
@@ -4042,7 +4122,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.3', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.4', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

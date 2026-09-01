@@ -1,0 +1,6 @@
+Pocket 64 v4.1.4
+- tap an existing Photo 1/2/3 to open a large viewer
+- swipe or use arrows through available car photos
+- separate replace controls for all photo slots; Photos 2–3 keep separate remove controls
+- Photo 1 remains the Main photo
+- upgraded Sets year circles to premium wheel/tire badges with restrained year-specific caliper accents
