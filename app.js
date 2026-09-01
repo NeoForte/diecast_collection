@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.0'
+const APP_VERSION = '4.1.1'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -589,6 +589,28 @@ function showSettings() {
 
 const SETS_STORAGE_PREFIX = 'pocket64-sets-v1'
 const SETS_CLOUD_MIGRATION_PREFIX = 'pocket64-sets-cloud-migrated-v1'
+const HOT_WHEELS_SET_REFERENCE = {"2020":[{"name":"BAJA BLAZERS","total":10,"type":"mainline"},{"name":"BATMAN","total":5,"type":"mainline"},{"name":"EXPERIMOTORS","total":10,"type":"mainline"},{"name":"FACTORY FRESH","total":10,"type":"mainline"},{"name":"FAST FOODIE","total":5,"type":"mainline"},{"name":"HONDA","total":5,"type":"mainline"},{"name":"HW ART CARS","total":10,"type":"mainline"},{"name":"HW DREAM GARAGE","total":10,"type":"mainline"},{"name":"HW EXOTICS","total":10,"type":"mainline"},{"name":"HW FLAMES","total":10,"type":"mainline"},{"name":"HW HOT TRUCKS","total":10,"type":"mainline"},{"name":"HW METRO","total":10,"type":"mainline"},{"name":"HW RACE DAY","total":10,"type":"mainline"},{"name":"HW RACE TEAM","total":5,"type":"mainline"},{"name":"HW RESCUE","total":10,"type":"mainline"},{"name":"HW RIDE-ONS","total":5,"type":"mainline"},{"name":"HW ROADSTERS","total":5,"type":"mainline"},{"name":"HW SCREEN TIME","total":10,"type":"mainline"},{"name":"HW SPEED GRAPHICS","total":10,"type":"mainline"},{"name":"HW TURBO","total":5,"type":"mainline"},{"name":"MUSCLE MANIA","total":10,"type":"mainline"},{"name":"NIGHTBURNERZ","total":10,"type":"mainline"},{"name":"OLYMPIC GAMES TOKYO 2020","total":10,"type":"mainline"},{"name":"PORSCHE","total":5,"type":"mainline"},{"name":"RED EDITION","total":12,"type":"exclusive"},{"name":"ROD SQUAD","total":10,"type":"mainline"},{"name":"SPEED BLUR","total":5,"type":"mainline"},{"name":"STREET BEASTS","total":10,"type":"mainline"},{"name":"TOONED","total":10,"type":"mainline"},{"name":"TRACK STARS","total":5,"type":"mainline"},{"name":"X-RAYCERS","total":10,"type":"mainline"}],"2021":[{"name":"BAJA BLAZERS","total":10,"type":"mainline"},{"name":"BATMAN","total":5,"type":"mainline"},{"name":"DINO RIDERS","total":5,"type":"mainline"},{"name":"EXPERIMOTORS","total":10,"type":"mainline"},{"name":"FACTORY FRESH","total":10,"type":"mainline"},{"name":"FAST FOODIE","total":5,"type":"mainline"},{"name":"HOLIDAY RACERS","total":5,"type":"mainline"},{"name":"HW ART CARS","total":10,"type":"mainline"},{"name":"HW DAREDEVILS","total":5,"type":"mainline"},{"name":"HW DREAM GARAGE","total":5,"type":"mainline"},{"name":"HW DRIFT","total":5,"type":"mainline"},{"name":"HW EXOTICS","total":10,"type":"mainline"},{"name":"HW FLAMES","total":5,"type":"mainline"},{"name":"HW GETAWAYS","total":5,"type":"mainline"},{"name":"HW GLOW RACERS","total":5,"type":"mainline"},{"name":"HW GREEN SPEED","total":5,"type":"mainline"},{"name":"HW HOT TRUCKS","total":10,"type":"mainline"},{"name":"HW J-IMPORTS","total":10,"type":"mainline"},{"name":"HW METRO","total":10,"type":"mainline"},{"name":"HW RACE DAY","total":10,"type":"mainline"},{"name":"HW RACE TEAM","total":10,"type":"mainline"},{"name":"HW RESCUE","total":10,"type":"mainline"},{"name":"HW SCREEN TIME","total":10,"type":"mainline"},{"name":"HW SPACE","total":5,"type":"mainline"},{"name":"HW SPEED GRAPHICS","total":10,"type":"mainline"},{"name":"HW TORQUE","total":5,"type":"mainline"},{"name":"HW TURBO","total":5,"type":"mainline"},{"name":"MATTEL GAMES","total":5,"type":"mainline"},{"name":"MUSCLE MANIA","total":10,"type":"mainline"},{"name":"RED EDITION","total":12,"type":"exclusive"},{"name":"ROD SQUAD","total":5,"type":"mainline"},{"name":"STREET BEASTS","total":5,"type":"mainline"},{"name":"THEN AND NOW","total":10,"type":"mainline"},{"name":"TOONED","total":5,"type":"mainline"},{"name":"TRACK STARS","total":5,"type":"mainline"},{"name":"X-RAYCERS","total":5,"type":"mainline"}],"2022":[{"name":"BAJA BLAZERS","total":10,"type":"mainline"},{"name":"BATMAN","total":5,"type":"mainline"},{"name":"CHEVY BEL AIR","total":5,"type":"mainline"},{"name":"COMPACT KINGS","total":5,"type":"mainline"},{"name":"EXPERIMOTORS","total":10,"type":"mainline"},{"name":"FACTORY FRESH","total":10,"type":"mainline"},{"name":"FAST FOODIE","total":5,"type":"mainline"},{"name":"HW ART CARS","total":10,"type":"mainline"},{"name":"HW CONTOURED","total":5,"type":"mainline"},{"name":"HW DAREDEVILS","total":5,"type":"mainline"},{"name":"HW DRAG STRIP","total":10,"type":"mainline"},{"name":"HW DREAM GARAGE","total":5,"type":"mainline"},{"name":"HW DRIFT","total":5,"type":"mainline"},{"name":"HW EXOTICS","total":10,"type":"mainline"},{"name":"HW GREEN SPEED","total":5,"type":"mainline"},{"name":"HW HATCHBACKS","total":5,"type":"mainline"},{"name":"HW HOT TRUCKS","total":10,"type":"mainline"},{"name":"HW J-IMPORTS","total":10,"type":"mainline"},{"name":"HW METRO","total":10,"type":"mainline"},{"name":"HW RESCUE","total":10,"type":"mainline"},{"name":"HW RIDE-ONS","total":5,"type":"mainline"},{"name":"HW SCREEN TIME","total":10,"type":"mainline"},{"name":"HW SPEED TEAM","total":5,"type":"mainline"},{"name":"HW TURBO","total":10,"type":"mainline"},{"name":"HW WAGONS","total":5,"type":"mainline"},{"name":"MUD STUDS","total":5,"type":"mainline"},{"name":"MUSCLE MANIA","total":10,"type":"mainline"},{"name":"RALLY CHAMPS","total":5,"type":"mainline"},{"name":"RED EDITION","total":12,"type":"exclusive"},{"name":"RETRO RACERS","total":10,"type":"mainline"},{"name":"ROD SQUAD","total":5,"type":"mainline"},{"name":"SPOILER ALERT","total":5,"type":"mainline"},{"name":"STREET BEASTS","total":5,"type":"mainline"},{"name":"THEN AND NOW","total":10,"type":"mainline"},{"name":"TOONED","total":5,"type":"mainline"},{"name":"X-RAYCERS","total":5,"type":"mainline"}],"2023":[{"name":"BAJA BLAZERS","total":10,"type":"mainline"},{"name":"BATMAN","total":5,"type":"mainline"},{"name":"BRICK RIDES","total":5,"type":"mainline"},{"name":"EXPERIMOTORS","total":5,"type":"mainline"},{"name":"FACTORY FRESH","total":5,"type":"mainline"},{"name":"HW 55 RACE TEAM","total":5,"type":"mainline"},{"name":"HW ART CARS","total":10,"type":"mainline"},{"name":"HW DRAG STRIP","total":10,"type":"mainline"},{"name":"HW DREAM GARAGE","total":5,"type":"mainline"},{"name":"HW EXOTICS","total":10,"type":"mainline"},{"name":"HW GASSERS","total":5,"type":"mainline"},{"name":"HW GREEN SPEED","total":10,"type":"mainline"},{"name":"HW HAULERS","total":5,"type":"mainline"},{"name":"HW HOT TRUCKS","total":10,"type":"mainline"},{"name":"HW J-IMPORTS","total":10,"type":"mainline"},{"name":"HW METRO","total":10,"type":"mainline"},{"name":"HW MODIFIED","total":5,"type":"mainline"},{"name":"HW MOTO","total":5,"type":"mainline"},{"name":"HW RESCUE","total":10,"type":"mainline"},{"name":"HW ROADSTERS","total":10,"type":"mainline"},{"name":"HW SCREEN TIME","total":10,"type":"mainline"},{"name":"HW SLAMMED","total":5,"type":"mainline"},{"name":"HW SPORTS","total":5,"type":"mainline"},{"name":"HW TRACK CHAMPS","total":5,"type":"mainline"},{"name":"HW TURBO","total":5,"type":"mainline"},{"name":"HW WAGONS","total":5,"type":"mainline"},{"name":"HW: THE '80S","total":10,"type":"mainline"},{"name":"MUD STUDS","total":5,"type":"mainline"},{"name":"MUSCLE MANIA","total":10,"type":"mainline"},{"name":"RED EDITION","total":12,"type":"exclusive"},{"name":"RETRO RACERS","total":10,"type":"mainline"},{"name":"SKY SHOW","total":5,"type":"mainline"},{"name":"SURF'S UP","total":5,"type":"mainline"},{"name":"SWEET RIDES","total":5,"type":"mainline"},{"name":"THEN AND NOW","total":10,"type":"mainline"},{"name":"TOONED","total":5,"type":"mainline"}],"2024":[{"name":"BATMAN","total":5,"type":"mainline"},{"name":"COMPACT KINGS","total":5,"type":"mainline"},{"name":"EXPERIMOTORS","total":5,"type":"mainline"},{"name":"FACTORY FRESH","total":10,"type":"mainline"},{"name":"FAST FOODIE","total":5,"type":"mainline"},{"name":"HOT WHEELS LET'S RACE","total":5,"type":"mainline"},{"name":"HW ART CARS","total":10,"type":"mainline"},{"name":"HW CELEBRATION RACERS","total":10,"type":"mainline"},{"name":"HW DIRT","total":10,"type":"mainline"},{"name":"HW DREAM GARAGE","total":5,"type":"mainline"},{"name":"HW EXOTICS","total":10,"type":"mainline"},{"name":"HW FAST TRANSIT","total":5,"type":"mainline"},{"name":"HW FIRST RESPONSE","total":10,"type":"mainline"},{"name":"HW GREEN SPEED","total":10,"type":"mainline"},{"name":"HW HOT TRUCKS","total":10,"type":"mainline"},{"name":"HW J-IMPORTS","total":10,"type":"mainline"},{"name":"HW MEGA BITE","total":5,"type":"mainline"},{"name":"HW METRO","total":10,"type":"mainline"},{"name":"HW MODIFIED","total":10,"type":"mainline"},{"name":"HW RACE DAY","total":10,"type":"mainline"},{"name":"HW REVERSE RAKE","total":5,"type":"mainline"},{"name":"HW RIDE-ONS","total":5,"type":"mainline"},{"name":"HW ROADSTERS","total":5,"type":"mainline"},{"name":"HW ROLLING METAL","total":5,"type":"mainline"},{"name":"HW SCREEN TIME","total":10,"type":"mainline"},{"name":"HW TRACK CHAMPS","total":5,"type":"mainline"},{"name":"HW TURBO","total":5,"type":"mainline"},{"name":"HW VANS","total":5,"type":"mainline"},{"name":"HW XTREME SPORTS","total":5,"type":"mainline"},{"name":"HW: THE '90S","total":10,"type":"mainline"},{"name":"MUSCLE MANIA","total":5,"type":"mainline"},{"name":"QUARTER MILE HEROES","total":5,"type":"mainline"},{"name":"RED EDITION","total":12,"type":"exclusive"},{"name":"ROD SQUAD","total":5,"type":"mainline"},{"name":"THEN AND NOW","total":10,"type":"mainline"},{"name":"TOONED","total":5,"type":"mainline"}],"2025":[{"name":"BATMAN","total":5,"type":"mainline"},{"name":"COMPACT KINGS","total":10,"type":"mainline"},{"name":"EXPERIMOTORS","total":10,"type":"mainline"},{"name":"FACTORY FRESH","total":5,"type":"mainline"},{"name":"FAST FOODIE","total":5,"type":"mainline"},{"name":"HOT WHEELS LET'S RACE","total":5,"type":"mainline"},{"name":"HW ART CARS","total":10,"type":"mainline"},{"name":"HW CELEBRATION RACERS","total":10,"type":"mainline"},{"name":"HW DESIGNED BY","total":5,"type":"mainline"},{"name":"HW DIRT","total":10,"type":"mainline"},{"name":"HW DREAM GARAGE","total":5,"type":"mainline"},{"name":"HW EV","total":10,"type":"mainline"},{"name":"HW EXOTICS","total":5,"type":"mainline"},{"name":"HW FIRST RESPONSE","total":5,"type":"mainline"},{"name":"HW HOT TRUCKS","total":10,"type":"mainline"},{"name":"HW J-IMPORTS","total":5,"type":"mainline"},{"name":"HW METRO","total":5,"type":"mainline"},{"name":"HW MODIFIED","total":5,"type":"mainline"},{"name":"HW MOTO","total":5,"type":"mainline"},{"name":"HW RACE DAY","total":10,"type":"mainline"},{"name":"HW REVERSE RAKE","total":5,"type":"mainline"},{"name":"HW RIDE-ONS","total":5,"type":"mainline"},{"name":"HW SCREEN TIME","total":10,"type":"mainline"},{"name":"HW TRACK CHAMPS","total":5,"type":"mainline"},{"name":"HW WAGONS","total":5,"type":"mainline"},{"name":"HW: '70S VS. '90S","total":10,"type":"mainline"},{"name":"MUSCLE MANIA","total":10,"type":"mainline"},{"name":"MUSTANG 60TH","total":5,"type":"mainline"},{"name":"PEAK PURSUIT","total":10,"type":"mainline"},{"name":"RED EDITION","total":12,"type":"exclusive"},{"name":"ROD SQUAD","total":10,"type":"mainline"},{"name":"SAFARI MODE","total":5,"type":"mainline"},{"name":"THEN AND NOW","total":10,"type":"mainline"},{"name":"TRACK ACES","total":5,"type":"mainline"},{"name":"WILD WIDEBODY","total":5,"type":"mainline"},{"name":"X-RAYCERS","total":10,"type":"mainline"}],"2026":[{"name":"BATMAN","total":5,"type":"mainline"},{"name":"COMPACT KINGS","total":10,"type":"mainline"},{"name":"COOL CLASSICS","total":10,"type":"mainline"},{"name":"DRAG RACERS","total":10,"type":"mainline"},{"name":"DROP TOPS","total":5,"type":"mainline"},{"name":"EXOTICARS","total":10,"type":"mainline"},{"name":"EXPERIMOTORS","total":5,"type":"mainline"},{"name":"FACTORY FRESH","total":5,"type":"mainline"},{"name":"FERRARI","total":5,"type":"mainline"},{"name":"FORMULA 1","total":5,"type":"mainline"},{"name":"HOT WHEELS LET'S RACE","total":5,"type":"mainline"},{"name":"HW ALL DRIVERS WELCOME","total":5,"type":"mainline"},{"name":"HW DIRT","total":10,"type":"mainline"},{"name":"HW DREAM GARAGE","total":5,"type":"mainline"},{"name":"HW EURO","total":10,"type":"mainline"},{"name":"HW EV","total":10,"type":"mainline"},{"name":"HW FAN DRIVEN","total":5,"type":"mainline"},{"name":"HW HEAVYWEIGHTS","total":5,"type":"mainline"},{"name":"HW J-IMPORTS","total":10,"type":"mainline"},{"name":"HW MODS","total":5,"type":"mainline"},{"name":"HW STARTING GRID","total":10,"type":"mainline"},{"name":"HW TORQUE","total":10,"type":"mainline"},{"name":"LAYIN' LOW","total":5,"type":"mainline"},{"name":"MATTEL","total":5,"type":"mainline"},{"name":"NIGHTSPEED","total":10,"type":"mainline"},{"name":"RED EDITION","total":12,"type":"exclusive"},{"name":"ROD SQUAD","total":10,"type":"mainline"},{"name":"SCREEN TIME","total":10,"type":"mainline"},{"name":"SWEET RIDES","total":5,"type":"mainline"},{"name":"TEAM WHEELS","total":5,"type":"mainline"},{"name":"THEN AND NOW","total":10,"type":"mainline"},{"name":"TOONED","total":5,"type":"mainline"},{"name":"TRUCKIN' ALONG","total":5,"type":"mainline"},{"name":"WAGONS","total":10,"type":"mainline"},{"name":"X-RAYCERS","total":5,"type":"mainline"}]}
+
+function normalizeSetReferenceName(value) {
+  return String(value || '')
+    .toUpperCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+}
+
+function referenceSetsForYear(yearValue) {
+  const year = String(yearValue || '').replace(/[^0-9]/g, '').slice(0,4)
+  return HOT_WHEELS_SET_REFERENCE[year] || []
+}
+
+function referenceSetFor(yearValue, nameValue) {
+  const wanted = normalizeSetReferenceName(nameValue)
+  if (!wanted) return null
+  return referenceSetsForYear(yearValue).find((item) => normalizeSetReferenceName(item.name) === wanted) || null
+}
+
 let openSetId = null
 let editorReturnSetId = null
 
@@ -728,7 +750,7 @@ function matchingExistingSet(yearValue, seriesValue, numberValue, state = readSe
   const match = String(numberValue || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
   if (year.length !== 4 || !name || !match) return null
   const position = Math.max(1, Math.floor(Number(match[1]) || 0))
-  const set = state.sets.find((item) => item.year === year && item.name === name)
+  const set = state.sets.find((item) => item.year === year && normalizeSetReferenceName(item.name) === normalizeSetReferenceName(name))
   if (!set || !position || position > set.total) return null
   return { set, position }
 }
@@ -796,30 +818,111 @@ function refreshSetEditorOptions(selectedSetId = '', selectedPosition = '') {
 function createSetModal(defaultYear = '') {
   const old = $('set-modal-backdrop')
   if (old) old.remove()
+  const requestedYear = String(defaultYear || '').replace(/[^0-9]/g,'').slice(0,4)
+  const initialYear = requestedYear.length === 4 ? requestedYear : String(new Date().getFullYear())
   const overlay = document.createElement('div')
   overlay.id = 'set-modal-backdrop'
   overlay.className = 'set-modal-backdrop'
   overlay.innerHTML = `
     <form class="set-modal" id="set-create-form">
       <div class="set-modal-head"><strong>NEW SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
-      <label>YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${String(defaultYear || new Date().getFullYear())}"></label>
-      <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder=""></label>
-      <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
+      <label>RELEASE YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${initialYear}"></label>
+      <label id="set-reference-label" class="set-reference-label">
+        HOT WHEELS SET / SERIES
+        <select id="set-reference-select" aria-label="Hot Wheels set or series"></select>
+        <span id="set-reference-meta" class="set-reference-meta"></span>
+      </label>
+      <div id="set-manual-fields" class="set-manual-fields hidden">
+        <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder=""></label>
+        <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
+      </div>
       <button class="set-modal-create" type="submit">CREATE SET</button>
     </form>`
   document.body.append(overlay)
+
+  const yearInput = $('set-new-year')
+  const referenceLabel = $('set-reference-label')
+  const referenceSelect = $('set-reference-select')
+  const referenceMeta = $('set-reference-meta')
+  const manualFields = $('set-manual-fields')
+  const nameInput = $('set-new-name')
+  const totalInput = $('set-new-total')
+
+  const showManual = (show) => {
+    manualFields.classList.toggle('hidden', !show)
+    if (show) {
+      referenceMeta.textContent = 'MANUAL SET'
+      referenceMeta.classList.remove('exclusive')
+    }
+  }
+
+  const populateReference = () => {
+    const year = yearInput.value.replace(/[^0-9]/g,'').slice(0,4)
+    const entries = referenceSetsForYear(year)
+    referenceSelect.replaceChildren()
+    referenceMeta.textContent = ''
+    referenceMeta.classList.remove('exclusive')
+    if (!entries.length) {
+      referenceLabel.classList.add('hidden')
+      showManual(true)
+      return
+    }
+    referenceLabel.classList.remove('hidden')
+    referenceSelect.append(new Option(`CHOOSE FROM ${year}`, ''))
+    for (const item of entries) {
+      const suffix = item.type === 'exclusive' ? ' • EXCLUSIVE' : ''
+      referenceSelect.append(new Option(`${item.name} (${item.total})${suffix}`, item.name))
+    }
+    referenceSelect.append(new Option('MANUAL / OTHER', '__manual__'))
+    showManual(false)
+  }
+
+  const chooseReference = () => {
+    if (referenceSelect.value === '__manual__') {
+      showManual(true)
+      setTimeout(() => nameInput?.focus(), 20)
+      return
+    }
+    showManual(false)
+    const selected = referenceSetFor(yearInput.value, referenceSelect.value)
+    if (!selected) {
+      referenceMeta.textContent = ''
+      referenceMeta.classList.remove('exclusive')
+      return
+    }
+    referenceMeta.textContent = selected.type === 'exclusive' ? `TARGET EXCLUSIVE • ${selected.total} POSITIONS` : `${selected.total} POSITIONS`
+    referenceMeta.classList.toggle('exclusive', selected.type === 'exclusive')
+  }
+
+  populateReference()
   const close = () => overlay.remove()
   $('set-modal-close').addEventListener('click', close)
   overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+  yearInput.addEventListener('input', populateReference)
+  referenceSelect.addEventListener('change', chooseReference)
+
   $('set-create-form').addEventListener('submit', (event) => {
     event.preventDefault()
-    const year = $('set-new-year').value.replace(/[^0-9]/g,'').slice(0,4)
-    const name = $('set-new-name').value.trim().toUpperCase()
-    const totalRaw = Math.floor(Number($('set-new-total').value))
+    const year = yearInput.value.replace(/[^0-9]/g,'').slice(0,4)
+    const entries = referenceSetsForYear(year)
+    let name = ''
+    let totalRaw = 0
+
+    if (entries.length && referenceSelect.value && referenceSelect.value !== '__manual__') {
+      const selected = referenceSetFor(year, referenceSelect.value)
+      if (selected) {
+        name = selected.name
+        totalRaw = selected.total
+      }
+    } else {
+      name = nameInput.value.trim().toUpperCase()
+      totalRaw = Math.floor(Number(totalInput.value))
+    }
+
     if (year.length !== 4 || !name || !Number.isFinite(totalRaw) || totalRaw < 1) return
     const total = Math.min(99, totalRaw)
     const state = readSetsState()
-    const duplicate = state.sets.find((set) => set.year === year && set.name === name)
+    const duplicate = state.sets.find((set) => set.year === year && normalizeSetReferenceName(set.name) === normalizeSetReferenceName(name))
     if (duplicate) {
       alert('That set already exists for this year.')
       return
@@ -836,7 +939,10 @@ function createSetModal(defaultYear = '') {
     refreshSetEditorOptions(set.id, '')
     renderSetsLanding()
   })
-  setTimeout(() => $('set-new-name')?.focus(), 50)
+  setTimeout(() => {
+    if (!referenceLabel.classList.contains('hidden')) referenceSelect?.focus()
+    else nameInput?.focus()
+  }, 50)
 }
 
 function editOpenSet() {
@@ -854,7 +960,7 @@ function editOpenSet() {
   overlay.innerHTML = `
     <form class="set-modal" id="set-edit-form">
       <div class="set-modal-head"><strong>EDIT SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
-      <label>YEAR<input id="set-edit-year" type="text" inputmode="numeric" maxlength="4" value="${set.year}"></label>
+      <label>RELEASE YEAR<input id="set-edit-year" type="text" inputmode="numeric" maxlength="4" value="${set.year}"></label>
       <label>SET NAME<input id="set-edit-name" type="text" autocomplete="off" value="${escapeHtml(set.name)}"></label>
       <label>CARS IN SET<input id="set-edit-total" type="number" inputmode="numeric" min="1" max="99" value="${set.total}"></label>
       <button class="set-modal-create" type="submit">SAVE CHANGES</button>
@@ -1255,14 +1361,19 @@ function hideToyNumberSuggestions() {
 
 function autoSelectSetFromCatalog(car) {
   const year = String(car?.model_year || '').replace(/[^0-9]/g, '').slice(0, 4)
-  const name = String(car?.series_collection || '').trim().toUpperCase()
+  const rawName = String(car?.series_collection || '').trim().toUpperCase()
   const match = String(car?.series_collection_number || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
-  if (year.length !== 4 || !name || !match) return
+  if (year.length !== 4 || !rawName || !match) return
   const position = Math.max(1, Math.floor(Number(match[1]) || 0))
-  const total = Math.max(position, Math.min(99, Math.floor(Number(match[2]) || 0)))
-  if (!position || !total) return
+  const catalogTotal = Math.max(position, Math.min(99, Math.floor(Number(match[2]) || 0)))
+  if (!position || !catalogTotal) return
+
+  const reference = referenceSetFor(year, rawName)
+  const name = reference?.name || rawName
+  const total = reference && position <= reference.total ? reference.total : catalogTotal
+
   const state = readSetsState()
-  let set = state.sets.find((item) => item.year === year && item.name === name)
+  let set = state.sets.find((item) => item.year === year && normalizeSetReferenceName(item.name) === normalizeSetReferenceName(name))
   if (!set) {
     set = { id:crypto.randomUUID(), year, name, total }
     state.sets.push(set)
@@ -3573,7 +3684,7 @@ $('sets-add-button')?.addEventListener('click', () => createSetModal())
 $('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))
 $('set-edit-button')?.addEventListener('click', editOpenSet)
 $('set-delete-button')?.addEventListener('click', deleteOpenSet)
-$('set-select')?.addEventListener('change', () => { if ($('set-select').value === '__new__') { $('set-select').value = ''; createSetModal($('model-year')?.value || '') } else refreshSetEditorOptions($('set-select').value, '') })
+$('set-select')?.addEventListener('change', () => { if ($('set-select').value === '__new__') { $('set-select').value = ''; createSetModal($('model-year')?.value === 'Other' ? $('custom-year')?.value : ($('model-year')?.value || '')) } else refreshSetEditorOptions($('set-select').value, '') })
 for (const id of ['series','series-collection-number','model-year','custom-year']) {
   $(id)?.addEventListener('change', autoSelectExistingSetFromEditorFields)
   $(id)?.addEventListener('blur', autoSelectExistingSetFromEditorFields)
@@ -3882,7 +3993,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.0', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.1', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

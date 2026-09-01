@@ -5489,3 +5489,12 @@ body.sets-active main {
 .editor-bottom-actions #delete-button{flex:0 0 18%;min-width:72px;max-width:96px;background:rgba(75,20,20,.34);border-color:rgba(225,100,100,.35);color:#d9a4a4}
 .editor-bottom-actions #bottom-save-button{flex:1 1 auto}
 html[data-theme="light"] .extra-photo-slot{background:#eef1f4;color:#66717d;border-color:#cfd6dc}
+
+
+/* Pocket 64 v4.1.1 — curated Hot Wheels Set reference picker */
+.set-modal select { min-height:46px; width:100%; box-sizing:border-box; border:1px solid rgba(120,145,165,.35); border-radius:11px; background:linear-gradient(145deg,#0b1016,#05070a); color:#eaf3fb; padding:0 38px 0 12px; font-size:16px; font-weight:750; letter-spacing:.025em; }
+.set-reference-label { padding:9px 9px 8px; border:1px solid rgba(70,151,229,.23); border-radius:13px; background:linear-gradient(145deg,rgba(21,31,41,.68),rgba(6,9,13,.72)); }
+.set-reference-meta { min-height:14px; display:block; color:#6f9cc7; font-size:9px; font-weight:850; letter-spacing:.12em; }
+.set-reference-meta.exclusive { color:#82bfff; }
+.set-manual-fields { display:grid; gap:12px; }
+.set-manual-fields.hidden { display:none; }

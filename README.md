@@ -768,3 +768,9 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Adds optional Photo 2/3 editor slots with replace/remove support and full ZIP backup/restore.
 - Refines bottom Edit Car actions: narrow confirmed Delete, dominant Save.
 - Auto-selects existing Sets from year + Series/Collection + series number, and retro-links clear matches for existing cars.
+
+
+## v4.1.1
+- Added read-only Hot Wheels Set/Series reference metadata for 2020–2026 to streamline New Set creation.
+- Personal Sets remain opt-in; reference rows do not populate the Sets landing page until selected.
+- Release Year wording applied to Set creation/editing.

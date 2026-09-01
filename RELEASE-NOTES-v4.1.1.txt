@@ -1,0 +1,9 @@
+Pocket 64 v4.1.1
+
+- Adds verified Hot Wheels Set / Series reference data for release years 2020–2026.
+- New Set now offers an alphabetical year-specific reference picker with the correct slot total prefilled.
+- Reference data never creates personal Sets until the user chooses a Set (or intentionally selects a matching catalog car during Add Car).
+- Manual Set creation remains available for older years and anything not in the reference list.
+- Red Edition is identified as an exclusive series in the picker.
+- Catalog-driven Set creation uses the reference total when a verified year/name match exists.
+- Visible Set editor wording now uses Release Year.
