@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.7'
+const APP_VERSION = '4.1.8'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -4011,6 +4011,20 @@ function resetPhotoViewerTransform() {
   photoViewerPinchStart = null
   requestAnimationFrame(applyPhotoViewerTransform)
 }
+function fitPhotoViewerImage() {
+  const image = photoViewerImageEl()
+  if (!image || !image.naturalWidth || !image.naturalHeight) return
+  const maxW = Math.min(window.innerWidth * 0.64, 320)
+  const maxH = Math.min(window.innerHeight * 0.52, 520)
+  const ratio = Math.min(maxW / image.naturalWidth, maxH / image.naturalHeight, 1)
+  const width = Math.max(1, Math.round(image.naturalWidth * ratio))
+  const height = Math.max(1, Math.round(image.naturalHeight * ratio))
+  image.style.setProperty('width', `${width}px`, 'important')
+  image.style.setProperty('height', `${height}px`, 'important')
+  image.style.setProperty('max-width', `${maxW}px`, 'important')
+  image.style.setProperty('max-height', `${maxH}px`, 'important')
+  resetPhotoViewerTransform()
+}
 function renderPhotoViewer() {
   const items = editorPhotoItems()
   const viewer = $('photo-viewer')
@@ -4019,8 +4033,10 @@ function renderPhotoViewer() {
   if (!viewer || !image || !items.length) return closePhotoViewer()
   photoViewerIndex = Math.max(0, Math.min(photoViewerIndex, items.length - 1))
   const current = items[photoViewerIndex]
+  image.onload = fitPhotoViewerImage
   image.src = current.img.src
   image.alt = `${current.label} car photo`
+  if (image.complete) requestAnimationFrame(fitPhotoViewerImage)
   if (count) count.textContent = `${current.label} · ${photoViewerIndex + 1}/${items.length}`
   const single = items.length < 2
   $('photo-viewer-prev')?.classList.toggle('hidden', single)
@@ -4146,6 +4162,7 @@ $('photo-viewer-stage')?.addEventListener('touchend', (event) => {
   photoViewerPanStart = null
   if (!event.touches?.length) photoViewerPinchStart = null
 }, { passive:false })
+window.addEventListener('resize', () => { if (!$('photo-viewer')?.classList.contains('hidden')) fitPhotoViewerImage() })
 document.addEventListener('keydown', (event) => {
   if ($('photo-viewer')?.classList.contains('hidden')) return
   if (event.key === 'Escape') closePhotoViewer()
@@ -4214,7 +4231,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.7', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.8', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

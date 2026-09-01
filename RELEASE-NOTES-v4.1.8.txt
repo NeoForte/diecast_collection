@@ -1,0 +1,5 @@
+Pocket 64 v4.1.8
+- hard-caps the initial photo viewer size in JavaScript for reliable iPhone/Safari behavior
+- photos now open at roughly 64% of viewport width / 52% of viewport height maximum
+- pinch zoom and pan remain available after opening
+- no Sets/wheel changes
