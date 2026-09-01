@@ -3765,7 +3765,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.6', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.8', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)
