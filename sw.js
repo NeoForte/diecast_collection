@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.0.7'
+const CACHE = 'pocket64-v4.0.8'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',

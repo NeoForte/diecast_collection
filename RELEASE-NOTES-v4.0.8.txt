@@ -1,0 +1,10 @@
+Pocket 64 v4.0.8
+
+- Adds a built-in Hot Wheels mainline mini-set picker for 2024, 2025, and 2026.
+- New Set now defaults to HOT WHEELS 24-26, with Manual still available.
+- Pick a year and mini-set; Pocket 64 fills the official set size automatically.
+- The picker previews numbered slots and known model names from the Pocket 64 catalog.
+- Known reference slot names are cached locally; 2026 can keep filling in as the catalog is updated.
+- Empty slots inside referenced Sets show the expected model name when known.
+- Selecting a Set that already exists opens it instead of creating a duplicate.
+- 2026 reference includes all current mainline mini-set names, including Nightspeed, Drag Racers, HW Dirt, Team Wheels, Cool Classics, and HW Torque.

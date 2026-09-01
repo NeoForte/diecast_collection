@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.7'
+const APP_VERSION = '4.0.8'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -607,6 +607,86 @@ function sortSetRecords(list) {
   return [...list].sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }))
 }
 
+// Hot Wheels mainline mini-set reference. The list itself is bundled so the picker
+// works immediately; known slot/model names are refreshed from Pocket 64's catalog
+// and cached locally so 2026 can continue filling in without an app revision.
+const HW_SET_REFERENCE_CACHE_PREFIX = 'pocket64-hw-set-reference-v1'
+const HW_MAINLINE_SET_REFERENCE = {
+  '2024': [
+    ['HW DREAM GARAGE',5],['BATMAN',5],['HW SCREEN TIME',10],['HW FAST TRANSIT',5],['HW FIRST RESPONSE',10],['HW MODIFIED',10],['FACTORY FRESH',10],['HW GREEN SPEED',10],['HW XTREME SPORTS',5],['HW MEGA BITE',5],['HW ROADSTERS',5],['COMPACT KINGS',5],['EXPERIMOTORS',5],['ROD SQUAD',5],['HW CELEBRATION RACERS',10],['HW REVERSE RAKE',5],['HW HOT TRUCKS',10],['HW J-IMPORTS',10],['HW TURBO',5],['HW ART CARS',10],['HW RACE DAY',10],["HOT WHEELS LET'S RACE",5],['HW RIDE-ONS',5],['HW METRO',10],['HW TRACK CHAMPS',5],['FAST FOODIE',5],['MUSCLE MANIA',5],['HW EXOTICS',10],['TOONED',5],['QUARTER MILE HEROES',5],["HW: THE '90S",10],['HW DIRT',10],['HW VANS',5],['HW ROLLING METAL',5],['THEN AND NOW',10],['RED EDITION',12],
+  ],
+  '2025': [
+    ['HW DREAM GARAGE',5],['BATMAN',5],['HW SCREEN TIME',10],['HW DESIGNED BY',5],['HW METRO',5],['HW EV',10],['HW ART CARS',10],['X-RAYCERS',10],['FACTORY FRESH',5],['HW FIRST RESPONSE',5],["HOT WHEELS LET'S RACE",5],['HW HOT TRUCKS',10],['HW RIDE-ONS',5],['ROD SQUAD',10],['HW J-IMPORTS',5],['HW CELEBRATION RACERS',10],["HW: '70S VS. '90S",10],['MUSTANG 60TH',5],['SAFARI MODE',5],['HW MODIFIED',5],['HW DIRT',10],['TRACK ACES',5],['HW RACE DAY',10],['COMPACT KINGS',10],['FAST FOODIE',5],['HW REVERSE RAKE',5],['HW EXOTICS',5],['EXPERIMOTORS',10],['THEN AND NOW',10],['MUSCLE MANIA',10],['HW MOTO',5],['HW WAGONS',5],['WILD WIDEBODY',5],['PEAK PURSUIT',10],['HW TRACK CHAMPS',5],['RED EDITION',12],
+  ],
+  '2026': [
+    ['HW DREAM GARAGE',5],['EXOTICARS',10],['BATMAN',5],['DROP TOPS',5],['X-RAYCERS',5],['HW EV',10],['NIGHTSPEED',10],['EXPERIMOTORS',5],["TRUCKIN' ALONG",5],['FACTORY FRESH',5],["LAYIN' LOW",5],['HW FAN DRIVEN',5],['FORMULA 1',5],['MATTEL',5],['HW STARTING GRID',10],['SCREEN TIME',10],['HW HEAVYWEIGHTS',5],['HW ALL DRIVERS WELCOME',5],['FERRARI',5],['HW MODS',5],['SWEET RIDES',5],['HW J-IMPORTS',10],['HW EURO',10],['THEN AND NOW',10],['DRAG RACERS',10],['COMPACT KINGS',10],['WAGONS',10],['ROD SQUAD',10],['TOONED',5],['HW DIRT',10],['TEAM WHEELS',5],["HOT WHEELS LET'S RACE",5],['COOL CLASSICS',10],['HW TORQUE',10],['RED EDITION',12],
+  ],
+}
+let hwSetReferenceSlots = {}
+let hwReferenceLoading = new Map()
+
+function hwReferenceCacheKey(year) {
+  return `${HW_SET_REFERENCE_CACHE_PREFIX}-${year}`
+}
+
+function readHwReferenceCache(year) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(hwReferenceCacheKey(year)) || 'null')
+    if (parsed && typeof parsed === 'object') hwSetReferenceSlots[year] = parsed
+  } catch {}
+}
+
+function hwReferenceTemplate(year, name) {
+  const y = String(year || '')
+  const n = String(name || '').trim().toUpperCase()
+  const base = (HW_MAINLINE_SET_REFERENCE[y] || []).find(([setName]) => setName === n)
+  if (!base) return null
+  return { year:y, name:n, total:Number(base[1]), slots:hwSetReferenceSlots?.[y]?.[n]?.slots || {} }
+}
+
+async function ensureHwReferenceYear(year, { force=false } = {}) {
+  const y = String(year || '')
+  if (!HW_MAINLINE_SET_REFERENCE[y]) return {}
+  if (!hwSetReferenceSlots[y]) readHwReferenceCache(y)
+  if (!force && hwSetReferenceSlots[y]) return hwSetReferenceSlots[y]
+  if (hwReferenceLoading.has(y)) return hwReferenceLoading.get(y)
+  if (!session?.user) return hwSetReferenceSlots[y] || {}
+  const promise = (async () => {
+    const { data, error } = await supabase.from('catalog_cars')
+      .select('series_collection,series_collection_number,model')
+      .ilike('diecast_brand','Hot Wheels')
+      .eq('model_year', y)
+      .not('series_collection','is',null)
+    if (error) throw error
+    const grouped = {}
+    for (const row of data || []) {
+      const name = String(row.series_collection || '').trim().toUpperCase()
+      const match = String(row.series_collection_number || '').match(/^(\d+)\/(\d+)$/)
+      if (!name || !match) continue
+      const pos = Number(match[1])
+      const total = Number(match[2])
+      if (!grouped[name]) grouped[name] = { total, slots:{} }
+      grouped[name].total = Math.max(grouped[name].total || 0, total)
+      const model = String(row.model || '').trim().toUpperCase()
+      if (!model) continue
+      const existing = grouped[name].slots[String(pos)] || ''
+      const models = new Set(existing ? existing.split(' / ') : [])
+      models.add(model)
+      grouped[name].slots[String(pos)] = [...models].filter(Boolean).join(' / ')
+    }
+    hwSetReferenceSlots[y] = grouped
+    try { localStorage.setItem(hwReferenceCacheKey(y), JSON.stringify(grouped)) } catch {}
+    return grouped
+  })().catch((error) => {
+    console.warn('Hot Wheels set reference refresh failed', error)
+    return hwSetReferenceSlots[y] || {}
+  }).finally(() => hwReferenceLoading.delete(y))
+  hwReferenceLoading.set(y, promise)
+  return promise
+}
+
+for (const year of Object.keys(HW_MAINLINE_SET_REFERENCE)) readHwReferenceCache(year)
+
 function refreshSetEditorOptions(selectedSetId = '', selectedPosition = '') {
   const select = $('set-select')
   const pos = $('set-position')
@@ -640,32 +720,105 @@ function refreshSetEditorOptions(selectedSetId = '', selectedPosition = '') {
 function createSetModal(defaultYear = '') {
   const old = $('set-modal-backdrop')
   if (old) old.remove()
+  const preferredYear = HW_MAINLINE_SET_REFERENCE[String(defaultYear)] ? String(defaultYear) : '2026'
   const overlay = document.createElement('div')
   overlay.id = 'set-modal-backdrop'
   overlay.className = 'set-modal-backdrop'
   overlay.innerHTML = `
-    <form class="set-modal" id="set-create-form">
+    <form class="set-modal set-modal-reference" id="set-create-form">
       <div class="set-modal-head"><strong>NEW SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
-      <label>YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${String(defaultYear || new Date().getFullYear())}"></label>
-      <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder=""></label>
-      <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
+      <div class="set-create-mode" role="group" aria-label="Set type">
+        <button type="button" class="active" id="set-mode-reference">HOT WHEELS 24–26</button>
+        <button type="button" id="set-mode-manual">MANUAL</button>
+      </div>
+      <div id="set-reference-fields" class="set-reference-fields">
+        <label>YEAR<select id="set-reference-year"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select></label>
+        <label>MINI SET<select id="set-reference-name"></select></label>
+        <div class="set-reference-summary" id="set-reference-summary"></div>
+        <div class="set-reference-preview" id="set-reference-preview" aria-live="polite"></div>
+      </div>
+      <div id="set-manual-fields" class="set-manual-fields hidden">
+        <label>YEAR<input id="set-new-year" type="text" inputmode="numeric" maxlength="4" value="${String(defaultYear || new Date().getFullYear())}"></label>
+        <label>SET NAME<input id="set-new-name" type="text" autocomplete="off" placeholder=""></label>
+        <label>CARS IN SET<input id="set-new-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
+      </div>
       <button class="set-modal-create" type="submit">CREATE SET</button>
     </form>`
   document.body.append(overlay)
   const close = () => overlay.remove()
   $('set-modal-close').addEventListener('click', close)
   overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+
+  let mode = 'reference'
+  const referenceButton = $('set-mode-reference')
+  const manualButton = $('set-mode-manual')
+  const yearSelect = $('set-reference-year')
+  const nameSelect = $('set-reference-name')
+  yearSelect.value = preferredYear
+
+  const setMode = (nextMode) => {
+    mode = nextMode
+    const isReference = mode === 'reference'
+    referenceButton.classList.toggle('active', isReference)
+    manualButton.classList.toggle('active', !isReference)
+    $('set-reference-fields').classList.toggle('hidden', !isReference)
+    $('set-manual-fields').classList.toggle('hidden', isReference)
+    if (!isReference) setTimeout(() => $('set-new-name')?.focus(), 30)
+  }
+  referenceButton.addEventListener('click', () => setMode('reference'))
+  manualButton.addEventListener('click', () => setMode('manual'))
+
+  const renderReferencePreview = () => {
+    const template = hwReferenceTemplate(yearSelect.value, nameSelect.value)
+    if (!template) return
+    $('set-reference-summary').textContent = `${template.total} CARS · ${template.year}`
+    const preview = $('set-reference-preview')
+    preview.replaceChildren()
+    for (let i=1; i<=template.total; i+=1) {
+      const row = document.createElement('div')
+      row.className = 'set-reference-row'
+      const model = template.slots?.[String(i)] || 'SLOT NOT PUBLISHED YET'
+      row.innerHTML = `<span>${i}/${template.total}</span><strong>${escapeHtml(model)}</strong>`
+      preview.append(row)
+    }
+  }
+
+  const populateReferenceSets = async () => {
+    const year = yearSelect.value
+    const list = HW_MAINLINE_SET_REFERENCE[year] || []
+    const previous = nameSelect.value
+    nameSelect.replaceChildren()
+    for (const [name,total] of list) nameSelect.append(new Option(`${name} · ${total} CARS`, name))
+    if ([...nameSelect.options].some((option) => option.value === previous)) nameSelect.value = previous
+    renderReferencePreview()
+    await ensureHwReferenceYear(year)
+    if (document.body.contains(overlay) && yearSelect.value === year) renderReferencePreview()
+  }
+  yearSelect.addEventListener('change', populateReferenceSets)
+  nameSelect.addEventListener('change', renderReferencePreview)
+  populateReferenceSets()
+
   $('set-create-form').addEventListener('submit', (event) => {
     event.preventDefault()
-    const year = $('set-new-year').value.replace(/[^0-9]/g,'').slice(0,4)
-    const name = $('set-new-name').value.trim().toUpperCase()
-    const totalRaw = Math.floor(Number($('set-new-total').value))
+    let year, name, totalRaw
+    if (mode === 'reference') {
+      const template = hwReferenceTemplate(yearSelect.value, nameSelect.value)
+      if (!template) return
+      year = template.year
+      name = template.name
+      totalRaw = template.total
+    } else {
+      year = $('set-new-year').value.replace(/[^0-9]/g,'').slice(0,4)
+      name = $('set-new-name').value.trim().toUpperCase()
+      totalRaw = Math.floor(Number($('set-new-total').value))
+    }
     if (year.length !== 4 || !name || !Number.isFinite(totalRaw) || totalRaw < 1) return
     const total = Math.min(99, totalRaw)
     const state = readSetsState()
     const duplicate = state.sets.find((set) => set.year === year && set.name === name)
     if (duplicate) {
-      alert('That set already exists for this year.')
+      close()
+      openSetDetail(duplicate.id)
       return
     }
     const set = { id:crypto.randomUUID(), year, name, total }
@@ -678,9 +831,8 @@ function createSetModal(defaultYear = '') {
     }
     close()
     refreshSetEditorOptions(set.id, '')
-    renderSetsLanding()
+    openSetDetail(set.id)
   })
-  setTimeout(() => $('set-new-name')?.focus(), 50)
 }
 
 function editOpenSet() {
@@ -816,6 +968,11 @@ function openSetDetail(setId) {
   $('set-detail-title').textContent = set.name
   $('set-detail-meta').textContent = `${set.year} · ${set.total} CARS`
   renderSetCards(set, state)
+  if (HW_MAINLINE_SET_REFERENCE[set.year]) {
+    ensureHwReferenceYear(set.year).then(() => {
+      if (openSetId === set.id && $('set-detail') && !$('set-detail').classList.contains('hidden')) renderSetCards(set, readSetsState())
+    })
+  }
   window.scrollTo({ top:0, behavior:'auto' })
 }
 
@@ -882,8 +1039,10 @@ function renderSetCards(set, state = readSetsState()) {
         card.addEventListener('keydown', (event) => { if (event.key === 'Enter') showEditor(car, { returnSetId:set.id }) })
       } else {
         photo.classList.add('set-empty-photo')
-        title.textContent = 'EMPTY SLOT'
-        sub.textContent = 'NOT IN THE GARAGE YET'
+        const template = hwReferenceTemplate(set.year, set.name)
+        const expected = template?.slots?.[String(position)] || ''
+        title.textContent = expected || 'EMPTY SLOT'
+        sub.textContent = expected ? 'MISSING FROM YOUR GARAGE' : 'NOT IN THE GARAGE YET'
       }
       grid.append(card)
     }
