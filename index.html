@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=4.0.9" />
+  <link rel="manifest" href="manifest.webmanifest?v=4.1.0" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=4.0.9" />
+  <link rel="stylesheet" href="styles.css?v=4.1.0" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -221,7 +221,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 4.0.9</span>
+              <span class="version-badge">Version 4.1.0</span>
             </div>
           </div>
         </section>
@@ -252,12 +252,20 @@
           </div>
 
           <div class="photo-picker">
-            <img id="photo-preview" class="hidden" alt="Car preview" />
-            <div id="photo-placeholder" class="photo-placeholder-speed" role="button" tabindex="0" aria-label="Add photo">
+            <img id="photo-preview" class="hidden" alt="Main car photo preview" />
+            <div id="photo-placeholder" class="photo-placeholder-speed" role="button" tabindex="0" aria-label="Add main photo">
               <span class="photo-placeholder-icon" aria-hidden="true">📷</span>
               <span>ADD PHOTO</span>
             </div>
             <input id="photo-input" class="hidden" type="file" accept="image/*" />
+          </div>
+          <div class="extra-photo-row" aria-label="Optional extra photos">
+            <button id="photo2-slot" class="extra-photo-slot" type="button" aria-label="Add photo 2"><img id="photo2-preview" class="hidden" alt="Photo 2 preview"><span id="photo2-label">+ PHOTO 2</span></button>
+            <button id="photo3-slot" class="extra-photo-slot" type="button" aria-label="Add photo 3"><img id="photo3-preview" class="hidden" alt="Photo 3 preview"><span id="photo3-label">+ PHOTO 3</span></button>
+            <button id="photo2-remove" class="extra-photo-remove hidden" type="button" aria-label="Remove photo 2">×</button>
+            <button id="photo3-remove" class="extra-photo-remove hidden" type="button" aria-label="Remove photo 3">×</button>
+            <input id="photo2-input" class="hidden" type="file" accept="image/*" />
+            <input id="photo3-input" class="hidden" type="file" accept="image/*" />
           </div>
 
           <form id="car-form" class="car-form compact-editor-form">
@@ -420,8 +428,8 @@
           </form>
 
           <div class="editor-bottom-actions">
+            <button id="delete-button" class="danger hidden" type="button">Delete</button>
             <button id="bottom-save-button" class="editor-bottom-save hidden" type="button">Save</button>
-            <button id="delete-button" class="danger hidden" type="button">Delete Car</button>
           </div>
           <p id="editor-message" class="message"></p>
         </section>
@@ -431,8 +439,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=4.0.9"></script>
-  <script type="module" src="app.js?v=4.0.9"></script>
-  <script src="showcase-sync.js?v=4.0.9"></script>
+  <script src="jszip.min.js?v=4.1.0"></script>
+  <script type="module" src="app.js?v=4.1.0"></script>
+  <script src="showcase-sync.js?v=4.1.0"></script>
 </body>
 </html>

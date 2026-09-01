@@ -1,0 +1,22 @@
+Pocket 64 v4.1.0
+
+MULTI-PHOTO
+- Up to 3 photos per car.
+- Photo 1 remains the MAIN photo everywhere: Home cards, Sets, Showcase/share behavior.
+- Photos 2 and 3 are optional detail photos and load only inside the car editor/details screen.
+- Photos 2 and 3 can be added, replaced, or removed independently.
+- ZIP backup/restore now includes all stored car photos.
+
+EDIT CAR POLISH
+- Bottom action row now places a small DELETE action on the left and a dominant SAVE action on the right.
+- DELETE still requires confirmation.
+
+SETS AUTOMATION
+- Series/Collection + year + a value such as 3/10 automatically selects an already-created matching Set and position.
+- Existing unassigned cars are retro-linked when year, Series/Collection, and series number clearly match an existing Set.
+- Retro linking never creates a pile of Sets from old data.
+- Catalog suggestions keep the existing automatic Set creation/selection behavior.
+
+DATA
+- Optional photo2_path and photo3_path fields added to cars.
+- Main cards and Sets continue using photo_path only to keep routine image traffic lean.

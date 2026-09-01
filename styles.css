@@ -5422,12 +5422,12 @@ body.sets-active main {
 }
 
 
-/* Pocket 64 v4.0.9 — streamlined Sets + one match UI only. */
+/* Pocket 64 v4.1.0 — streamlined Sets + one match UI only. */
 #sets-landing .sets-top-spacer { width:44px; height:44px; display:block; }
 #duplicate-warning.legacy-duplicate-disabled { display:none !important; }
 
 
-/* v4.0.9 quality-of-life polish */
+/* v4.1.0 quality-of-life polish */
 .editor-bottom-actions {
   display:flex;
   gap:10px;
@@ -5476,3 +5476,16 @@ body.sets-active main {
   #collection-screen .square-car-card .card-set-marker { right:6px; bottom:38px; width:18px; height:18px; }
   #collection-screen .square-car-card .card-set-marker svg { width:11px; height:11px; }
 }
+
+/* Pocket 64 v4.1.0 — 3-photo editor + safer bottom actions */
+.extra-photo-row{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:-6px 0 16px}
+.extra-photo-slot{position:relative;min-height:74px;border:1px solid rgba(130,150,168,.28);border-radius:12px;background:linear-gradient(180deg,rgba(27,31,36,.96),rgba(12,15,18,.98));color:#9aa6b2;font-weight:800;letter-spacing:.04em;overflow:hidden;padding:8px}
+.extra-photo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0d0d0d}
+.extra-photo-slot span{position:relative;z-index:1}
+.extra-photo-slot.has-photo span{display:none}
+.extra-photo-remove{position:absolute;z-index:5;top:5px;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(5,8,10,.78);color:#d9e2ea;font-size:18px;line-height:1;padding:0}
+#photo2-remove{left:calc(50% - 31px)}
+#photo3-remove{right:5px}
+.editor-bottom-actions #delete-button{flex:0 0 18%;min-width:72px;max-width:96px;background:rgba(75,20,20,.34);border-color:rgba(225,100,100,.35);color:#d9a4a4}
+.editor-bottom-actions #bottom-save-button{flex:1 1 auto}
+html[data-theme="light"] .extra-photo-slot{background:#eef1f4;color:#66717d;border-color:#cfd6dc}

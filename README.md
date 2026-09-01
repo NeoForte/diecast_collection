@@ -757,8 +757,14 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Preserves v3.3.2 collection layout, photo quality, caching, and special-category behavior.
 
 
-## v4.0.9
+## v4.1.0
 - Removed the JDM Stats tile.
 - Restored normal pinch zoom.
 - Polished occupied Set-card photo rendering.
 - Fixed Delete Set menu layering above Set cards.
+
+## v4.1.0
+- Adds up to three photos per car; Photo 1 remains the Main photo used by Home and Sets.
+- Adds optional Photo 2/3 editor slots with replace/remove support and full ZIP backup/restore.
+- Refines bottom Edit Car actions: narrow confirmed Delete, dominant Save.
+- Auto-selects existing Sets from year + Series/Collection + series number, and retro-links clear matches for existing cars.

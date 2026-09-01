@@ -1,4 +1,4 @@
-Pocket 64 v4.0.9
+Pocket 64 v4.1.0
 
 - Keeps the current screen when iPhone suspends/resumes Pocket 64.
 - Restores Add/Edit Car drafts after a full PWA reload when possible.

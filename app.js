@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.0.9'
+const APP_VERSION = '4.1.0'
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -227,6 +227,10 @@ const deleteButton = $('delete-button')
 const photoPreview = $('photo-preview')
 const photoPlaceholder = $('photo-placeholder')
 const photoInput = $('photo-input')
+const photo2Input = $('photo2-input')
+const photo3Input = $('photo3-input')
+const photo2Preview = $('photo2-preview')
+const photo3Preview = $('photo3-preview')
 const duplicateWarning = $('duplicate-warning')
 const modelSuggestions = $('model-suggestions')
 const toyNumberSuggestions = $('toy-number-suggestions')
@@ -258,7 +262,13 @@ let cars = []
 let filteredCars = []
 let editingCar = null
 let selectedPhotoFile = null
+let selectedPhotoFile2 = null
+let selectedPhotoFile3 = null
+let removePhoto2 = false
+let removePhoto3 = false
 let previewObjectUrl = null
+let previewObjectUrl2 = null
+let previewObjectUrl3 = null
 let quickAddMode = false
 let quickAddKeepBrand = ''
 let quickAddKeepCustomBrand = ''
@@ -673,6 +683,9 @@ async function syncSetsFromCloud({ migrateLocal=true } = {}) {
   }
   try { localStorage.setItem(migrationKey, '1') } catch {}
   writeSetsState(remote)
+  if (cars.length) {
+    try { await retroLinkExistingCarsToSets(); remote = readSetsState() } catch (error) { console.warn('Retro Set linking failed', error) }
+  }
   refreshSetEditorOptions()
   if (collectionScreen?.classList.contains('active')) renderCars()
   if (setsScreen?.classList.contains('active')) {
@@ -707,6 +720,43 @@ function assignmentForCar(carId, state = readSetsState()) {
   const assignment = state.assignments?.[String(carId)]
   if (!assignment || !setForId(String(assignment.setId || ''), state)) return null
   return { setId:String(assignment.setId), position:Math.max(1, Math.floor(Number(assignment.position) || 1)) }
+}
+
+function matchingExistingSet(yearValue, seriesValue, numberValue, state = readSetsState()) {
+  const year = String(yearValue || '').replace(/[^0-9]/g, '').slice(0,4)
+  const name = String(seriesValue || '').trim().toUpperCase()
+  const match = String(numberValue || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
+  if (year.length !== 4 || !name || !match) return null
+  const position = Math.max(1, Math.floor(Number(match[1]) || 0))
+  const set = state.sets.find((item) => item.year === year && item.name === name)
+  if (!set || !position || position > set.total) return null
+  return { set, position }
+}
+
+function autoSelectExistingSetFromEditorFields() {
+  const yearValue = $('model-year')?.value === 'Other' ? $('custom-year')?.value : $('model-year')?.value
+  const match = matchingExistingSet(yearValue, $('series')?.value, $('series-collection-number')?.value)
+  if (match) refreshSetEditorOptions(match.set.id, String(match.position))
+}
+
+async function retroLinkExistingCarsToSets() {
+  if (!session?.user || !cars.length) return 0
+  const state = readSetsState()
+  const additions = []
+  for (const car of cars) {
+    if (state.assignments[String(car.id)]) continue
+    const match = matchingExistingSet(car.model_year, car.series_collection, car.series_collection_number, state)
+    if (!match) continue
+    state.assignments[String(car.id)] = { setId:match.set.id, position:match.position }
+    additions.push({ user_id:session.user.id, set_id:match.set.id, car_id:car.id, position:match.position, updated_at:new Date().toISOString() })
+  }
+  if (!additions.length) return 0
+  const { error } = await supabase.from('pocket64_set_assignments').upsert(additions, { onConflict:'user_id,car_id' })
+  if (error) throw error
+  writeSetsState(state)
+  if (collectionScreen?.classList.contains('active')) renderCars()
+  if (setsScreen?.classList.contains('active')) { if (openSetId) openSetDetail(openSetId); else renderSetsLanding() }
+  return additions.length
 }
 
 function sortSetRecords(list) {
@@ -1615,11 +1665,19 @@ function showEditor(car = null, options = {}) {
   editingCar = car
   quickAddMode = !car && Boolean(options.quick)
   selectedPhotoFile = null
+  selectedPhotoFile2 = null
+  selectedPhotoFile3 = null
+  removePhoto2 = false
+  removePhoto3 = false
   editorMessage.textContent = ''
   duplicateDismissedModel = ''
   hideDuplicateWarning()
   if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
+  if (previewObjectUrl2) URL.revokeObjectURL(previewObjectUrl2)
+  if (previewObjectUrl3) URL.revokeObjectURL(previewObjectUrl3)
   previewObjectUrl = null
+  previewObjectUrl2 = null
+  previewObjectUrl3 = null
   $('editor-title').textContent = car ? 'Car Details' : (quickAddMode ? 'Quick Add' : 'Add Car')
   $('save-button').textContent = quickAddMode ? 'Save & Next' : 'Save'
   $('more-details-toggle').classList.toggle('hidden', !quickAddMode)
@@ -1664,8 +1722,14 @@ function fillEditor(car) {
   syncExclusiveFields()
   $('notes').value = car?.notes ?? ''
   photoInput.value = ''
+  if (photo2Input) photo2Input.value = ''
+  if (photo3Input) photo3Input.value = ''
   setPhotoPreview(null)
+  setExtraPhotoPreview(2, null)
+  setExtraPhotoPreview(3, null)
   if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder)
+  if (car?.photo2_path) loadPrivatePhoto(car.photo2_path, photo2Preview).then(() => markExtraPhotoPresent(2, true))
+  if (car?.photo3_path) loadPrivatePhoto(car.photo3_path, photo3Preview).then(() => markExtraPhotoPresent(3, true))
   const setAssignment = car?.id ? assignmentForCar(car.id) : null
   refreshSetEditorOptions(setAssignment?.setId || '', setAssignment?.position || '')
 }
@@ -1680,6 +1744,43 @@ function setPhotoPreview(src) {
     photoPreview.classList.add('hidden')
     photoPlaceholder.classList.remove('hidden')
   }
+}
+
+function markExtraPhotoPresent(slot, present) {
+  const button = $(slot === 2 ? 'photo2-slot' : 'photo3-slot')
+  const preview = slot === 2 ? photo2Preview : photo3Preview
+  const remove = $(slot === 2 ? 'photo2-remove' : 'photo3-remove')
+  button?.classList.toggle('has-photo', Boolean(present))
+  preview?.classList.toggle('hidden', !present)
+  remove?.classList.toggle('hidden', !present)
+}
+
+function setExtraPhotoPreview(slot, src) {
+  const preview = slot === 2 ? photo2Preview : photo3Preview
+  if (!preview) return
+  if (src) { preview.src = src; markExtraPhotoPresent(slot, true) }
+  else { preview.removeAttribute('src'); markExtraPhotoPresent(slot, false) }
+}
+
+function useSelectedExtraPhotoFile(slot, file) {
+  if (!file) return
+  if (slot === 2) {
+    selectedPhotoFile2 = file; removePhoto2 = false
+    if (previewObjectUrl2) URL.revokeObjectURL(previewObjectUrl2)
+    previewObjectUrl2 = URL.createObjectURL(file)
+    setExtraPhotoPreview(2, previewObjectUrl2)
+  } else {
+    selectedPhotoFile3 = file; removePhoto3 = false
+    if (previewObjectUrl3) URL.revokeObjectURL(previewObjectUrl3)
+    previewObjectUrl3 = URL.createObjectURL(file)
+    setExtraPhotoPreview(3, previewObjectUrl3)
+  }
+}
+
+function clearExtraPhoto(slot) {
+  if (slot === 2) { selectedPhotoFile2 = null; removePhoto2 = true }
+  else { selectedPhotoFile3 = null; removePhoto3 = true }
+  setExtraPhotoPreview(slot, null)
 }
 
 
@@ -1837,12 +1938,13 @@ async function loadCars() {
     cars = data ?? []
     loadedCarsUserId = userId
     await prunePrivatePhotoCache([
-      ...cars.map((car) => car.photo_path).filter(Boolean),
+      ...cars.flatMap((car) => [car.photo_path, car.photo2_path, car.photo3_path]).filter(Boolean),
       `${userId}/profile-icon.jpg`,
     ])
     applySearch()
     renderStats()
     updateBackupReminder()
+    if (readSetsState().sets.length) { try { await retroLinkExistingCarsToSets() } catch (error) { console.warn('Retro Set linking failed', error) } }
   })().finally(() => { carsLoadPromise = null })
 
   return carsLoadPromise
@@ -1932,19 +2034,24 @@ async function exportBackup() {
     const zip = new JSZip()
     const photoMap = {}
     const integrityFiles = {}
-    const photoCars = cars.filter((car) => Boolean(car.photo_path))
+    const photoEntries = cars.flatMap((car) => [
+      { car, slot:1, path:car.photo_path },
+      { car, slot:2, path:car.photo2_path },
+      { car, slot:3, path:car.photo3_path },
+    ].filter((item) => Boolean(item.path)))
     const failures = []
 
-    for (let index = 0; index < photoCars.length; index += 1) {
-      const car = photoCars[index]
-      button.textContent = `Photos ${index + 1}/${photoCars.length}`
-      const data = await getPrivatePhotoBlob(car.photo_path)
+    for (let index = 0; index < photoEntries.length; index += 1) {
+      const { car, slot, path } = photoEntries[index]
+      button.textContent = `Photos ${index + 1}/${photoEntries.length}`
+      const data = await getPrivatePhotoBlob(path)
       if (!data) {
-        failures.push(car.model || car.id)
+        failures.push(`${car.model || car.id} photo ${slot}`)
         continue
       }
-      const photoFile = `photos/${car.id}.jpg`
-      photoMap[car.id] = photoFile
+      const photoFile = `photos/${car.id}-${slot}.jpg`
+      if (!photoMap[car.id] || typeof photoMap[car.id] !== 'object') photoMap[car.id] = {}
+      photoMap[car.id][String(slot)] = photoFile
       zip.file(photoFile, data, { binary: true, compression: 'STORE' })
       integrityFiles[photoFile] = await sha256Hex(data)
     }
@@ -1958,11 +2065,11 @@ async function exportBackup() {
     const backupCars = cars.map((car) => ({ ...car }))
     const backup = {
       format: 'ajs-garage-backup',
-      version: 6,
+      version: 7,
       exported_at: new Date().toISOString(),
       source_user_id: session.user.id,
       car_count: backupCars.length,
-      photo_count: Object.keys(photoMap).length,
+      photo_count: photoEntries.length,
       note: 'Self-contained Pocket 64 backup. backup.json contains all current collection fields and the photos folder contains the actual private car images.',
       photos: photoMap,
       sets: readSetsState(),
@@ -1987,7 +2094,7 @@ async function exportBackup() {
       `Photos: ${backup.photo_count}`,
       '',
       'Keep this ZIP file somewhere safe. Do not unzip or modify it before restoring in Pocket 64.',
-      'The backup contains collection data, Sets, and the actual stored car images.',
+      'The backup contains collection data, Sets, and the actual stored car images, including optional photos 2 and 3.',
       'Pocket 64 v3.3.0+ also validates SHA-256 checksums before a restore changes your collection.',
     ].join('\n'))
 
@@ -2038,10 +2145,18 @@ function restoreDate(value, fallback) {
   return Number.isFinite(Date.parse(text)) ? text : fallback
 }
 
-function safePhotoBackupPath(value, originalId) {
+function safePhotoBackupPath(value, originalId, slot = 1) {
   const path = String(value ?? '')
-  const expected = `photos/${originalId}.jpg`
-  return path === expected ? path : null
+  const expected = `photos/${originalId}-${slot}.jpg`
+  const legacyExpected = slot === 1 ? `photos/${originalId}.jpg` : ''
+  return path === expected || (legacyExpected && path === legacyExpected) ? path : null
+}
+
+function backupPhotoPathForSlot(photoMap, originalId, slot) {
+  const entry = photoMap?.[originalId]
+  if (entry && typeof entry === 'object') return safePhotoBackupPath(entry[String(slot)], originalId, slot)
+  if (slot === 1) return safePhotoBackupPath(entry, originalId, 1)
+  return null
 }
 
 async function readBackupFile(file) {
@@ -2066,12 +2181,14 @@ function validateBackup(backup) {
   if (backup.cars.length > 20000) throw new Error('This backup contains an unexpected number of records and was not restored.')
 }
 
-function restorePayload(car, targetId, initialPhotoPath) {
+function restorePayload(car, targetId, initialPhotoPath, initialPhoto2Path = null, initialPhoto3Path = null) {
   const now = new Date().toISOString()
   const payload = {
     id: targetId,
     user_id: session.user.id,
     photo_path: initialPhotoPath,
+    photo2_path: initialPhoto2Path,
+    photo3_path: initialPhoto3Path,
     diecast_brand: nullableText(car.diecast_brand),
     make: nullableText(car.make),
     model: nullableText(car.model),
@@ -2189,7 +2306,7 @@ async function restoreBackupFile(file) {
     const sourceUserId = nullableText(backup.source_user_id) || nullableText(backup.cars.find((car) => car?.user_id)?.user_id)
     const sameAccount = Boolean(sourceUserId && sourceUserId === session.user.id)
     const photoMap = backup.photos && typeof backup.photos === 'object' ? backup.photos : {}
-    const embeddedPhotoCount = zip ? Object.keys(photoMap).length : 0
+    const embeddedPhotoCount = zip ? Object.values(photoMap).reduce((count, value) => count + (value && typeof value === 'object' ? Object.values(value).filter(Boolean).length : (value ? 1 : 0)), 0) : 0
     const exportedDate = Number.isFinite(Date.parse(backup.exported_at || ''))
       ? new Date(backup.exported_at).toLocaleString()
       : 'unknown date'
@@ -2219,16 +2336,22 @@ async function restoreBackupFile(file) {
       const originalId = String(car?.id || '')
       const targetId = sameAccount && isUuid(originalId) ? originalId : crypto.randomUUID()
       const existing = existingById.get(targetId)
-      const embeddedPath = zip ? safePhotoBackupPath(photoMap[originalId], originalId) : null
-      const legacyPath = !embeddedPath && sameAccount && String(car?.photo_path || '').startsWith(`${session.user.id}/`)
-        ? String(car.photo_path)
-        : null
+      const embeddedPaths = {
+        1: zip ? backupPhotoPathForSlot(photoMap, originalId, 1) : null,
+        2: zip ? backupPhotoPathForSlot(photoMap, originalId, 2) : null,
+        3: zip ? backupPhotoPathForSlot(photoMap, originalId, 3) : null,
+      }
+      const legacyPath = !embeddedPaths[1] && sameAccount && String(car?.photo_path || '').startsWith(`${session.user.id}/`) ? String(car.photo_path) : null
+      const legacyPath2 = !embeddedPaths[2] && sameAccount && String(car?.photo2_path || '').startsWith(`${session.user.id}/`) ? String(car.photo2_path) : null
+      const legacyPath3 = !embeddedPaths[3] && sameAccount && String(car?.photo3_path || '').startsWith(`${session.user.id}/`) ? String(car.photo3_path) : null
       const initialPhotoPath = existing?.photo_path || legacyPath || null
+      const initialPhoto2Path = existing?.photo2_path || legacyPath2 || null
+      const initialPhoto3Path = existing?.photo3_path || legacyPath3 || null
       return {
         originalId,
         targetId,
-        embeddedPath,
-        payload: restorePayload(car || {}, targetId, initialPhotoPath),
+        embeddedPaths,
+        payload: restorePayload(car || {}, targetId, initialPhotoPath, initialPhoto2Path, initialPhoto3Path),
       }
     })
 
@@ -2239,31 +2362,26 @@ async function restoreBackupFile(file) {
     await verifyAndRepairRestoreFlags(rows)
     restoreButton.textContent = `Cars ${restoreItems.length}/${restoreItems.length}`
 
-    const photoItems = restoreItems.filter((item) => item.embeddedPath)
+    const photoItems = restoreItems.flatMap((item) => [1,2,3].filter((slot) => item.embeddedPaths?.[slot]).map((slot) => ({ item, slot, embeddedPath:item.embeddedPaths[slot] })))
     const photoFailures = []
     for (let index = 0; index < photoItems.length; index += 1) {
-      const item = photoItems[index]
+      const { item, slot, embeddedPath } = photoItems[index]
       restoreButton.textContent = `Photos ${index + 1}/${photoItems.length}`
       try {
-        const entry = zip.file(item.embeddedPath)
-        if (!entry) throw new Error(`Missing ${item.embeddedPath}`)
+        const entry = zip.file(embeddedPath)
+        if (!entry) throw new Error(`Missing ${embeddedPath}`)
         const blob = await entry.async('blob')
-        const targetPath = `${session.user.id}/${item.targetId}.jpg`
-        const { error: uploadError } = await supabase.storage.from('car-photos').upload(targetPath, blob, {
-          contentType: 'image/jpeg',
-          upsert: true,
-        })
+        const suffix = slot === 1 ? '' : `-p${slot}`
+        const targetPath = `${session.user.id}/${item.targetId}${suffix}.jpg`
+        const { error: uploadError } = await supabase.storage.from('car-photos').upload(targetPath, blob, { contentType: 'image/jpeg', upsert: true })
         if (uploadError) throw uploadError
         await invalidatePrivatePhotoCache(targetPath)
-        const { error: updateError } = await supabase
-          .from('cars')
-          .update({ photo_path: targetPath, updated_at: item.payload.updated_at })
-          .eq('id', item.targetId)
-          .eq('user_id', session.user.id)
+        const column = slot === 1 ? 'photo_path' : `photo${slot}_path`
+        const { error: updateError } = await supabase.from('cars').update({ [column]: targetPath, updated_at: item.payload.updated_at }).eq('id', item.targetId).eq('user_id', session.user.id)
         if (updateError) throw updateError
       } catch (error) {
         console.error(error)
-        photoFailures.push(item.originalId || item.targetId)
+        photoFailures.push(`${item.originalId || item.targetId} photo ${slot}`)
       }
     }
 
@@ -2738,10 +2856,11 @@ async function compressImage(file, maxDimension = 1600, quality = 0.86) {
   })
 }
 
-async function uploadPhoto(carId, file) {
+async function uploadPhoto(carId, file, slot = 1) {
   const compressed = await compressImage(file)
   const version = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const path = `${session.user.id}/${carId}-${version}.jpg`
+  const suffix = slot === 1 ? '' : `-p${slot}`
+  const path = `${session.user.id}/${carId}${suffix}-${version}.jpg`
   const { error } = await supabase.storage.from('car-photos').upload(path, compressed, {
     contentType: 'image/jpeg',
     upsert: false,
@@ -2832,6 +2951,7 @@ async function saveCar() {
   saveButton.disabled = true
   if (bottomSaveButton) { bottomSaveButton.textContent = 'Saving…'; bottomSaveButton.disabled = true }
   try {
+    autoSelectExistingSetFromEditorFields()
     const pendingSetId = $('set-select')?.value || ''
     const pendingSetPosition = $('set-position')?.value || ''
     const payload = editorPayload()
@@ -2885,6 +3005,26 @@ async function saveCar() {
       }
     }
 
+    const extraPhotoOps = [
+      { slot:2, file:selectedPhotoFile2, remove:removePhoto2, column:'photo2_path', old:editingCar?.photo2_path || car?.photo2_path || '' },
+      { slot:3, file:selectedPhotoFile3, remove:removePhoto3, column:'photo3_path', old:editingCar?.photo3_path || car?.photo3_path || '' },
+    ]
+    for (const op of extraPhotoOps) {
+      if (!op.file && !op.remove) continue
+      let nextPath = null
+      if (op.file) nextPath = await uploadPhoto(car.id, op.file, op.slot)
+      const { error:updateExtraError } = await supabase.from('cars').update({ [op.column]:nextPath, updated_at:new Date().toISOString() }).eq('id', car.id).eq('user_id', session.user.id)
+      if (updateExtraError) {
+        if (nextPath) await supabase.storage.from('car-photos').remove([nextPath])
+        throw updateExtraError
+      }
+      if (op.old && op.old !== nextPath) {
+        const { error:removeOldExtraError } = await supabase.storage.from('car-photos').remove([op.old])
+        if (removeOldExtraError) console.warn(`Old photo ${op.slot} could not be deleted`, removeOldExtraError)
+        await invalidatePrivatePhotoCache(op.old)
+      }
+    }
+
     saveSetAssignment(car.id, pendingSetId, pendingSetPosition)
     await loadCars()
     if (quickAddMode && !editingCar) {
@@ -2930,11 +3070,11 @@ async function clearCollection() {
   try {
     const { data: rows, error: readError } = await supabase
       .from('cars')
-      .select('id, photo_path')
+      .select('id, photo_path, photo2_path, photo3_path')
       .eq('user_id', session.user.id)
     if (readError) throw readError
 
-    const photoPaths = [...new Set((rows || []).map((row) => row.photo_path).filter(Boolean))]
+    const photoPaths = [...new Set((rows || []).flatMap((row) => [row.photo_path, row.photo2_path, row.photo3_path]).filter(Boolean))]
 
     // Database truth first. If Storage cleanup later fails, the result is only an
     // orphaned image — never a surviving car whose photo was already destroyed.
@@ -2979,7 +3119,7 @@ async function deleteCar() {
   if (!editingCar || !confirm('Are you sure you want to delete this vehicle?')) return
   editorMessage.textContent = 'Deleting…'
   try {
-    const photoPath = editingCar.photo_path || ''
+    const photoPaths = [editingCar.photo_path, editingCar.photo2_path, editingCar.photo3_path].filter(Boolean)
     const { error } = await supabase
       .from('cars')
       .delete()
@@ -2988,10 +3128,10 @@ async function deleteCar() {
     if (error) throw error
     removeSetAssignment(editingCar.id)
 
-    if (photoPath) {
-      const { error: storageError } = await supabase.storage.from('car-photos').remove([photoPath])
-      if (storageError) console.warn('Car was deleted, but its old photo could not be removed from Storage.', storageError)
-      await invalidatePrivatePhotoCache(photoPath)
+    if (photoPaths.length) {
+      const { error: storageError } = await supabase.storage.from('car-photos').remove(photoPaths)
+      if (storageError) console.warn('Car was deleted, but one or more old photos could not be removed from Storage.', storageError)
+      await Promise.all(photoPaths.map((path) => invalidatePrivatePhotoCache(path)))
     }
     await loadCars()
     returnFromEditor()
@@ -3434,6 +3574,10 @@ $('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classL
 $('set-edit-button')?.addEventListener('click', editOpenSet)
 $('set-delete-button')?.addEventListener('click', deleteOpenSet)
 $('set-select')?.addEventListener('change', () => { if ($('set-select').value === '__new__') { $('set-select').value = ''; createSetModal($('model-year')?.value || '') } else refreshSetEditorOptions($('set-select').value, '') })
+for (const id of ['series','series-collection-number','model-year','custom-year']) {
+  $(id)?.addEventListener('change', autoSelectExistingSetFromEditorFields)
+  $(id)?.addEventListener('blur', autoSelectExistingSetFromEditorFields)
+}
 $('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
 $('settings-profile-icon').addEventListener('click', () => $('profile-icon-input').click())
 $('diagnostics-button')?.addEventListener('click', () => {
@@ -3670,6 +3814,13 @@ photoInput.addEventListener('change', () => {
   photoInput.value = ''
 })
 
+$('photo2-slot')?.addEventListener('click', () => photo2Input?.click())
+$('photo3-slot')?.addEventListener('click', () => photo3Input?.click())
+photo2Input?.addEventListener('change', () => { useSelectedExtraPhotoFile(2, photo2Input.files?.[0]); photo2Input.value = '' })
+photo3Input?.addEventListener('change', () => { useSelectedExtraPhotoFile(3, photo3Input.files?.[0]); photo3Input.value = '' })
+$('photo2-remove')?.addEventListener('click', (event) => { event.stopPropagation(); clearExtraPhoto(2) })
+$('photo3-remove')?.addEventListener('click', (event) => { event.stopPropagation(); clearExtraPhoto(3) })
+
 const backToTopButton = $('back-to-top-button')
 function syncBackToTopButton() {
   if (!backToTopButton) return
@@ -3731,7 +3882,7 @@ if (session) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.0.9', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.0', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)
