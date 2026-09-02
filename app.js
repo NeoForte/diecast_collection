@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.2.0'
+const APP_VERSION = '4.2.1'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -4090,7 +4090,7 @@ for (const id of ['series','series-collection-number','model-year','custom-year'
   $(id)?.addEventListener('blur', autoSelectExistingSetFromEditorFields)
 }
 $('appearance-select').addEventListener('change', (event) => applyAppearance(event.currentTarget.value, true))
-$('settings-profile-icon').addEventListener('click', () => $('profile-icon-input').click())
+$('settings-profile-icon')?.addEventListener('click', () => $('profile-icon-input').click())
 $('diagnostics-button')?.addEventListener('click', () => {
   const entries = readDiagnostics()
   if (!entries.length) {
@@ -4120,7 +4120,7 @@ $('restore-input').addEventListener('change', () => {
   const file = $('restore-input').files?.[0]
   if (file) restoreBackupFile(file)
 })
-$('refresh-button').addEventListener('click', loadCars)
+$('refresh-button')?.addEventListener('click', loadCars)
 $('clear-collection-button')?.addEventListener('click', clearCollection)
 $('active-filter-pill').addEventListener('click', clearBrandFilter)
 $('profile-icon-button').addEventListener('click', () => $('profile-icon-input').click())
@@ -4600,7 +4600,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.2.0', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.2.1', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

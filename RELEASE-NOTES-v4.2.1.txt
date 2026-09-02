@@ -1,0 +1,12 @@
+Pocket 64 v4.2.1
+
+Settings cleanup
+- Moved Sign Out to the top.
+- Kept Appearance directly below account controls.
+- Kept Backup & Restore together and easy to reach.
+- Kept Share Pocket 64 and Contact / Help near the bottom.
+- About remains last.
+- Removed Profile Icon, Refresh, Diagnostics, and Clear Collection from the Settings UI.
+- Bumped app/service-worker cache version to 4.2.1.
+
+No database, auth, domain, DNS, or Resend changes in this release.
