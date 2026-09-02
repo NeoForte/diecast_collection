@@ -3564,13 +3564,18 @@ $('auth-form').addEventListener('submit', async (e) => {
     showAuth('verify-panel')
     return
   }
-  if (!error && data?.user?.user_metadata?.p64_email_verified === false) {
+  // Supabase Auth is the source of truth for email verification. Do not block a
+  // confirmed user because an older Pocket 64 metadata flag is stale.
+  if (!error && data?.user && !data.user.email_confirmed_at) {
     await supabase.auth.signOut()
     rememberVerificationEmail(email)
     $('verify-message').classList.remove('success')
     $('verify-message').textContent = 'Your email still needs to be verified.'
     showAuth('verify-panel')
     return
+  }
+  if (!error && data?.user?.email_confirmed_at && data.user.user_metadata?.p64_email_verified !== true) {
+    await supabase.auth.updateUser({ data:{ ...(data.user.user_metadata || {}), p64_email_verified:true } }).catch?.(() => {})
   }
   authMessage.textContent = error ? error.message : ''
 })
