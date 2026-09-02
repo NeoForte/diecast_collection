@@ -30,7 +30,7 @@
 
   function updateVisibleVersion() {
     document.querySelectorAll('.version-badge').forEach((badge) => {
-      if (badge.textContent !== 'Version 4.1.8') badge.textContent = 'Version 4.1.8'
+      if (badge.textContent !== 'Version 4.1.9') badge.textContent = 'Version 4.1.9'
     })
   }
 

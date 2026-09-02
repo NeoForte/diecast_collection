@@ -1,0 +1,28 @@
+Pocket 64 v4.1.9
+
+ACCOUNT / SIGN-IN
+- Replaces the old one-tap signup with a dedicated Create Account screen.
+- Adds email, password, Confirm Password, minimum password validation, and a verification-email holding screen.
+- Adds resend-verification support and a proper Back to Sign In path.
+- Adds Forgot Password with Supabase password-reset flow.
+- Existing users continue to sign in normally.
+
+SUPPORT
+- Adds NEED HELP? to Sign In, Create Account, Verification, and Password Reset screens.
+- Adds a compact support form with issue category, reply email, message, app version, browser/device info, and last visible auth error.
+- Support tickets are stored privately in Supabase through the new pocket64-support Edge Function.
+- Adds honeypot + server-side daily rate limits to reduce spam.
+- Adds direct-email fallback to pocket64app@gmail.com if the support function is unavailable.
+
+ADD / EDIT CAR CLEANUP
+- Removes the Options heading.
+- Adds Favorite to the editor with a blue-star treatment beside Custom; Showcase remains available without adding clutter.
+- Add Car now uses one full-width Save button at the bottom and never shows Delete.
+- Edit Car now uses equal 50/50 Delete and Save buttons with matching height.
+- Pulls Notes upward and trims dead space in the lower form.
+- Leaves the rest of the form layout unchanged.
+
+SETS
+- Existing manually created Sets are now preselected when Release Year + Series / Collection match.
+- Series / Collection Number fills Set Position when a valid position is available.
+- Catalog selection can no longer auto-create or auto-expand a Set. Set creation remains manual.

@@ -10,7 +10,17 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.8'
+const APP_VERSION = '4.1.9'
+const SUPPORT_EMAIL = 'pocket64app@gmail.com'
+const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
+const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
+const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
+const startupUrl = new URL(window.location.href)
+const isVerificationReturn = startupUrl.searchParams.get('verified') === '1'
+const isPasswordRecoveryReturn = startupUrl.searchParams.get('reset') === '1'
+let authFlowPanel = 'signin-panel'
+let authSupportReturnPanel = 'signin-panel'
+let passwordRecoveryActive = isPasswordRecoveryReturn
 queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))
 const APPEARANCE_STORAGE_KEY = 'pocket64-appearance'
 const LAST_BACKUP_STORAGE_KEY = 'pocket64-last-backup'
@@ -240,6 +250,7 @@ const duplicateAnywayBtn = $('duplicate-anyway-btn')
 const customColorLabel = $('custom-color-label')
 const customColor = $('custom-color')
 const customCheckbox = $('is-custom')
+const favoriteCheckbox = $('is-favorite')
 const showcaseCheckbox = $('is-showcase')
 const favoritesStat = $('favorites-stat')
 const statsFavorites = $('stats-favorites')
@@ -479,9 +490,39 @@ function hideScreens() {
   editorScreen.classList.remove('active')
 }
 
-function showAuth() {
+const AUTH_PANEL_IDS = ['signin-panel','signup-panel','verify-panel','forgot-panel','reset-panel','support-panel']
+
+function showAuthPanel(panelId = 'signin-panel') {
+  authFlowPanel = AUTH_PANEL_IDS.includes(panelId) ? panelId : 'signin-panel'
+  for (const id of AUTH_PANEL_IDS) $(id)?.classList.toggle('hidden', id !== authFlowPanel)
+}
+
+function showAuth(panelId = 'signin-panel') {
   authView.classList.remove('hidden')
   mainView.classList.add('hidden')
+  showAuthPanel(panelId)
+}
+
+function showSupportPanel(returnPanel = authFlowPanel) {
+  authSupportReturnPanel = AUTH_PANEL_IDS.includes(returnPanel) && returnPanel !== 'support-panel' ? returnPanel : 'signin-panel'
+  const knownEmail = session?.user?.email || $('signup-email')?.value || $('email')?.value || $('reset-email')?.value || ''
+  if ($('support-email') && !$('support-email').value) $('support-email').value = String(knownEmail || '').trim()
+  $('support-form-message').textContent = ''
+  showAuth('support-panel')
+}
+
+function pendingVerificationEmail() {
+  try { return localStorage.getItem(PENDING_VERIFY_EMAIL_KEY) || '' } catch { return '' }
+}
+
+function rememberVerificationEmail(email) {
+  const clean = String(email || '').trim().toLowerCase()
+  try { if (clean) localStorage.setItem(PENDING_VERIFY_EMAIL_KEY, clean); else localStorage.removeItem(PENDING_VERIFY_EMAIL_KEY) } catch {}
+  if ($('verify-email-display')) $('verify-email-display').textContent = clean || 'your email'
+}
+
+function clearAuthRedirectUrl() {
+  try { history.replaceState({}, '', APP_URL) } catch {}
 }
 
 function showMain() {
@@ -747,18 +788,18 @@ function assignmentForCar(carId, state = readSetsState()) {
 function matchingExistingSet(yearValue, seriesValue, numberValue, state = readSetsState()) {
   const year = String(yearValue || '').replace(/[^0-9]/g, '').slice(0,4)
   const name = String(seriesValue || '').trim().toUpperCase()
-  const match = String(numberValue || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
-  if (year.length !== 4 || !name || !match) return null
-  const position = Math.max(1, Math.floor(Number(match[1]) || 0))
+  if (year.length !== 4 || !name) return null
   const set = state.sets.find((item) => item.year === year && normalizeSetReferenceName(item.name) === normalizeSetReferenceName(name))
-  if (!set || !position || position > set.total) return null
-  return { set, position }
+  if (!set) return null
+  const numberMatch = String(numberValue || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
+  const position = numberMatch ? Math.max(1, Math.floor(Number(numberMatch[1]) || 0)) : 0
+  return { set, position: position && position <= set.total ? position : 0 }
 }
 
 function autoSelectExistingSetFromEditorFields() {
   const yearValue = $('model-year')?.value === 'Other' ? $('custom-year')?.value : $('model-year')?.value
   const match = matchingExistingSet(yearValue, $('series')?.value, $('series-collection-number')?.value)
-  if (match) refreshSetEditorOptions(match.set.id, String(match.position))
+  if (match) refreshSetEditorOptions(match.set.id, match.position ? String(match.position) : '')
 }
 
 async function retroLinkExistingCarsToSets() {
@@ -768,7 +809,7 @@ async function retroLinkExistingCarsToSets() {
   for (const car of cars) {
     if (state.assignments[String(car.id)]) continue
     const match = matchingExistingSet(car.model_year, car.series_collection, car.series_collection_number, state)
-    if (!match) continue
+    if (!match || !match.position) continue
     state.assignments[String(car.id)] = { setId:match.set.id, position:match.position }
     additions.push({ user_id:session.user.id, set_id:match.set.id, car_id:car.id, position:match.position, updated_at:new Date().toISOString() })
   }
@@ -1409,39 +1450,11 @@ function hideToyNumberSuggestions() {
 }
 
 function autoSelectSetFromCatalog(car) {
-  const year = String(car?.model_year || '').replace(/[^0-9]/g, '').slice(0, 4)
-  const rawName = String(car?.series_collection || '').trim().toUpperCase()
-  const match = String(car?.series_collection_number || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
-  if (year.length !== 4 || !rawName || !match) return
-  const position = Math.max(1, Math.floor(Number(match[1]) || 0))
-  const catalogTotal = Math.max(position, Math.min(99, Math.floor(Number(match[2]) || 0)))
-  if (!position || !catalogTotal) return
-
-  const reference = referenceSetFor(year, rawName)
-  const name = reference?.name || rawName
-  const total = reference && position <= reference.total ? reference.total : catalogTotal
-
-  const state = readSetsState()
-  let set = state.sets.find((item) => item.year === year && normalizeSetReferenceName(item.name) === normalizeSetReferenceName(name))
-  if (!set) {
-    set = { id:crypto.randomUUID(), year, name, total }
-    state.sets.push(set)
-    writeSetsState(state)
-    if (session?.user) {
-      supabase.from('pocket64_sets').insert({ id:set.id, user_id:session.user.id, year:Number(year), name, total }).then(({ error }) => {
-        if (error) { console.warn('Automatic Set creation failed', error); syncSetsSoon() }
-      })
-    }
-  } else if (position > set.total) {
-    set.total = Math.min(99, Math.max(set.total, total, position))
-    writeSetsState(state)
-    if (session?.user) {
-      supabase.from('pocket64_sets').update({ total:set.total, updated_at:new Date().toISOString() }).eq('id', set.id).eq('user_id', session.user.id).then(({ error }) => {
-        if (error) { console.warn('Automatic Set expansion failed', error); syncSetsSoon() }
-      })
-    }
-  }
-  refreshSetEditorOptions(set.id, String(position))
+  // v4.1.9: catalog data may PREFILL an existing personal Set, but it must
+  // never create or expand a Set automatically. Set creation stays user-driven.
+  const match = matchingExistingSet(car?.model_year, car?.series_collection, car?.series_collection_number)
+  if (!match) return
+  refreshSetEditorOptions(match.set.id, match.position ? String(match.position) : '')
 }
 
 function applyCatalogCarToEditor(car, focusTarget = null, options = {}) {
@@ -1844,7 +1857,10 @@ function showEditor(car = null, options = {}) {
   $('more-details-section').classList.toggle('quick-collapsed', quickAddMode)
   $('more-details-toggle').textContent = 'More Details ▾'
   deleteButton.classList.toggle('hidden', !car)
-  $('bottom-save-button')?.classList.toggle('hidden', !car)
+  const bottomSaveButton = $('bottom-save-button')
+  bottomSaveButton?.classList.remove('hidden')
+  if (bottomSaveButton) bottomSaveButton.textContent = quickAddMode ? 'Save & Next' : 'Save'
+  document.querySelector('.editor-bottom-actions')?.classList.toggle('add-mode', !car)
   $('share-button').classList.toggle('hidden', !car)
   fillEditor(car)
   if (quickAddMode && quickAddKeepBrand) {
@@ -1857,6 +1873,7 @@ function showEditor(car = null, options = {}) {
 function fillEditor(car) {
   setBrandValue(car?.diecast_brand ?? '')
   customCheckbox.checked = Boolean(car?.is_custom)
+  if (favoriteCheckbox) favoriteCheckbox.checked = Boolean(car?.is_favorite)
   if (showcaseCheckbox) showcaseCheckbox.checked = Boolean(car?.is_showcase)
   $('model').value = car?.model ?? ''
   hideModelSuggestions()
@@ -3061,6 +3078,7 @@ function editorPayload() {
     user_id: session.user.id,
     diecast_brand: brandRaw ? canonicalBrand(brandRaw) : null,
     is_custom: Boolean(customCheckbox.checked),
+    is_favorite: collectionExtrasSupported ? Boolean(favoriteCheckbox?.checked) : undefined,
     is_showcase: collectionExtrasSupported ? Boolean(showcaseCheckbox?.checked) : undefined,
     model: $('model').value.trim().toUpperCase() || null,
     model_year: yearRaw ? String(yearRaw).toUpperCase() : null,
@@ -3075,7 +3093,7 @@ function editorPayload() {
     notes: $('notes').value.trim() || null,
     updated_at: new Date().toISOString(),
   }
-  if (!collectionExtrasSupported) delete payload.is_showcase
+  if (!collectionExtrasSupported) { delete payload.is_favorite; delete payload.is_showcase }
   if (collectionExtrasSupported) {
     payload.exclusive_retailer = exclusiveRetailer?.value || null
     payload.exclusive_type = exclusiveRetailer?.value ? (exclusiveType?.value || null) : null
@@ -3210,7 +3228,7 @@ async function saveCar() {
   } finally {
     saveButton.disabled = false
     saveButton.textContent = quickAddMode ? 'Save & Next' : 'Save'
-    if (bottomSaveButton) { bottomSaveButton.disabled = false; bottomSaveButton.textContent = 'Save' }
+    if (bottomSaveButton) { bottomSaveButton.disabled = false; bottomSaveButton.textContent = quickAddMode ? 'Save & Next' : 'Save' }
   }
 }
 
@@ -3532,28 +3550,221 @@ favoritesStat?.addEventListener('click', () => {
 })
 $('auth-form').addEventListener('submit', async (e) => {
   e.preventDefault()
-  authMessage.textContent = 'Signing in…'
-  const { error } = await supabase.auth.signInWithPassword({
-    email: $('email').value.trim(),
-    password: $('password').value,
-  })
-  authMessage.textContent = error ? error.message : ''
-})
-
-$('signup-btn').addEventListener('click', async () => {
   const email = $('email').value.trim()
   const password = $('password').value
   if (!email || !password) {
-    authMessage.textContent = 'Enter an email and password first.'
+    authMessage.textContent = 'Enter your email and password.'
     return
   }
-  authMessage.textContent = 'Creating account…'
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: APP_URL },
-  })
-  authMessage.textContent = error ? error.message : 'Account created. Check your email to confirm it, then sign in.'
+  authMessage.textContent = 'Signing in…'
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error && /email.*not.*confirm|not.*confirm/i.test(error.message || '')) {
+    rememberVerificationEmail(email)
+    $('verify-message').textContent = 'Your email still needs to be verified.'
+    showAuth('verify-panel')
+    return
+  }
+  if (!error && data?.user?.user_metadata?.p64_email_verified === false) {
+    await supabase.auth.signOut()
+    rememberVerificationEmail(email)
+    $('verify-message').classList.remove('success')
+    $('verify-message').textContent = 'Your email still needs to be verified.'
+    showAuth('verify-panel')
+    return
+  }
+  authMessage.textContent = error ? error.message : ''
+})
+
+$('signup-btn').addEventListener('click', () => {
+  $('signup-email').value = $('email').value.trim()
+  $('signup-password').value = ''
+  $('signup-password-confirm').value = ''
+  $('signup-message').textContent = ''
+  showAuth('signup-panel')
+  setTimeout(() => $('signup-email')?.focus(), 40)
+})
+
+$('signup-back-btn')?.addEventListener('click', () => showAuth('signin-panel'))
+$('signup-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const email = $('signup-email').value.trim().toLowerCase()
+  const password = $('signup-password').value
+  const confirmPassword = $('signup-password-confirm').value
+  const message = $('signup-message')
+  const button = $('create-account-btn')
+  message.classList.remove('success')
+  if (!email) { message.textContent = 'Enter your email address.'; return }
+  if (password.length < 8) { message.textContent = 'Password must be at least 8 characters.'; return }
+  if (password !== confirmPassword) { message.textContent = 'Passwords do not match.'; return }
+
+  button.disabled = true
+  button.textContent = 'Creating…'
+  message.textContent = 'Creating your account…'
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: VERIFY_REDIRECT_URL, data:{ p64_email_verified:false } },
+    })
+    if (error) throw error
+    // Never let the Create Account action itself drop a new user straight into
+    // the garage. Even if project settings return a session, sign it out here.
+    if (data?.session) await supabase.auth.signOut()
+    rememberVerificationEmail(email)
+    $('verify-message').classList.add('success')
+    $('verify-message').textContent = 'Verification email sent.'
+    showAuth('verify-panel')
+  } catch (error) {
+    message.textContent = error?.message || 'Could not create the account.'
+  } finally {
+    button.disabled = false
+    button.textContent = 'Create Account'
+  }
+})
+
+$('resend-verification-btn')?.addEventListener('click', async () => {
+  const email = pendingVerificationEmail() || $('signup-email')?.value.trim() || $('email')?.value.trim()
+  const message = $('verify-message')
+  if (!email) {
+    message.classList.remove('success')
+    message.textContent = 'Go back and enter your email first.'
+    return
+  }
+  const button = $('resend-verification-btn')
+  button.disabled = true
+  button.textContent = 'Sending…'
+  message.classList.remove('success')
+  message.textContent = ''
+  try {
+    const { error } = await supabase.auth.resend({ type:'signup', email, options:{ emailRedirectTo:VERIFY_REDIRECT_URL } })
+    if (error) throw error
+    rememberVerificationEmail(email)
+    message.classList.add('success')
+    message.textContent = 'Verification email sent again.'
+  } catch (error) {
+    message.textContent = error?.message || 'Could not resend the verification email.'
+  } finally {
+    button.disabled = false
+    button.textContent = 'Resend Verification Email'
+  }
+})
+
+$('verify-back-btn')?.addEventListener('click', () => {
+  const email = pendingVerificationEmail()
+  if (email) $('email').value = email
+  showAuth('signin-panel')
+})
+
+$('forgot-password-btn')?.addEventListener('click', () => {
+  $('reset-email').value = $('email').value.trim()
+  $('forgot-message').textContent = ''
+  showAuth('forgot-panel')
+})
+$('forgot-back-btn')?.addEventListener('click', () => showAuth('signin-panel'))
+$('forgot-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const email = $('reset-email').value.trim().toLowerCase()
+  const message = $('forgot-message')
+  const button = $('send-reset-btn')
+  message.classList.remove('success')
+  if (!email) { message.textContent = 'Enter your email address.'; return }
+  button.disabled = true
+  button.textContent = 'Sending…'
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo:RESET_REDIRECT_URL })
+    if (error) throw error
+    message.classList.add('success')
+    message.textContent = 'Reset link sent. Check your email.'
+  } catch (error) {
+    message.textContent = error?.message || 'Could not send the reset link.'
+  } finally {
+    button.disabled = false
+    button.textContent = 'Send Reset Link'
+  }
+})
+
+$('reset-password-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const password = $('new-password').value
+  const confirmPassword = $('new-password-confirm').value
+  const message = $('reset-password-message')
+  const button = $('update-password-btn')
+  message.classList.remove('success')
+  if (password.length < 8) { message.textContent = 'Password must be at least 8 characters.'; return }
+  if (password !== confirmPassword) { message.textContent = 'Passwords do not match.'; return }
+  button.disabled = true
+  button.textContent = 'Updating…'
+  try {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw error
+    await supabase.auth.signOut()
+    passwordRecoveryActive = false
+    clearAuthRedirectUrl()
+    $('email').value = $('reset-email')?.value || ''
+    authMessage.classList.add('success')
+    authMessage.textContent = 'Password updated. Sign in with your new password.'
+    showAuth('signin-panel')
+  } catch (error) {
+    message.textContent = error?.message || 'Could not update the password.'
+  } finally {
+    button.disabled = false
+    button.textContent = 'Update Password'
+  }
+})
+
+for (const [id, panel] of [
+  ['support-btn','signin-panel'],
+  ['signup-support-btn','signup-panel'],
+  ['verify-support-btn','verify-panel'],
+  ['forgot-support-btn','forgot-panel'],
+]) $(id)?.addEventListener('click', () => showSupportPanel(panel))
+
+$('support-back-btn')?.addEventListener('click', () => showAuth(authSupportReturnPanel))
+$('support-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const email = $('support-email').value.trim().toLowerCase()
+  const category = $('support-category').value
+  const supportText = $('support-message-input').value.trim()
+  const website = $('support-website').value.trim()
+  const message = $('support-form-message')
+  const button = $('support-submit-btn')
+  message.classList.remove('success')
+  if (!email || !supportText) { message.textContent = 'Enter your email and a short message.'; return }
+  if (supportText.length < 8) { message.textContent = 'Please add a little more detail so we can help.'; return }
+  button.disabled = true
+  button.textContent = 'Sending…'
+  message.textContent = 'Sending your support request…'
+  const clientRequestId = crypto.randomUUID()
+  try {
+    const lastError = [authMessage?.textContent, $('signup-message')?.textContent, $('verify-message')?.textContent, $('forgot-message')?.textContent]
+      .map((value) => String(value || '').trim()).find(Boolean) || ''
+    const { data, error } = await supabase.functions.invoke('pocket64-support', {
+      body: {
+        email,
+        category,
+        message:supportText,
+        website,
+        app_version:APP_VERSION,
+        user_agent:navigator.userAgent,
+        platform:navigator.platform || '',
+        last_error:lastError,
+        client_request_id:clientRequestId,
+      },
+    })
+    if (error) throw error
+    const ticket = String(data?.ticket || '').trim()
+    const subject = ticket ? `Pocket 64 Support ${ticket}` : 'Pocket 64 Support'
+    $('support-direct-email').href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Ticket: ${ticket || 'new'}\nCategory: ${category}\n\n${supportText}`)}`
+    message.classList.add('success')
+    message.textContent = ticket ? `Request received — ticket ${ticket}.` : 'Request received.'
+    $('support-message-input').value = ''
+  } catch (error) {
+    console.error('Support request failed', error)
+    message.textContent = 'Could not save the request. You can still use “Email Pocket 64 Support Directly” below.'
+  } finally {
+    button.disabled = false
+    button.textContent = 'Send Support Request'
+  }
 })
 
 
@@ -4194,6 +4405,15 @@ supabase.auth.onAuthStateChange((event, newSession) => {
   session = newSession
 
   if (session) {
+    if (event === 'PASSWORD_RECOVERY') passwordRecoveryActive = true
+    if (passwordRecoveryActive || isPasswordRecoveryReturn) {
+      showAuth('reset-panel')
+      return
+    }
+    if (isVerificationReturn) {
+      showAuth('signin-panel')
+      return
+    }
     const sameUser = Boolean(previousUserId && previousUserId === nextUserId)
     if (!sameUser || mainView.classList.contains('hidden')) showMain()
     setTimeout(() => loadProfileIcon(), 0)
@@ -4218,20 +4438,37 @@ supabase.auth.onAuthStateChange((event, newSession) => {
 
 const { data: { session: initialSession } } = await supabase.auth.getSession()
 session = initialSession
-if (session) {
+if (isVerificationReturn) {
+  const verifiedEmail = session?.user?.email || pendingVerificationEmail()
+  if (session) {
+    await supabase.auth.updateUser({ data:{ ...(session.user.user_metadata || {}), p64_email_verified:true } }).catch?.(() => {})
+    await supabase.auth.signOut()
+  }
+  session = null
+  rememberVerificationEmail('')
+  clearAuthRedirectUrl()
+  if (verifiedEmail) $('email').value = verifiedEmail
+  authMessage.classList.add('success')
+  authMessage.textContent = 'Email verified. Sign in to start your Pocket 64 garage.'
+  showAuth('signin-panel')
+} else if (isPasswordRecoveryReturn) {
+  passwordRecoveryActive = true
+  showAuth('reset-panel')
+} else if (session) {
   showMain()
   await loadProfileIcon()
   if (loadedCarsUserId !== session.user.id) await loadCars()
   await syncSetsFromCloud({ migrateLocal:true }).catch((error) => console.warn('Sets sync failed', error))
   await restoreUiState()
 } else {
-  showAuth()
+  rememberVerificationEmail(pendingVerificationEmail())
+  showAuth('signin-panel')
 }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.8', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.9', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

@@ -782,3 +782,10 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 - Reference rows materialize into the user's personal Sets only when opened or used by a car assignment.
 - Manual and older Sets blend into the same year-grouped list with no badge or special label.
 - Set rows use restrained alternating graphite/blue tones for visual separation without clutter.
+
+## v4.1.9
+- Reworked account creation into a dedicated signup + email-verification flow.
+- Added forgot-password and sign-in/signup support UI.
+- Added private, rate-limited Supabase support-request intake with direct Pocket 64 support-email fallback.
+- Added Favorite to Add/Edit, cleaned the lower editor, and standardized bottom Save/Delete actions.
+- Corrected Set autofill so it only selects an already-created Set and never auto-creates one.

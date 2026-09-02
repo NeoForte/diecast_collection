@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=4.1.8" />
+  <link rel="manifest" href="manifest.webmanifest?v=4.1.9" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=4.1.8" />
+  <link rel="stylesheet" href="styles.css?v=4.1.9" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -17,14 +17,91 @@
     <section id="auth-view" class="view center-view">
       <div class="auth-card">
         <img class="auth-brand-banner" src="pocket64-speedline-v251.png" alt="Pocket 64" />
-        <p class="muted">Your diecast collection, in your pocket.</p>
-        <form id="auth-form">
-          <label>Email<input id="email" type="email" autocomplete="email" /></label>
-          <label>Password<input id="password" type="password" autocomplete="current-password" /></label>
-          <button id="login-btn" type="submit">Sign In</button>
-        </form>
-        <button id="signup-btn" class="secondary" type="button">Create Account</button>
-        <p id="auth-message" class="message"></p>
+
+        <div id="signin-panel" class="auth-panel">
+          <p class="muted">Your diecast collection, in your pocket.</p>
+          <form id="auth-form">
+            <label>Email<input id="email" type="email" autocomplete="email" inputmode="email" /></label>
+            <label>Password<input id="password" type="password" autocomplete="current-password" /></label>
+            <button id="login-btn" type="submit">Sign In</button>
+          </form>
+          <button id="forgot-password-btn" class="auth-text-link" type="button">Forgot Password?</button>
+          <button id="signup-btn" class="secondary" type="button">Create An Account</button>
+          <button id="support-btn" class="auth-support-link" type="button">Need Help?</button>
+          <p id="auth-message" class="message"></p>
+        </div>
+
+        <div id="signup-panel" class="auth-panel hidden">
+          <button id="signup-back-btn" class="auth-back-link" type="button">‹ Back to Sign In</button>
+          <h2>Create Account</h2>
+          <p class="auth-panel-copy">Create your Pocket 64 account. We’ll verify your email before you can use it.</p>
+          <form id="signup-form">
+            <label>Email<input id="signup-email" type="email" autocomplete="email" inputmode="email" /></label>
+            <label>Password<input id="signup-password" type="password" autocomplete="new-password" /></label>
+            <label>Confirm Password<input id="signup-password-confirm" type="password" autocomplete="new-password" /></label>
+            <p class="auth-hint">Use at least 8 characters.</p>
+            <button id="create-account-btn" type="submit">Create Account</button>
+          </form>
+          <button id="signup-support-btn" class="auth-support-link" type="button">Need Help?</button>
+          <p id="signup-message" class="message"></p>
+        </div>
+
+        <div id="verify-panel" class="auth-panel hidden">
+          <div class="auth-status-icon" aria-hidden="true">✉</div>
+          <h2>Check Your Email</h2>
+          <p class="auth-panel-copy">We sent a verification link to <strong id="verify-email-display">your email</strong>. Verify it before signing in.</p>
+          <button id="resend-verification-btn" class="secondary auth-secondary-first" type="button">Resend Verification Email</button>
+          <button id="verify-back-btn" class="auth-text-link" type="button">Back to Sign In</button>
+          <button id="verify-support-btn" class="auth-support-link" type="button">Need Help?</button>
+          <p id="verify-message" class="message"></p>
+        </div>
+
+        <div id="forgot-panel" class="auth-panel hidden">
+          <button id="forgot-back-btn" class="auth-back-link" type="button">‹ Back to Sign In</button>
+          <h2>Reset Password</h2>
+          <p class="auth-panel-copy">Enter your email and we’ll send you a password-reset link.</p>
+          <form id="forgot-form">
+            <label>Email<input id="reset-email" type="email" autocomplete="email" inputmode="email" /></label>
+            <button id="send-reset-btn" type="submit">Send Reset Link</button>
+          </form>
+          <button id="forgot-support-btn" class="auth-support-link" type="button">Need Help?</button>
+          <p id="forgot-message" class="message"></p>
+        </div>
+
+        <div id="reset-panel" class="auth-panel hidden">
+          <div class="auth-status-icon" aria-hidden="true">🔒</div>
+          <h2>Choose New Password</h2>
+          <p class="auth-panel-copy">Set a new password for your Pocket 64 account.</p>
+          <form id="reset-password-form">
+            <label>New Password<input id="new-password" type="password" autocomplete="new-password" /></label>
+            <label>Confirm Password<input id="new-password-confirm" type="password" autocomplete="new-password" /></label>
+            <button id="update-password-btn" type="submit">Update Password</button>
+          </form>
+          <p id="reset-password-message" class="message"></p>
+        </div>
+
+        <div id="support-panel" class="auth-panel hidden">
+          <button id="support-back-btn" class="auth-back-link" type="button">‹ Back</button>
+          <h2>Contact Support</h2>
+          <p class="auth-panel-copy">Having trouble getting into Pocket 64? Send us the details and we’ll have a record of it.</p>
+          <form id="support-form">
+            <label>Your Email<input id="support-email" type="email" autocomplete="email" inputmode="email" required /></label>
+            <label>What’s Going On?
+              <select id="support-category" required>
+                <option value="Sign In">Sign In</option>
+                <option value="Create Account">Create Account</option>
+                <option value="Email Verification">Email Verification</option>
+                <option value="Password">Password</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label>Message<textarea id="support-message-input" rows="4" maxlength="2000" placeholder="Tell us what happened…" required></textarea></label>
+            <label class="support-honeypot" aria-hidden="true">Website<input id="support-website" type="text" tabindex="-1" autocomplete="off" /></label>
+            <button id="support-submit-btn" type="submit">Send Support Request</button>
+          </form>
+          <a id="support-direct-email" class="auth-direct-email" href="mailto:pocket64app@gmail.com">Email Pocket 64 Support Directly</a>
+          <p id="support-form-message" class="message"></p>
+        </div>
       </div>
     </section>
 
@@ -221,7 +298,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 4.1.8</span>
+              <span class="version-badge">Version 4.1.9</span>
             </div>
           </div>
         </section>
@@ -248,7 +325,7 @@
               <button id="share-button" class="text-button share-button hidden" type="button">Share</button>
             </div>
             <h2 id="editor-title">Add Car</h2>
-            <button id="save-button" class="text-button strong" type="button">Save</button>
+            <button id="save-button" class="text-button strong editor-header-save hidden" type="button" tabindex="-1" aria-hidden="true">Save</button>
           </div>
 
           <div class="photo-picker">
@@ -420,9 +497,9 @@
             </div>
 
             <div class="entry-options-row" aria-label="Car options">
-              <span class="entry-options-label">Options</span>
-              <label class="custom-toggle" for="is-showcase"><input id="is-showcase" type="checkbox" /><span>Showcase</span></label>
+              <label class="custom-toggle favorite-editor-toggle" for="is-favorite"><input id="is-favorite" type="checkbox" /><span class="favorite-editor-star" aria-hidden="true">★</span><span>Favorite</span></label>
               <label class="custom-toggle" for="is-custom"><input id="is-custom" type="checkbox" /><span>Custom</span></label>
+              <label class="custom-toggle showcase-editor-toggle" for="is-showcase"><input id="is-showcase" type="checkbox" /><span>Showcase</span></label>
             </div>
 
             <label class="notes-field">Notes<textarea id="notes" rows="2" placeholder="Optional notes"></textarea></label>
@@ -453,8 +530,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=4.1.8"></script>
-  <script type="module" src="app.js?v=4.1.8"></script>
-  <script src="showcase-sync.js?v=4.1.8"></script>
+  <script src="jszip.min.js?v=4.1.9"></script>
+  <script type="module" src="app.js?v=4.1.9"></script>
+  <script src="showcase-sync.js?v=4.1.9"></script>
 </body>
 </html>
