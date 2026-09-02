@@ -5634,3 +5634,38 @@ html[data-theme="light"] .auth-card .auth-text-link,
 html[data-theme="light"] .auth-card .auth-support-link,
 html[data-theme="light"] .auth-card .auth-back-link { color:#276b9f; }
 html[data-theme="light"] .auth-direct-email { background:#eef6fb; border-color:#c9dce9; color:#235f8d; }
+
+
+/* Pocket 64 v4.2.0 — share, logged-in support, branded confirmation */
+.settings-support-card { margin-top:2px; }
+.p64-modal-overlay {
+  position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center;
+  padding:20px; background:rgba(0,0,0,.72); backdrop-filter:blur(6px);
+}
+.p64-modal-overlay.hidden { display:none !important; }
+.p64-modal-card {
+  position:relative; width:min(440px,100%); padding:22px; border:1px solid var(--p64-border-strong);
+  border-radius:18px; background:var(--p64-surface); color:var(--p64-text); box-shadow:0 24px 70px rgba(0,0,0,.5);
+}
+.p64-modal-card h3 { margin:0 32px 8px 0; font-size:20px; }
+.p64-modal-card p { margin:0 0 18px; color:var(--p64-muted); line-height:1.45; }
+.p64-modal-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }
+.p64-modal-button, .settings-support-modal button[type="submit"] {
+  min-height:46px; border-radius:12px; border:1px solid var(--p64-border-strong); background:var(--p64-surface-3);
+  color:var(--p64-text); font-weight:850; cursor:pointer;
+}
+.p64-modal-danger { border-color:#7e3038 !important; background:#3b171c !important; color:#ffced2 !important; }
+.p64-modal-close {
+  position:absolute; top:12px; right:13px; width:36px; height:36px; border:0; background:transparent;
+  color:var(--p64-muted); font-size:26px; line-height:1; cursor:pointer;
+}
+.settings-support-modal form { display:grid; gap:12px; }
+.settings-support-modal label { display:grid; gap:6px; color:var(--p64-muted); font-size:12px; font-weight:800; }
+.settings-support-modal input, .settings-support-modal select, .settings-support-modal textarea {
+  width:100%; margin:0; border:1px solid var(--p64-border-strong); border-radius:11px; background:var(--p64-surface-3);
+  color:var(--p64-text); padding:11px 12px; font:inherit; box-sizing:border-box;
+}
+.settings-support-modal textarea { resize:vertical; min-height:96px; }
+.p64-modal-subcopy { margin-bottom:16px !important; }
+html[data-theme="light"] .p64-modal-overlay { background:rgba(0,0,0,.42); }
+@media (max-width:390px) { .p64-modal-card { padding:19px; } }

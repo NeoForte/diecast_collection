@@ -10,7 +10,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.1.9'
+const APP_VERSION = '4.2.0'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -623,6 +623,89 @@ function showSettings() {
   if (appearanceSelect) appearanceSelect.value = getSavedAppearance()
   updateBackupStatus()
   hideDuplicateScanResults()
+}
+
+function friendlyAuthEmailError(error, fallback = 'Could not send the email.') {
+  const code = String(error?.code || error?.error_code || '').toLowerCase()
+  const text = String(error?.message || error || '').toLowerCase()
+  if (code.includes('rate') || text.includes('rate limit') || text.includes('too many')) {
+    return 'Too many emails have been sent recently. Please wait a few minutes and try again.'
+  }
+  return error?.message || fallback
+}
+
+function appShareUrl() {
+  const url = new URL(window.location.href)
+  url.search = ''
+  url.hash = ''
+  return url.toString()
+}
+
+async function sharePocket64App() {
+  const url = appShareUrl()
+  const action = $('share-app-action')
+  try {
+    if (navigator.share) {
+      await navigator.share({ title:'Pocket 64', text:'Pocket 64 — your diecast collection, in your pocket.', url })
+      return
+    }
+    await navigator.clipboard.writeText(url)
+    if (action) { action.textContent = 'Copied!'; setTimeout(() => { action.textContent = 'Share' }, 1800) }
+  } catch (error) {
+    if (error?.name === 'AbortError') return
+    try {
+      await navigator.clipboard.writeText(url)
+      if (action) { action.textContent = 'Copied!'; setTimeout(() => { action.textContent = 'Share' }, 1800) }
+    } catch {
+      if (action) { action.textContent = 'Try Again'; setTimeout(() => { action.textContent = 'Share' }, 1800) }
+    }
+  }
+}
+
+function openSettingsSupport() {
+  const overlay = $('settings-support-overlay')
+  const email = $('settings-support-email')
+  if (email) email.value = String(session?.user?.email || '').trim()
+  $('settings-support-form-message').textContent = ''
+  overlay?.classList.remove('hidden')
+  setTimeout(() => $('settings-support-message-input')?.focus(), 40)
+}
+
+function closeSettingsSupport() {
+  $('settings-support-overlay')?.classList.add('hidden')
+}
+
+function pocket64Confirm({ title='Are you sure?', message='', confirmText='Confirm', danger=false } = {}) {
+  return new Promise((resolve) => {
+    const overlay = $('p64-confirm-overlay')
+    const titleEl = $('p64-confirm-title')
+    const messageEl = $('p64-confirm-message')
+    const cancel = $('p64-confirm-cancel')
+    const ok = $('p64-confirm-ok')
+    if (!overlay || !cancel || !ok) { resolve(false); return }
+    titleEl.textContent = title
+    messageEl.textContent = message
+    ok.textContent = confirmText
+    ok.classList.toggle('p64-modal-danger', Boolean(danger))
+    overlay.classList.remove('hidden')
+    const finish = (value) => {
+      overlay.classList.add('hidden')
+      cancel.removeEventListener('click', onCancel)
+      ok.removeEventListener('click', onOk)
+      overlay.removeEventListener('click', onOverlay)
+      document.removeEventListener('keydown', onKey)
+      resolve(value)
+    }
+    const onCancel = () => finish(false)
+    const onOk = () => finish(true)
+    const onOverlay = (event) => { if (event.target === overlay) finish(false) }
+    const onKey = (event) => { if (event.key === 'Escape') finish(false) }
+    cancel.addEventListener('click', onCancel)
+    ok.addEventListener('click', onOk)
+    overlay.addEventListener('click', onOverlay)
+    document.addEventListener('keydown', onKey)
+    setTimeout(() => cancel.focus(), 30)
+  })
 }
 
 
@@ -3301,7 +3384,14 @@ async function clearCollection() {
 }
 
 async function deleteCar() {
-  if (!editingCar || !confirm('Are you sure you want to delete this vehicle?')) return
+  if (!editingCar) return
+  const approved = await pocket64Confirm({
+    title:'Delete Vehicle?',
+    message:'This vehicle will be permanently deleted from your collection. This cannot be undone.',
+    confirmText:'Delete',
+    danger:true,
+  })
+  if (!approved) return
   editorMessage.textContent = 'Deleting…'
   try {
     const photoPaths = [editingCar.photo_path, editingCar.photo2_path, editingCar.photo3_path].filter(Boolean)
@@ -3619,7 +3709,7 @@ $('signup-form')?.addEventListener('submit', async (event) => {
     $('verify-message').textContent = 'Verification email sent.'
     showAuth('verify-panel')
   } catch (error) {
-    message.textContent = error?.message || 'Could not create the account.'
+    message.textContent = friendlyAuthEmailError(error, 'Could not create the account.')
   } finally {
     button.disabled = false
     button.textContent = 'Create Account'
@@ -3646,7 +3736,7 @@ $('resend-verification-btn')?.addEventListener('click', async () => {
     message.classList.add('success')
     message.textContent = 'Verification email sent again.'
   } catch (error) {
-    message.textContent = error?.message || 'Could not resend the verification email.'
+    message.textContent = friendlyAuthEmailError(error, 'Could not resend the verification email.')
   } finally {
     button.disabled = false
     button.textContent = 'Resend Verification Email'
@@ -3680,7 +3770,7 @@ $('forgot-form')?.addEventListener('submit', async (event) => {
     message.classList.add('success')
     message.textContent = 'Reset link sent. Check your email.'
   } catch (error) {
-    message.textContent = error?.message || 'Could not send the reset link.'
+    message.textContent = friendlyAuthEmailError(error, 'Could not send the reset link.')
   } finally {
     button.disabled = false
     button.textContent = 'Send Reset Link'
@@ -3940,6 +4030,46 @@ async function saveProfileIcon(file) {
     $('profile-icon-input').value = ''
   }
 }
+
+$('share-app-button')?.addEventListener('click', sharePocket64App)
+$('settings-support-button')?.addEventListener('click', openSettingsSupport)
+$('settings-support-close')?.addEventListener('click', closeSettingsSupport)
+$('settings-support-overlay')?.addEventListener('click', (event) => { if (event.target === $('settings-support-overlay')) closeSettingsSupport() })
+$('settings-support-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const email = $('settings-support-email').value.trim().toLowerCase()
+  const category = $('settings-support-category').value
+  const supportText = $('settings-support-message-input').value.trim()
+  const website = $('settings-support-website').value.trim()
+  const message = $('settings-support-form-message')
+  const button = $('settings-support-submit')
+  message.classList.remove('success')
+  if (!email || !supportText) { message.textContent = 'Enter your email and a short message.'; return }
+  if (supportText.length < 8) { message.textContent = 'Please add a little more detail so we can help.'; return }
+  button.disabled = true
+  button.textContent = 'Sending…'
+  message.textContent = 'Sending your support request…'
+  try {
+    const { data, error } = await supabase.functions.invoke('pocket64-support', {
+      body:{
+        email, category, message:supportText, website,
+        app_version:APP_VERSION, user_agent:navigator.userAgent, platform:navigator.platform || '',
+        last_error:'', client_request_id:crypto.randomUUID(),
+      },
+    })
+    if (error) throw error
+    const ticket = String(data?.ticket || '').trim()
+    message.classList.add('success')
+    message.textContent = ticket ? `Request received — ticket ${ticket}.` : 'Request received.'
+    $('settings-support-message-input').value = ''
+  } catch (error) {
+    console.error('Settings support request failed', error)
+    message.textContent = 'We couldn’t send your request right now. Please try again shortly.'
+  } finally {
+    button.disabled = false
+    button.textContent = 'Send Support Request'
+  }
+})
 
 $('logout-btn').addEventListener('click', async () => {
   if (!window.confirm('Are you sure you want to sign out?')) return
@@ -4470,7 +4600,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.1.9', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=4.2.0', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

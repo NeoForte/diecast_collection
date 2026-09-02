@@ -1,0 +1,7 @@
+Pocket 64 v4.2.0
+
+- Added Share Pocket 64 to Settings with the native device share sheet and copy-link fallback.
+- Added logged-in Contact Support at the bottom of Settings using the existing private support-ticket pipeline.
+- Replaced the browser-host delete prompt for vehicle deletion with a Pocket 64 confirmation modal.
+- Reworded Supabase email rate-limit errors into a clearer user-facing message.
+- Bumped app/service-worker cache version to 4.2.0 for a clean update.

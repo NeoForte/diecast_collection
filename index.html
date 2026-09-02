@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=4.1.9" />
+  <link rel="manifest" href="manifest.webmanifest?v=4.2.0" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=4.1.9" />
+  <link rel="stylesheet" href="styles.css?v=4.2.0" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -292,13 +292,27 @@
               </div>
               <button id="logout-btn" class="settings-mini-button settings-signout-button" type="button">Sign Out</button>
             </div>
+            <button id="share-app-button" class="settings-card settings-button-card" type="button">
+              <div class="settings-copy">
+                <strong>Share Pocket 64</strong>
+                <span>Send Pocket 64 to a friend or copy the app link.</span>
+              </div>
+              <span id="share-app-action" class="settings-action">Share</span>
+            </button>
             <div class="settings-card">
               <div class="settings-copy">
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 4.1.9</span>
+              <span class="version-badge">Version 4.2.0</span>
             </div>
+            <button id="settings-support-button" class="settings-card settings-button-card settings-support-card" type="button">
+              <div class="settings-copy">
+                <strong>Contact Support</strong>
+                <span>Having trouble? Send Pocket 64 a support request.</span>
+              </div>
+              <span class="settings-action">Help</span>
+            </button>
           </div>
         </section>
 
@@ -517,6 +531,41 @@
   </div>
 
 
+  <div id="p64-confirm-overlay" class="p64-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="p64-confirm-title">
+    <div class="p64-modal-card p64-confirm-card">
+      <h3 id="p64-confirm-title">Delete Vehicle?</h3>
+      <p id="p64-confirm-message">This vehicle will be permanently deleted from your collection.</p>
+      <div class="p64-modal-actions">
+        <button id="p64-confirm-cancel" class="p64-modal-button" type="button">Cancel</button>
+        <button id="p64-confirm-ok" class="p64-modal-button p64-modal-danger" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings-support-overlay" class="p64-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-support-title">
+    <div class="p64-modal-card settings-support-modal">
+      <button id="settings-support-close" class="p64-modal-close" type="button" aria-label="Close support">×</button>
+      <h3 id="settings-support-title">Contact Support</h3>
+      <p class="p64-modal-subcopy">Tell us what happened and we’ll save a support ticket.</p>
+      <form id="settings-support-form">
+        <label>Your Email<input id="settings-support-email" type="email" autocomplete="email" required /></label>
+        <label>Category
+          <select id="settings-support-category" required>
+            <option>Sign In</option>
+            <option>Create Account</option>
+            <option>Email Verification</option>
+            <option>Password</option>
+            <option selected>Other</option>
+          </select>
+        </label>
+        <label>Message<textarea id="settings-support-message-input" rows="4" maxlength="2000" placeholder="Tell us what happened…" required></textarea></label>
+        <label class="support-honeypot" aria-hidden="true">Website<input id="settings-support-website" type="text" tabindex="-1" autocomplete="off" /></label>
+        <button id="settings-support-submit" type="submit">Send Support Request</button>
+      </form>
+      <p id="settings-support-form-message" class="message"></p>
+    </div>
+  </div>
+
   <div id="photo-viewer" class="photo-viewer hidden" role="dialog" aria-modal="true" aria-label="Car photo viewer">
     <button id="photo-viewer-close" class="photo-viewer-close" type="button" aria-label="Close photo viewer">×</button>
     <button id="photo-viewer-prev" class="photo-viewer-nav photo-viewer-prev" type="button" aria-label="Previous photo">‹</button>
@@ -529,8 +578,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=4.1.9"></script>
-  <script type="module" src="app.js?v=4.1.9"></script>
-  <script src="showcase-sync.js?v=4.1.9"></script>
+  <script src="jszip.min.js?v=4.2.0"></script>
+  <script type="module" src="app.js?v=4.2.0"></script>
+  <script src="showcase-sync.js?v=4.2.0"></script>
 </body>
 </html>
