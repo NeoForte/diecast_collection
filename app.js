@@ -11,7 +11,6 @@ const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
 const APP_VERSION = '4.1.9'
-const SUPPORT_EMAIL = 'pocket64app@gmail.com'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -3758,14 +3757,12 @@ $('support-form')?.addEventListener('submit', async (event) => {
     })
     if (error) throw error
     const ticket = String(data?.ticket || '').trim()
-    const subject = ticket ? `Pocket 64 Support ${ticket}` : 'Pocket 64 Support'
-    $('support-direct-email').href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Ticket: ${ticket || 'new'}\nCategory: ${category}\n\n${supportText}`)}`
     message.classList.add('success')
     message.textContent = ticket ? `Request received — ticket ${ticket}.` : 'Request received.'
     $('support-message-input').value = ''
   } catch (error) {
     console.error('Support request failed', error)
-    message.textContent = 'Could not save the request. You can still use “Email Pocket 64 Support Directly” below.'
+    message.textContent = 'We couldn’t send your request right now. Please try again shortly.'
   } finally {
     button.disabled = false
     button.textContent = 'Send Support Request'

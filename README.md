@@ -786,6 +786,6 @@ Open the deployed URL in Safari, Share > Add to Home Screen, then enable Open as
 ## v4.1.9
 - Reworked account creation into a dedicated signup + email-verification flow.
 - Added forgot-password and sign-in/signup support UI.
-- Added private, rate-limited Supabase support-request intake with direct Pocket 64 support-email fallback.
+- Added private, rate-limited Supabase support-request intake with private retry-only failure handling.
 - Added Favorite to Add/Edit, cleaned the lower editor, and standardized bottom Save/Delete actions.
 - Corrected Set autofill so it only selects an already-created Set and never auto-creates one.

@@ -12,7 +12,7 @@ SUPPORT
 - Adds a compact support form with issue category, reply email, message, app version, browser/device info, and last visible auth error.
 - Support tickets are stored privately in Supabase through the new pocket64-support Edge Function.
 - Adds honeypot + server-side daily rate limits to reduce spam.
-- Adds direct-email fallback to pocket64app@gmail.com if the support function is unavailable.
+- Keeps support contact private; failed submissions show a retry message instead of exposing a direct email link.
 
 ADD / EDIT CAR CLEANUP
 - Removes the Options heading.
