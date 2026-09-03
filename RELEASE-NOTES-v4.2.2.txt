@@ -1,0 +1,6 @@
+Pocket 64 v4.2.2
+
+- Updated the app authentication return URL to https://pocket64.app/.
+- New-account verification, verification resend, and password-reset email links now return to the Pocket 64 custom domain.
+- No database, layout, feature, or support-flow changes.
+- Bumped app/service-worker cache version to 4.2.2 to prevent stale 4.2.1 auth redirects.
