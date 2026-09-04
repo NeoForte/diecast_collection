@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.2.2-photofix2'
+const CACHE = 'pocket64-v4.2.2-photofix3'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
@@ -67,7 +67,7 @@ async function patchedAppResponse(request) {
     button.id = 'photo1-remove'
     button.className = 'photo-main-remove hidden'
     button.type = 'button'
-    button.textContent = '🗑'
+    button.textContent = '×'
     button.setAttribute('aria-label', 'Delete main photo')
     button.title = 'Delete main photo'
     picker.append(button)
@@ -78,12 +78,12 @@ async function patchedAppResponse(request) {
 const photoFixStyle = document.createElement('style')
 photoFixStyle.textContent = \`
   .photo-main-remove {
-    position:absolute; right:58px; top:12px; z-index:8;
+    position:absolute; right:58px; top:12px; z-index:20;
     width:40px; height:40px; padding:0;
     display:grid; place-items:center;
     border:1px solid rgba(255,120,120,.72); border-radius:999px;
-    background:rgba(20,4,4,.9); color:#ffb4b4;
-    font-size:18px; line-height:1; font-weight:900;
+    background:rgba(20,4,4,.92); color:#ffb4b4;
+    font-size:27px; line-height:1; font-weight:700;
     backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,.45);
   }
   .photo-viewer-close {
@@ -99,6 +99,15 @@ document.head.append(photoFixStyle)
 function syncMainPhotoControls(present) {
   $('photo1-replace')?.classList.toggle('hidden', !present)
   mainPhotoRemoveButton?.classList.toggle('hidden', !present)
+}
+
+const syncMainDeleteFromPreview = () => {
+  const present = Boolean(photoPreview?.src) && !photoPreview?.classList.contains('hidden')
+  mainPhotoRemoveButton?.classList.toggle('hidden', !present)
+}
+if (photoPreview) {
+  new MutationObserver(syncMainDeleteFromPreview).observe(photoPreview, { attributes:true, attributeFilter:['src','class'] })
+  queueMicrotask(syncMainDeleteFromPreview)
 }`
     )
     source = source.replace(
@@ -140,10 +149,6 @@ mainPhotoRemoveButton?.addEventListener('click', (event) => {
   setPhotoPreview(null)
   editorMessage.textContent = removePhoto1 ? 'Main photo will be deleted when you Save.' : ''
 })`
-    )
-    source = source.replace(
-      "  if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder).then(() => syncMainPhotoControls(true))",
-      "  if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder).then(() => { syncMainPhotoControls(true); mainPhotoRemoveButton?.classList.remove('hidden') })"
     )
     source = source.replace(
       "$('photo-viewer-close')?.addEventListener('click', closePhotoViewer)",
