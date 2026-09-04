@@ -1,12 +1,12 @@
-const CACHE = 'pocket64-v4.2.2-photofix4'
+const CACHE = 'pocket64-v4.2.3-setedit1'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=4.2.2',
-  './showcase-sync.js?v=4.2.2',
-  './manifest.webmanifest?v=4.2.2',
-  './jszip.min.js?v=4.2.2',
+  './styles.css?v=4.2.3',
+  './showcase-sync.js?v=4.2.3',
+  './manifest.webmanifest?v=4.2.3',
+  './jszip.min.js?v=4.2.3',
   './black-brick-wall.svg',
   './icon-192.png',
   './icon-512.png',
@@ -93,6 +93,15 @@ photoFixStyle.textContent = \`
     z-index:1005 !important; font-size:30px !important; line-height:1 !important;
     display:grid !important; place-items:center !important;
   }
+  .set-direct-edit-button {
+    width:auto !important;
+    min-width:48px !important;
+    padding:0 10px !important;
+    border-radius:12px !important;
+    font-size:11px !important;
+    font-weight:800 !important;
+    letter-spacing:.05em !important;
+  }
 \`
 document.head.append(photoFixStyle)
 
@@ -155,6 +164,27 @@ mainPhotoRemoveButton?.addEventListener('click', (event) => {
       `$('photo-viewer-close')?.addEventListener('click', closePhotoViewer)
 $('photo-viewer')?.addEventListener('click', (event) => { if (event.target === $('photo-viewer')) closePhotoViewer() })`
     )
+    source = source.replace(
+      "$('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))",
+      `const setDirectEditButton = (() => {
+  const actions = document.querySelector('.set-detail-actions')
+  if (!actions) return null
+  let button = $('set-direct-edit-button')
+  if (!button) {
+    button = document.createElement('button')
+    button.id = 'set-direct-edit-button'
+    button.className = 'sets-icon-button set-direct-edit-button'
+    button.type = 'button'
+    button.textContent = 'EDIT'
+    button.setAttribute('aria-label', 'Edit set')
+    button.title = 'Edit set'
+    actions.prepend(button)
+  }
+  return button
+})()
+setDirectEditButton?.addEventListener('click', editOpenSet)
+$('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))`
+    )
 
     const headers = new Headers(response.headers)
     headers.set('content-type', 'text/javascript; charset=utf-8')
@@ -181,8 +211,8 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.endsWith('/showcase-sync.js')) {
     event.respondWith(
-      fetch('./showcase-sync.js?v=4.2.2', { cache:'no-store' })
-        .catch(() => caches.match('./showcase-sync.js?v=4.2.2'))
+      fetch('./showcase-sync.js?v=4.2.3', { cache:'no-store' })
+        .catch(() => caches.match('./showcase-sync.js?v=4.2.3'))
     )
     return
   }
