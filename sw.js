@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.2.3-setedit4'
+const CACHE = 'pocket64-v4.2.3-setedit5'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
@@ -33,6 +33,26 @@ self.addEventListener('activate', (event) => {
 })
 
 
+async function patchedIndexResponse(request) {
+  try {
+    const response = await fetch(request, { cache:'no-store' })
+    if (!response.ok) return response
+    let html = await response.text()
+    html = html.replaceAll('Version 4.2.2', 'Version 4.2.3')
+    html = html.replaceAll('?v=4.2.2', '?v=4.2.3')
+    const headers = new Headers(response.headers)
+    headers.set('content-type', 'text/html; charset=utf-8')
+    headers.delete('content-length')
+    return new Response(html, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    })
+  } catch {
+    return caches.match('./index.html') || caches.match('./')
+  }
+}
+
 async function patchedAppResponse(request) {
   try {
     const response = await fetch(request, { cache:'no-store' })
@@ -47,6 +67,20 @@ async function patchedAppResponse(request) {
     source = source.replace(
       "navigator.serviceWorker.register('./sw.js?v=4.2.2', { updateViaCache:'none' })",
       "navigator.serviceWorker.register('./sw.js?v=4.2.3', { updateViaCache:'none' })"
+    )
+
+    source = source.replace(
+      "function editOpenSet() {",
+      `function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function editOpenSet() {`
     )
 
     source = source.replace(
@@ -204,6 +238,11 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
   const url = new URL(event.request.url)
+
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('/index.html')) {
+    event.respondWith(patchedIndexResponse(event.request))
+    return
+  }
 
   if (url.pathname.endsWith('/app.js')) {
     event.respondWith(patchedAppResponse(event.request))
