@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.2.2-photofix3'
+const CACHE = 'pocket64-v4.2.2-photofix4'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
@@ -67,7 +67,7 @@ async function patchedAppResponse(request) {
     button.id = 'photo1-remove'
     button.className = 'photo-main-remove hidden'
     button.type = 'button'
-    button.textContent = '×'
+    button.textContent = '🗑'
     button.setAttribute('aria-label', 'Delete main photo')
     button.title = 'Delete main photo'
     picker.append(button)
@@ -83,7 +83,7 @@ photoFixStyle.textContent = \`
     display:grid; place-items:center;
     border:1px solid rgba(255,120,120,.72); border-radius:999px;
     background:rgba(20,4,4,.92); color:#ffb4b4;
-    font-size:27px; line-height:1; font-weight:700;
+    font-size:18px; line-height:1; font-weight:700;
     backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,.45);
   }
   .photo-viewer-close {
