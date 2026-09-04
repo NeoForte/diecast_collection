@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.2.3-setedit2'
+const CACHE = 'pocket64-v4.2.3-setedit4'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
@@ -33,32 +33,21 @@ self.addEventListener('activate', (event) => {
 })
 
 
-async function patchedIndexResponse(request) {
-  try {
-    const response = await fetch(request, { cache:'no-store' })
-    if (!response.ok) return response
-    let html = await response.text()
-    html = html.replaceAll('Version 4.2.2', 'Version 4.2.3')
-    html = html.replaceAll('?v=4.2.2', '?v=4.2.3')
-    const headers = new Headers(response.headers)
-    headers.set('content-type', 'text/html; charset=utf-8')
-    headers.delete('content-length')
-    return new Response(html, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    })
-  } catch {
-    return caches.match('./index.html') || caches.match('./')
-  }
-}
-
 async function patchedAppResponse(request) {
   try {
     const response = await fetch(request, { cache:'no-store' })
     if (!response.ok) return response
 
     let source = await response.text()
+
+    source = source.replace(
+      "const APP_VERSION = '4.2.2'",
+      "const APP_VERSION = '4.2.3'"
+    )
+    source = source.replace(
+      "navigator.serviceWorker.register('./sw.js?v=4.2.2', { updateViaCache:'none' })",
+      "navigator.serviceWorker.register('./sw.js?v=4.2.3', { updateViaCache:'none' })"
+    )
 
     source = source.replace(
       "const isVerificationReturn = startupUrl.searchParams.get('verified') === '1'",
@@ -114,14 +103,22 @@ photoFixStyle.textContent = \`
     z-index:1005 !important; font-size:30px !important; line-height:1 !important;
     display:grid !important; place-items:center !important;
   }
-  .set-direct-edit-button {
-    width:auto !important;
+  .set-detail-actions {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    position:relative !important;
+  }
+  .set-more-button {
+    width:48px !important;
+    height:48px !important;
     min-width:48px !important;
-    padding:0 10px !important;
-    border-radius:12px !important;
-    font-size:11px !important;
-    font-weight:800 !important;
-    letter-spacing:.05em !important;
+  }
+  .set-more-menu {
+    position:absolute !important;
+    right:0 !important;
+    top:calc(100% + 8px) !important;
+    z-index:50 !important;
   }
 \`
 document.head.append(photoFixStyle)
@@ -187,24 +184,7 @@ $('photo-viewer')?.addEventListener('click', (event) => { if (event.target === $
     )
     source = source.replace(
       "$('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))",
-      `const setDirectEditButton = (() => {
-  const actions = document.querySelector('.set-detail-actions')
-  if (!actions) return null
-  let button = $('set-direct-edit-button')
-  if (!button) {
-    button = document.createElement('button')
-    button.id = 'set-direct-edit-button'
-    button.className = 'sets-icon-button set-direct-edit-button'
-    button.type = 'button'
-    button.textContent = 'EDIT'
-    button.setAttribute('aria-label', 'Edit set')
-    button.title = 'Edit set'
-    actions.prepend(button)
-  }
-  return button
-})()
-setDirectEditButton?.addEventListener('click', editOpenSet)
-$('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))`
+      `$('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))`
     )
 
     const headers = new Headers(response.headers)
@@ -224,11 +204,6 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
   const url = new URL(event.request.url)
-
-  if (event.request.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
-    event.respondWith(patchedIndexResponse(event.request))
-    return
-  }
 
   if (url.pathname.endsWith('/app.js')) {
     event.respondWith(patchedAppResponse(event.request))
