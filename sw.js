@@ -1,10 +1,9 @@
-const CACHE = 'pocket64-v4.2.2'
+const CACHE = 'pocket64-v4.2.2-authfix1'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
   './index.html',
   './styles.css?v=4.2.2',
-  './app.js?v=4.2.2',
   './showcase-sync.js?v=4.2.2',
   './manifest.webmanifest?v=4.2.2',
   './jszip.min.js?v=4.2.2',
@@ -33,10 +32,43 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+async function patchedAppResponse(request) {
+  try {
+    const response = await fetch(request, { cache:'no-store' })
+    if (!response.ok) return response
+
+    let source = await response.text()
+    source = source.replace(
+      "const isVerificationReturn = startupUrl.searchParams.get('verified') === '1'",
+      "let isVerificationReturn = startupUrl.searchParams.get('verified') === '1'"
+    )
+    source = source.replace(
+      "clearAuthRedirectUrl()\n  if (verifiedEmail)",
+      "clearAuthRedirectUrl()\n  isVerificationReturn = false\n  if (verifiedEmail)"
+    )
+
+    const headers = new Headers(response.headers)
+    headers.set('content-type', 'text/javascript; charset=utf-8')
+    headers.delete('content-length')
+    return new Response(source, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    })
+  } catch {
+    return caches.match(request)
+  }
+}
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
   const url = new URL(event.request.url)
+
+  if (url.pathname.endsWith('/app.js')) {
+    event.respondWith(patchedAppResponse(event.request))
+    return
+  }
 
   if (url.pathname.endsWith('/showcase-sync.js')) {
     event.respondWith(
