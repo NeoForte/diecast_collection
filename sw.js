@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.2.3-setedit5'
+const CACHE = 'pocket64-v4.2.3-setedit6'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
@@ -64,6 +64,17 @@ async function patchedAppResponse(request) {
       "const APP_VERSION = '4.2.2'",
       "const APP_VERSION = '4.2.3'"
     )
+    source = source.replace(
+      "queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))",
+      "queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = 'Version 4.2.3' }))"
+    )
+    source += `
+setTimeout(() => {
+  document.querySelectorAll('.version-badge').forEach((el) => {
+    el.textContent = 'Version 4.2.3'
+  })
+}, 0)
+`
     source = source.replace(
       "navigator.serviceWorker.register('./sw.js?v=4.2.2', { updateViaCache:'none' })",
       "navigator.serviceWorker.register('./sw.js?v=4.2.3', { updateViaCache:'none' })"
