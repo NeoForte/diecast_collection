@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.2.2-photofix1'
+const CACHE = 'pocket64-v4.2.2-photofix2'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
@@ -39,7 +39,6 @@ async function patchedAppResponse(request) {
 
     let source = await response.text()
 
-    // v4.2.2 auth return hotfix.
     source = source.replace(
       "const isVerificationReturn = startupUrl.searchParams.get('verified') === '1'",
       "let isVerificationReturn = startupUrl.searchParams.get('verified') === '1'"
@@ -49,7 +48,6 @@ async function patchedAppResponse(request) {
       "clearAuthRedirectUrl()\n  isVerificationReturn = false\n  if (verifiedEmail)"
     )
 
-    // v4.2.2 photo fixes: allow staged deletion of the main photo.
     source = source.replace(
       "let removePhoto2 = false\nlet removePhoto3 = false",
       "let removePhoto1 = false\nlet removePhoto2 = false\nlet removePhoto3 = false"
@@ -69,8 +67,9 @@ async function patchedAppResponse(request) {
     button.id = 'photo1-remove'
     button.className = 'photo-main-remove hidden'
     button.type = 'button'
-    button.textContent = 'Delete Main Photo'
+    button.textContent = '🗑'
     button.setAttribute('aria-label', 'Delete main photo')
+    button.title = 'Delete main photo'
     picker.append(button)
   }
   return button
@@ -79,11 +78,13 @@ async function patchedAppResponse(request) {
 const photoFixStyle = document.createElement('style')
 photoFixStyle.textContent = \`
   .photo-main-remove {
-    position:absolute; left:12px; bottom:12px; z-index:6;
-    border:1px solid rgba(255,120,120,.65); border-radius:999px;
-    padding:8px 12px; background:rgba(20,4,4,.88); color:#ffb4b4;
-    font-size:12px; font-weight:850; letter-spacing:.01em;
-    backdrop-filter:blur(8px);
+    position:absolute; right:58px; top:12px; z-index:8;
+    width:40px; height:40px; padding:0;
+    display:grid; place-items:center;
+    border:1px solid rgba(255,120,120,.72); border-radius:999px;
+    background:rgba(20,4,4,.9); color:#ffb4b4;
+    font-size:18px; line-height:1; font-weight:900;
+    backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,.45);
   }
   .photo-viewer-close {
     top:calc(env(safe-area-inset-top) + 16px) !important;
@@ -139,6 +140,10 @@ mainPhotoRemoveButton?.addEventListener('click', (event) => {
   setPhotoPreview(null)
   editorMessage.textContent = removePhoto1 ? 'Main photo will be deleted when you Save.' : ''
 })`
+    )
+    source = source.replace(
+      "  if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder).then(() => syncMainPhotoControls(true))",
+      "  if (car?.photo_path) loadPrivatePhoto(car.photo_path, photoPreview, photoPlaceholder).then(() => { syncMainPhotoControls(true); mainPhotoRemoveButton?.classList.remove('hidden') })"
     )
     source = source.replace(
       "$('photo-viewer-close')?.addEventListener('click', closePhotoViewer)",
