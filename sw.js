@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-v4.2.3-setedit6'
+const CACHE = 'pocket64-v4.2.3-setedit7'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
@@ -61,9 +61,10 @@ async function patchedAppResponse(request) {
     let source = await response.text()
 
     source = source.replace(
-      "const APP_VERSION = '4.2.2'",
+      /const\s+APP_VERSION\s*=\s*['"]4\.2\.2['"]/,
       "const APP_VERSION = '4.2.3'"
     )
+    source = source.replaceAll('Version 4.2.2', 'Version 4.2.3')
     source = source.replace(
       "queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))",
       "queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = 'Version 4.2.3' }))"
