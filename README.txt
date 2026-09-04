@@ -1,14 +1,20 @@
-Pocket 64 v4.2.3 — Version Race Fix
+Pocket 64 v5.0.0
 
-WHAT THIS FIXES
-- Settings could briefly show 4.2.3, then flip back to 4.2.2.
-- Cause: index.html showed 4.2.3 first, then app.js overwrote it using its old APP_VERSION value.
-- This build replaces the APP_VERSION value in served app.js using a robust regex rather than an exact text match.
-- Also replaces any remaining literal "Version 4.2.2" strings in served app.js.
-- Set edit and the clean single ••• menu are unchanged.
+CHANGES
+- Restores SAVE at the top-right of the Add/Edit Car header beside ADD CAR / EDIT CAR.
+- Keeps the bottom Save button as-is.
+- Keeps the clean single ••• Set menu with EDIT SET and DELETE SET.
+- Keeps the working Set name / total-car editing fix.
+- Moves the displayed app version to 5.0.0.
+- Adds a v5 version guard so older app code cannot flash the version back to 4.2.2/4.2.3 after the Settings page loads.
+- Uses a fresh v5.0.0 service-worker cache.
 
 INSTALL
-Replace sw.js with this one.
-Fully close Pocket 64 and reopen it.
-Refresh Settings once.
-The version should remain 4.2.3 instead of flashing back to 4.2.2.
+1. Replace your existing sw.js with the sw.js in this ZIP.
+2. Fully close Pocket 64.
+3. Reopen it.
+4. Refresh once if needed.
+5. Check Settings: Version 5.0.0 should remain visible without flipping.
+6. Open Add Car: SAVE should be back at the top-right.
+
+No database changes are required.
