@@ -1,12 +1,12 @@
-const CACHE = 'pocket64-v5.0.0'
+const CACHE = 'pocket64-v4.2.3-recovery1'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=5.0.0',
-  './showcase-sync.js?v=5.0.0',
-  './manifest.webmanifest?v=5.0.0',
-  './jszip.min.js?v=5.0.0',
+  './styles.css?v=4.2.3',
+  './showcase-sync.js?v=4.2.3',
+  './manifest.webmanifest?v=4.2.3',
+  './jszip.min.js?v=4.2.3',
   './black-brick-wall.svg',
   './icon-192.png',
   './icon-512.png',
@@ -38,52 +38,8 @@ async function patchedIndexResponse(request) {
     const response = await fetch(request, { cache:'no-store' })
     if (!response.ok) return response
     let html = await response.text()
-    html = html.replaceAll('Version 4.2.2', 'Version 5.0.0')
-    html = html.replaceAll('Version 4.2.3', 'Version 5.0.0')
-    html = html.replaceAll('?v=4.2.2', '?v=5.0.0')
-    html = html.replaceAll('?v=4.2.3', '?v=5.0.0')
-
-    // Restore the original top-right SAVE control on the Add/Edit Car header.
-    html = html.replace(
-      '<button id="save-button" class="text-button strong editor-header-save hidden" type="button" tabindex="-1" aria-hidden="true">Save</button>',
-      '<button id="save-button" class="text-button strong editor-header-save" type="button">Save</button>'
-    )
-
-    // v5 guard: keep the displayed version and top SAVE correct even if older app.js
-    // finishes a moment later and tries to restore an older UI state/version label.
-    const v5Guard = `<script>
-(() => {
-  const VERSION_TEXT = 'Version 5.0.0'
-  const enforceV5 = () => {
-    document.querySelectorAll('.version-badge').forEach((el) => {
-      if (el.textContent !== VERSION_TEXT) el.textContent = VERSION_TEXT
-    })
-    const save = document.getElementById('save-button')
-    if (save) {
-      save.classList.remove('hidden')
-      save.removeAttribute('aria-hidden')
-      save.removeAttribute('tabindex')
-    }
-  }
-  const start = () => {
-    enforceV5()
-    const observer = new MutationObserver(enforceV5)
-    observer.observe(document.documentElement, {
-      subtree:true,
-      childList:true,
-      characterData:true,
-      attributes:true,
-      attributeFilter:['class','aria-hidden','tabindex']
-    })
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start, { once:true })
-  } else {
-    start()
-  }
-})()
-</script>`
-    html = html.replace('</body>', `${v5Guard}\n</body>`)
+    html = html.replaceAll('Version 4.2.2', 'Version 4.2.3')
+    html = html.replaceAll('?v=4.2.2', '?v=4.2.3')
     const headers = new Headers(response.headers)
     headers.set('content-type', 'text/html; charset=utf-8')
     headers.delete('content-length')
@@ -105,31 +61,24 @@ async function patchedAppResponse(request) {
     let source = await response.text()
 
     source = source.replace(
-      /const\s+APP_VERSION\s*=\s*['"](?:4\.2\.2|4\.2\.3)['"]/,
-      "const APP_VERSION = '5.0.0'"
+      /const\s+APP_VERSION\s*=\s*['"]4\.2\.2['"]/,
+      "const APP_VERSION = '4.2.3'"
     )
-    source = source.replaceAll('Version 4.2.2', 'Version 5.0.0')
-    source = source.replaceAll('Version 4.2.3', 'Version 5.0.0')
+    source = source.replaceAll('Version 4.2.2', 'Version 4.2.3')
     source = source.replace(
       "queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${APP_VERSION}` }))",
-      "queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = 'Version 5.0.0' }))"
+      "queueMicrotask(() => document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = 'Version 4.2.3' }))"
     )
     source += `
 setTimeout(() => {
   document.querySelectorAll('.version-badge').forEach((el) => {
-    el.textContent = 'Version 5.0.0'
+    el.textContent = 'Version 4.2.3'
   })
-  const topSave = document.getElementById('save-button')
-  if (topSave) {
-    topSave.classList.remove('hidden')
-    topSave.removeAttribute('aria-hidden')
-    topSave.removeAttribute('tabindex')
-  }
 }, 0)
 `
     source = source.replace(
-      /navigator\.serviceWorker\.register\('\.\/sw\.js\?v=(?:4\.2\.2|4\.2\.3)'[^\n]*\)/,
-      "navigator.serviceWorker.register('./sw.js?v=5.0.0', { updateViaCache:'none' })"
+      "navigator.serviceWorker.register('./sw.js?v=4.2.2', { updateViaCache:'none' })",
+      "navigator.serviceWorker.register('./sw.js?v=4.2.3', { updateViaCache:'none' })"
     )
 
     source = source.replace(
@@ -314,8 +263,8 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.endsWith('/showcase-sync.js')) {
     event.respondWith(
-      fetch('./showcase-sync.js?v=5.0.0', { cache:'no-store' })
-        .catch(() => caches.match('./showcase-sync.js?v=5.0.0'))
+      fetch('./showcase-sync.js?v=4.2.3', { cache:'no-store' })
+        .catch(() => caches.match('./showcase-sync.js?v=4.2.3'))
     )
     return
   }
