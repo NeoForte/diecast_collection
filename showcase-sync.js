@@ -481,6 +481,114 @@
     }
   }
 
+
+  async function refreshSetsFromCloudBeforeBackup() {
+    const client = await helperSupabase()
+    const { data:{ session }, error:sessionError } = await client.auth.getSession()
+    if (sessionError) throw sessionError
+    const userId = session?.user?.id
+    if (!userId) throw new Error('Your session expired. Sign in again and retry.')
+
+    const [
+      { data:setRows, error:setError },
+      { data:assignmentRows, error:assignmentError },
+    ] = await Promise.all([
+      client
+        .from('pocket64_sets')
+        .select('id,year,name,total')
+        .eq('user_id', userId)
+        .order('year', { ascending:false })
+        .order('name', { ascending:true }),
+      client
+        .from('pocket64_set_assignments')
+        .select('car_id,set_id,position')
+        .eq('user_id', userId),
+    ])
+    if (setError) throw setError
+    if (assignmentError) throw assignmentError
+
+    const sets = (setRows || []).map((row) => ({
+      id:String(row.id),
+      year:String(row.year ?? '').replace(/[^0-9]/g,'').slice(0,4),
+      name:String(row.name || '').trim().toUpperCase(),
+      total:Math.max(1, Math.floor(Number(row.total) || 1)),
+    }))
+
+    const validSetIds = new Set(sets.map((set) => set.id))
+    const assignments = {}
+    for (const row of assignmentRows || []) {
+      const carId = String(row.car_id || '')
+      const setId = String(row.set_id || '')
+      if (!carId || !setId || !validSetIds.has(setId)) continue
+      assignments[carId] = {
+        setId,
+        position:Math.max(1, Math.floor(Number(row.position) || 1)),
+      }
+    }
+
+    const state = { version:1, sets, assignments }
+    nativeStorageSetItem.call(
+      localStorage,
+      `${SETS_STORAGE_PREFIX}-${userId}`,
+      JSON.stringify(state)
+    )
+    nativeStorageSetItem.call(
+      localStorage,
+      `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`,
+      '1'
+    )
+    return {
+      sets:sets.length,
+      assignments:Object.keys(assignments).length,
+    }
+  }
+
+  function installCloudBackedBackup() {
+    if (document.documentElement.dataset.p64CloudBackedBackup === '1') return
+    document.documentElement.dataset.p64CloudBackedBackup = '1'
+
+    let bypass = false
+
+    document.addEventListener('click', async (event) => {
+      const button = event.target?.closest?.('#backup-button')
+      if (!button) return
+
+      if (bypass) {
+        bypass = false
+        return
+      }
+
+      event.preventDefault()
+      event.stopImmediatePropagation()
+
+      const originalText = button.textContent || 'Backup'
+      button.disabled = true
+      button.textContent = 'Syncing Sets…'
+
+      try {
+        const counts = await refreshSetsFromCloudBeforeBackup()
+        console.info(
+          `Pocket 64 v5.1.0 backup preflight: ${counts.sets} Sets / ${counts.assignments} assignments loaded from Supabase`
+        )
+
+        button.disabled = false
+        button.textContent = originalText
+
+        bypass = true
+        button.dispatchEvent(new MouseEvent('click', {
+          bubbles:true,
+          cancelable:true,
+          view:window,
+        }))
+      } catch (error) {
+        console.error('Pocket 64 v5.1.0 backup preflight failed', error)
+        button.disabled = false
+        button.textContent = originalText
+        nativeAlert(`Backup could not start: ${error.message || error}`)
+      }
+    }, true)
+  }
+
   function installOwnedRestore() {
     if (document.documentElement.dataset.p64OwnedRestore === '1') return
     document.documentElement.dataset.p64OwnedRestore = '1'
@@ -785,6 +893,7 @@
     updateVisibleVersion()
     installRestoreRetryGuard()
     installOwnedRestore()
+    installCloudBackedBackup()
     showAccountEmail()
   }
 

@@ -1,43 +1,33 @@
-Pocket 64 v5.0.9 — Deterministic Restore
+Pocket 64 v5.1.0 — Cloud-backed Sets in Backup
 
-This revision removes the restore timing race.
+WHAT CHANGED
 
-IMPORTANT CHANGE
-v5.0.9's restore handler owns the entire restore process from the moment the backup file is selected.
-The normal app.js restore event is stopped, so there are no longer two restore paths competing with each other.
+Backup now refreshes Sets and Set assignments directly from Supabase BEFORE the normal ZIP export begins.
 
-RESTORE ORDER
-1. Read/validate backup
-2. Warn if the garage is not empty
-3. Restore car rows
-4. Restore every embedded photo
-5. Build old-car-ID -> restored-car-ID map
-6. Build old-Set-ID -> restored-Set-ID map
-7. Replace Sets exactly from backup
-8. Restore exact Set assignments
-9. Verify restored cars/Sets/assignments
-10. Reload once
-11. Let normal startup finish
-12. Re-assert the exact backup Set state once
-13. Show ONE final confirmation
+WHY
+The previous backup path used the browser's local Sets cache. If that local cache was stale or empty, a perfectly good account with cloud Sets could create a backup that reported 0 Sets.
 
-SUCCESS MESSAGE
-Restore complete ✓
-[cars] · [photos] · [Sets] · [Set assignments]
-Backup restored and verified.
+v5.1.0 makes Supabase the source of truth for Sets at backup time.
+
+FLOW
+1. Tap Backup.
+2. Pocket 64 reads the signed-in user's Sets from pocket64_sets.
+3. Pocket 64 reads Set assignments from pocket64_set_assignments.
+4. The authoritative cloud state is written into the app's local Sets state.
+5. The normal self-contained ZIP backup runs.
+6. backup.json therefore receives the cloud-backed Sets/assignments.
 
 RETAINED
+- v5.0.9 deterministic restore
+- non-empty garage restore warning
 - Help & FAQs
 - Clear Collection / Danger Zone
-- Set years collapsed by default
-- Non-empty garage restore warning
+- collapsed Set years
 
 TEST
-1. Deploy and confirm Version 5.0.9.
-2. Create a fresh backup from MAIN.
-3. Clear DUMMY.
-4. Restore the fresh MAIN backup into DUMMY.
-5. Expect one automatic reload and then ONE final restore confirmation.
-6. Check Sets contain cars.
-7. Check Set icons appear on the correct collection cards.
-8. Sign out/in once and verify persistence.
+1. Deploy and confirm Version 5.1.0.
+2. On MAIN, create a fresh full backup.
+3. Restore that ZIP on a truly empty dummy account.
+4. The restore confirmation should show the expected non-zero Set count.
+5. After restore, Set pages should contain assigned cars and card Set icons should appear.
+6. Then compare MAIN vs DUMMY in Supabase.
