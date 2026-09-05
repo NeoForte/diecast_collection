@@ -1,0 +1,14 @@
+Pocket 64 v5.0.0
+
+SOURCE-LEVEL RELEASE
+- Restored SAVE at the top-right of Add/Edit Car beside the page title.
+- APP_VERSION is now 5.0.0 in app.js itself.
+- Version badge and asset references are 5.0.0 in index.html itself.
+- Service worker is now a clean v5 cache worker; it no longer rewrites HTML or JavaScript source.
+- Preserved/baked in the working Set Edit fix and clean ••• Set menu.
+- Preserved/baked in main-photo delete and photo-viewer fixes.
+- Preserved/baked in the email-verification return fix.
+- No database changes.
+
+IMPORTANT AFTER UPLOAD
+The currently-installed 4.2.3 recovery worker may control the FIRST page load after these files are uploaded. It can briefly display 4.2.3 during that one handoff. Fully close Pocket 64/Safari/Chrome and reopen it after the new worker installs. From then on the app source and worker both report 5.0.0; there is no 4.2.2 source value left to overwrite it.

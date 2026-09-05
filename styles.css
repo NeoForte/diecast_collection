@@ -5620,7 +5620,7 @@ body.photo-viewer-open{overflow:hidden}
 }
 .editor-bottom-actions.add-mode #bottom-save-button { flex:1 1 100% !important; }
 .editor-bottom-actions.add-mode #delete-button { display:none !important; }
-.editor-header-save { display:none !important; }
+.editor-header-save { display:inline-flex !important; align-items:center; justify-content:center; }
 
 @media (max-width:430px) {
   .auth-card { padding:22px; border-radius:20px; }
@@ -5671,3 +5671,39 @@ html[data-theme="light"] .p64-modal-overlay { background:rgba(0,0,0,.42); }
 @media (max-width:390px) { .p64-modal-card { padding:19px; } }
 
 /* Pocket 64 v4.2.2 — streamlined Settings before domain migration */
+
+
+/* Pocket 64 v5.0.0 — source-baked fixes formerly supplied by service-worker hotfixes */
+.photo-main-remove {
+  position:absolute; right:58px; top:12px; z-index:20;
+  width:40px; height:40px; padding:0;
+  display:grid; place-items:center;
+  border:1px solid rgba(255,120,120,.72); border-radius:999px;
+  background:rgba(20,4,4,.92); color:#ffb4b4;
+  font-size:18px; line-height:1; font-weight:700;
+  backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,.45);
+}
+.photo-viewer-close {
+  top:calc(env(safe-area-inset-top) + 16px) !important;
+  right:max(16px, env(safe-area-inset-right)) !important;
+  width:48px !important; height:48px !important; min-width:48px !important;
+  z-index:1005 !important; font-size:30px !important; line-height:1 !important;
+  display:grid !important; place-items:center !important;
+}
+.set-detail-actions {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  position:relative !important;
+}
+.set-more-button {
+  width:48px !important;
+  height:48px !important;
+  min-width:48px !important;
+}
+.set-more-menu {
+  position:absolute !important;
+  right:0 !important;
+  top:calc(100% + 8px) !important;
+  z-index:50 !important;
+}

@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=4.2.2" />
+  <link rel="manifest" href="manifest.webmanifest?v=5.0.0" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=4.2.2" />
+  <link rel="stylesheet" href="styles.css?v=5.0.0" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -283,7 +283,7 @@
                 <strong>About</strong>
                 <span>Your diecast collection, in your pocket.</span>
               </div>
-              <span class="version-badge">Version 4.2.2</span>
+              <span class="version-badge">Version 5.0.0</span>
             </div>
           </div>
         </section>
@@ -310,7 +310,7 @@
               <button id="share-button" class="text-button share-button hidden" type="button">Share</button>
             </div>
             <h2 id="editor-title">Add Car</h2>
-            <button id="save-button" class="text-button strong editor-header-save hidden" type="button" tabindex="-1" aria-hidden="true">Save</button>
+            <button id="save-button" class="text-button strong editor-header-save" type="button">Save</button>
           </div>
 
           <div class="photo-picker">
@@ -320,6 +320,7 @@
               <span>ADD PHOTO</span>
             </div>
             <button id="photo1-replace" class="photo-replace-control hidden" type="button" aria-label="Replace main photo" title="Replace main photo">↻</button>
+            <button id="photo1-remove" class="photo-main-remove hidden" type="button" aria-label="Delete main photo" title="Delete main photo">🗑</button>
             <input id="photo-input" class="hidden" type="file" accept="image/*" />
           </div>
           <div class="extra-photo-row" aria-label="Optional extra photos">
@@ -550,8 +551,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=4.2.2"></script>
-  <script type="module" src="app.js?v=4.2.2"></script>
-  <script src="showcase-sync.js?v=4.2.2"></script>
+  <script src="jszip.min.js?v=5.0.0"></script>
+  <script type="module" src="app.js?v=5.0.0"></script>
+  <script src="showcase-sync.js?v=5.0.0"></script>
 </body>
 </html>

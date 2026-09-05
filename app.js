@@ -10,12 +10,12 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '4.2.2'
+const APP_VERSION = '5.0.0'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
 const startupUrl = new URL(window.location.href)
-const isVerificationReturn = startupUrl.searchParams.get('verified') === '1'
+let isVerificationReturn = startupUrl.searchParams.get('verified') === '1'
 const isPasswordRecoveryReturn = startupUrl.searchParams.get('reset') === '1'
 let authFlowPanel = 'signin-panel'
 let authSupportReturnPanel = 'signin-panel'
@@ -274,6 +274,7 @@ let editingCar = null
 let selectedPhotoFile = null
 let selectedPhotoFile2 = null
 let selectedPhotoFile3 = null
+let removePhoto1 = false
 let removePhoto2 = false
 let removePhoto3 = false
 let previewObjectUrl = null
@@ -1068,6 +1069,15 @@ function createSetModal(defaultYear = '') {
   }, 50)
 }
 
+function escapeSetHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function editOpenSet() {
   if (!openSetId) return
   const state = readSetsState()
@@ -1084,7 +1094,7 @@ function editOpenSet() {
     <form class="set-modal" id="set-edit-form">
       <div class="set-modal-head"><strong>EDIT SET</strong><button type="button" id="set-modal-close" aria-label="Close">×</button></div>
       <label>RELEASE YEAR<input id="set-edit-year" type="text" inputmode="numeric" maxlength="4" value="${set.year}"></label>
-      <label>SET NAME<input id="set-edit-name" type="text" autocomplete="off" value="${escapeHtml(set.name)}"></label>
+      <label>SET NAME<input id="set-edit-name" type="text" autocomplete="off" value="${escapeSetHtml(set.name)}"></label>
       <label>CARS IN SET<input id="set-edit-total" type="number" inputmode="numeric" min="1" max="99" value="${set.total}"></label>
       <button class="set-modal-create" type="submit">SAVE CHANGES</button>
     </form>`
@@ -1922,6 +1932,7 @@ function showEditor(car = null, options = {}) {
   selectedPhotoFile = null
   selectedPhotoFile2 = null
   selectedPhotoFile3 = null
+  removePhoto1 = false
   removePhoto2 = false
   removePhoto3 = false
   editorMessage.textContent = ''
@@ -1995,6 +2006,7 @@ function fillEditor(car) {
 
 function syncMainPhotoControls(present) {
   $('photo1-replace')?.classList.toggle('hidden', !present)
+  $('photo1-remove')?.classList.toggle('hidden', !present)
 }
 
 function setPhotoPreview(src) {
@@ -3249,7 +3261,25 @@ async function saveCar() {
       car = data
     }
 
-    if (selectedPhotoFile) {
+    if (removePhoto1 && editingCar?.photo_path && selectedPhotoFile == null) {
+      const oldPhotoPath = editingCar.photo_path
+      const nextUpdatedAt = new Date().toISOString()
+      let removeQuery = supabase
+        .from('cars')
+        .update({ photo_path:null, updated_at:nextUpdatedAt })
+        .eq('id', car.id)
+        .eq('user_id', session.user.id)
+      if (car.updated_at) removeQuery = removeQuery.eq('updated_at', car.updated_at)
+      const { data:photoRemoveUpdate, error:photoRemoveError } = await removeQuery.select('id,updated_at').maybeSingle()
+      if (photoRemoveError) throw photoRemoveError
+      if (!photoRemoveUpdate) throw new Error('This car changed while its main photo was being removed. Reopen the car and try again.')
+      car = { ...car, photo_path:null, updated_at:photoRemoveUpdate.updated_at }
+      const { error:removeMainStorageError } = await supabase.storage.from('car-photos').remove([oldPhotoPath])
+      if (removeMainStorageError) console.warn('Main photo was removed from the car, but the old storage file could not be deleted', removeMainStorageError)
+      await invalidatePrivatePhotoCache(oldPhotoPath)
+    }
+
+    if (selectedPhotoFile != null) {
       const oldPhotoPath = editingCar?.photo_path || car?.photo_path || ''
       const path = await uploadPhoto(car.id, selectedPhotoFile)
       const { data: photoUpdate, error } = await supabase
@@ -4206,6 +4236,7 @@ let squareCameraBlob = null
 function useSelectedPhotoFile(file) {
   selectedPhotoFile = file ?? null
   if (!selectedPhotoFile) return
+  removePhoto1 = false
   if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
   previewObjectUrl = URL.createObjectURL(selectedPhotoFile)
   setPhotoPreview(previewObjectUrl)
@@ -4415,6 +4446,16 @@ photoPlaceholder?.addEventListener('click', () => photoInput?.click())
 photoPlaceholder?.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); photoInput?.click() } })
 photoPreview?.addEventListener('click', () => openPhotoViewer(1))
 $('photo1-replace')?.addEventListener('click', (event) => { event.stopPropagation(); photoInput?.click() })
+$('photo1-remove')?.addEventListener('click', (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  selectedPhotoFile = null
+  removePhoto1 = Boolean(editingCar?.photo_path)
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
+  previewObjectUrl = null
+  setPhotoPreview(null)
+  editorMessage.textContent = removePhoto1 ? 'Main photo will be deleted when you Save.' : ''
+})
 $('square-camera-cancel')?.addEventListener('click', closeSquareCamera)
 $('square-camera-shutter')?.addEventListener('click', captureSquareCameraFrame)
 $('square-camera-retake')?.addEventListener('click', retakeSquareCameraPhoto)
@@ -4439,7 +4480,8 @@ photo3Input?.addEventListener('change', () => { useSelectedExtraPhotoFile(3, pho
 $('photo2-remove')?.addEventListener('click', (event) => { event.stopPropagation(); clearExtraPhoto(2) })
 $('photo3-remove')?.addEventListener('click', (event) => { event.stopPropagation(); clearExtraPhoto(3) })
 
-$('photo-viewer-close')?.addEventListener('click', closePhotoViewer)
+$('photo-viewer-close')?.addEventListener('click', () => closePhotoViewer())
+$('photo-viewer')?.addEventListener('click', (event) => { if (event.target === $('photo-viewer')) closePhotoViewer() })
 $('photo-viewer-prev')?.addEventListener('click', () => stepPhotoViewer(-1))
 $('photo-viewer-next')?.addEventListener('click', () => stepPhotoViewer(1))
 $('photo-viewer-stage')?.addEventListener('click', (event) => { if (event.target === $('photo-viewer-stage') && photoViewerScale === 1) closePhotoViewer() })
@@ -4579,6 +4621,7 @@ if (isVerificationReturn) {
   session = null
   rememberVerificationEmail('')
   clearAuthRedirectUrl()
+  isVerificationReturn = false
   if (verifiedEmail) $('email').value = verifiedEmail
   authMessage.classList.add('success')
   authMessage.textContent = 'Email verified. Sign in to start your Pocket 64 garage.'
@@ -4600,7 +4643,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=4.2.2', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=5.0.0', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)
