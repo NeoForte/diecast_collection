@@ -136,11 +136,6 @@
 
   const nativeStorageSetItem = Storage.prototype.setItem
   const nativeAlert = window.alert.bind(window)
-  let restoreGateBypass = false
-  let restoreFlowActive = false
-  let suppressedRestoreSummary = null
-  let pendingRestoreContext = null
-  let restoreSetsPersisting = false
 
   async function helperSupabase() {
     if (!helperSupabasePromise) {
@@ -150,421 +145,422 @@
     return helperSupabasePromise
   }
 
-  async function readBackupForSetRestore(file) {
+  async function readBackupForRestore(file) {
     const name = String(file?.name || '').toLowerCase()
     if (name.endsWith('.json') || file?.type === 'application/json') {
-      return JSON.parse(await file.text())
+      return { backup:JSON.parse(await file.text()), zip:null, legacyJson:true }
     }
-    if (!window.JSZip) throw new Error('ZIP support is not available.')
+    if (!window.JSZip) throw new Error('ZIP support is not available. Refresh Pocket 64 and try again.')
     const zip = await window.JSZip.loadAsync(file)
     const entry = zip.file('backup.json')
-    if (!entry) throw new Error('backup.json is missing.')
-    return JSON.parse(await entry.async('string'))
+    if (!entry) throw new Error('This ZIP does not contain backup.json.')
+    return { backup:JSON.parse(await entry.async('string')), zip, legacyJson:false }
   }
 
-  function normalizeCapturedSetsState(value) {
-    try {
-      const parsed = typeof value === 'string' ? JSON.parse(value) : value
-      if (!parsed || !Array.isArray(parsed.sets) || !parsed.assignments || typeof parsed.assignments !== 'object') return null
-      return {
-        version: 1,
-        sets: parsed.sets.map((set) => ({
-          id: String(set?.id || ''),
-          year: String(set?.year || ''),
-          name: String(set?.name || '').trim().toUpperCase(),
-          total: Math.max(1, Math.floor(Number(set?.total) || 1)),
-        })).filter((set) => set.id && set.name),
-        assignments: { ...parsed.assignments },
-      }
-    } catch {
-      return null
+  function validRestoreBackup(backup) {
+    return Boolean(backup && backup.format === 'ajs-garage-backup' && Array.isArray(backup.cars))
+  }
+
+  function cleanNullable(value) {
+    const valueText = String(value ?? '').trim()
+    return valueText || null
+  }
+
+  function cleanQuantity(value) {
+    const number = Number(value)
+    return Number.isFinite(number) ? Math.max(1, Math.floor(number)) : 1
+  }
+
+  function cleanBoolean(value) {
+    if (value === true || value === false) return value
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return ['1','true','yes'].includes(normalized)
+  }
+
+  function cleanDate(value) {
+    const raw = String(value || '')
+    return Number.isFinite(Date.parse(raw)) ? raw : new Date().toISOString()
+  }
+
+  function backupPhotoPath(photoMap, oldId, slot) {
+    const entry = photoMap?.[oldId]
+    if (!entry) return null
+    if (entry && typeof entry === 'object') {
+      const path = String(entry[String(slot)] || '')
+      return path.startsWith('photos/') ? path : null
     }
+    if (slot === 1) {
+      const path = String(entry || '')
+      return path.startsWith('photos/') ? path : null
+    }
+    return null
   }
 
-  function remapSetIdsForAccount(state, sameAccount) {
-    if (sameAccount) return state
+  function buildRestoredSetState(backupSets, carIdMap, sameAccount) {
+    const rawSets = Array.isArray(backupSets?.sets) ? backupSets.sets : []
+    const rawAssignments = backupSets?.assignments && typeof backupSets.assignments === 'object'
+      ? backupSets.assignments
+      : {}
+
     const setIdMap = new Map()
-    const sets = state.sets.map((set) => {
-      const nextId = crypto.randomUUID()
-      setIdMap.set(String(set.id), nextId)
-      return { ...set, id: nextId }
-    })
+    const sets = rawSets.map((set) => {
+      const oldId = String(set?.id || '')
+      const id = sameAccount && /^[0-9a-f-]{36}$/i.test(oldId) ? oldId : crypto.randomUUID()
+      if (oldId) setIdMap.set(oldId, id)
+      return {
+        id,
+        year:String(set?.year || '').replace(/[^0-9]/g,'').slice(0,4),
+        name:String(set?.name || '').trim().toUpperCase(),
+        total:Math.max(1, Math.floor(Number(set?.total) || 1)),
+      }
+    }).filter((set) => set.year.length === 4 && set.name)
+
+    const validSetIds = new Set(sets.map((set) => set.id))
     const assignments = {}
-    for (const [carId, assignment] of Object.entries(state.assignments || {})) {
-      const mappedSetId = setIdMap.get(String(assignment?.setId || ''))
-      if (!mappedSetId) continue
-      assignments[String(carId)] = {
-        setId: mappedSetId,
-        position: Math.max(1, Math.floor(Number(assignment?.position) || 1)),
+    for (const [oldCarId, assignment] of Object.entries(rawAssignments)) {
+      const newCarId = carIdMap.get(String(oldCarId))
+      const newSetId = setIdMap.get(String(assignment?.setId || ''))
+      if (!newCarId || !newSetId || !validSetIds.has(newSetId)) continue
+      assignments[newCarId] = {
+        setId:newSetId,
+        position:Math.max(1, Math.floor(Number(assignment?.position) || 1)),
       }
     }
-    return { version: 1, sets, assignments }
+    return { version:1, sets, assignments }
   }
 
-  async function persistCapturedRestoreSets(localKey, capturedState, backup) {
-    if (restoreSetsPersisting) return
-    restoreSetsPersisting = true
-    try {
-      const client = await helperSupabase()
-      const { data:{ session }, error:sessionError } = await client.auth.getSession()
-      if (sessionError) throw sessionError
-      const userId = session?.user?.id
-      if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
+  async function replaceCloudSetsExactly(client, userId, state) {
+    const { error:assignmentDeleteError } = await client
+      .from('pocket64_set_assignments')
+      .delete()
+      .eq('user_id', userId)
+    if (assignmentDeleteError) throw assignmentDeleteError
 
-      const expectedSets = Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0
-      const expectedAssignments = backup?.sets?.assignments && typeof backup.sets.assignments === 'object'
-        ? Object.keys(backup.sets.assignments).length
-        : 0
+    const { error:setDeleteError } = await client
+      .from('pocket64_sets')
+      .delete()
+      .eq('user_id', userId)
+    if (setDeleteError) throw setDeleteError
 
-      if (!expectedSets) return
-      if (capturedState.sets.length !== expectedSets) {
-        throw new Error(`Captured ${capturedState.sets.length} Sets but backup contains ${expectedSets}.`)
-      }
-      if (Object.keys(capturedState.assignments || {}).length !== expectedAssignments) {
-        throw new Error(`Captured ${Object.keys(capturedState.assignments || {}).length} assignments but backup contains ${expectedAssignments}.`)
-      }
+    const now = new Date().toISOString()
+    const setRows = state.sets.map((set) => ({
+      id:set.id,
+      user_id:userId,
+      year:Number(set.year),
+      name:set.name,
+      total:set.total,
+      updated_at:now,
+    }))
+    if (setRows.length) {
+      const { error:setInsertError } = await client.from('pocket64_sets').insert(setRows)
+      if (setInsertError) throw setInsertError
+    }
 
-      const sourceUserId = String(backup?.source_user_id || '').trim()
-      const sameAccount = Boolean(sourceUserId && sourceUserId === userId)
-      const cloudState = remapSetIdsForAccount(capturedState, sameAccount)
-
-      const setRows = cloudState.sets.map((set) => ({
-        id: String(set.id),
-        user_id: userId,
-        year: Number(set.year),
-        name: String(set.name || '').trim().toUpperCase(),
-        total: Math.max(1, Math.floor(Number(set.total) || 1)),
-        updated_at: new Date().toISOString(),
-      }))
-
-      const validSetIds = new Set(setRows.map((row) => row.id))
-      const assignmentRows = Object.entries(cloudState.assignments || {})
-        .filter(([, assignment]) => assignment && validSetIds.has(String(assignment.setId)))
-        .map(([carId, assignment]) => ({
-          user_id: userId,
-          set_id: String(assignment.setId),
-          car_id: String(carId),
-          position: Math.max(1, Math.floor(Number(assignment.position) || 1)),
-          updated_at: new Date().toISOString(),
-        }))
-
-      if (assignmentRows.length !== expectedAssignments) {
-        throw new Error(`Prepared ${assignmentRows.length} assignments but backup contains ${expectedAssignments}.`)
-      }
-
-      // Replace only this signed-in account's Sets state.
-      const { error:assignmentDeleteError } = await client
+    const assignmentRows = Object.entries(state.assignments).map(([carId, assignment]) => ({
+      user_id:userId,
+      set_id:assignment.setId,
+      car_id:carId,
+      position:assignment.position,
+      updated_at:now,
+    }))
+    for (let i = 0; i < assignmentRows.length; i += 100) {
+      const { error:assignmentInsertError } = await client
         .from('pocket64_set_assignments')
-        .delete()
+        .insert(assignmentRows.slice(i, i + 100))
+      if (assignmentInsertError) throw assignmentInsertError
+    }
+
+    nativeStorageSetItem.call(localStorage, `${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(state))
+    nativeStorageSetItem.call(localStorage, `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
+  }
+
+  async function verifyExactRestore(client, userId, restoredCarIds, state) {
+    let foundCars = 0
+    for (let i = 0; i < restoredCarIds.length; i += 100) {
+      const ids = restoredCarIds.slice(i, i + 100)
+      const { count, error } = await client
+        .from('cars')
+        .select('id', { count:'exact', head:true })
         .eq('user_id', userId)
-      if (assignmentDeleteError) throw assignmentDeleteError
+        .in('id', ids)
+      if (error) throw error
+      foundCars += Number(count || 0)
+    }
+    if (foundCars !== restoredCarIds.length) {
+      throw new Error(`Car verification found ${foundCars}/${restoredCarIds.length} restored cars.`)
+    }
 
-      const { error:setDeleteError } = await client
-        .from('pocket64_sets')
-        .delete()
-        .eq('user_id', userId)
-      if (setDeleteError) throw setDeleteError
-
-      if (setRows.length) {
-        const { error:setInsertError } = await client.from('pocket64_sets').insert(setRows)
-        if (setInsertError) throw setInsertError
-      }
-
-      for (let start = 0; start < assignmentRows.length; start += 100) {
-        const chunk = assignmentRows.slice(start, start + 100)
-        const { error:assignmentInsertError } = await client.from('pocket64_set_assignments').insert(chunk)
-        if (assignmentInsertError) throw assignmentInsertError
-      }
-
-      const [{ count:setCount, error:setCountError }, { count:assignmentCount, error:assignmentCountError }] = await Promise.all([
-        client.from('pocket64_sets').select('id', { count:'exact', head:true }).eq('user_id', userId),
-        client.from('pocket64_set_assignments').select('car_id', { count:'exact', head:true }).eq('user_id', userId),
-      ])
-      if (setCountError) throw setCountError
-      if (assignmentCountError) throw assignmentCountError
-      if (setCount !== expectedSets || assignmentCount !== expectedAssignments) {
-        throw new Error(`Cloud verification found ${setCount ?? 0}/${expectedSets} Sets and ${assignmentCount ?? 0}/${expectedAssignments} assignments.`)
-      }
-
-      // Keep browser-local Sets state identical to the verified cloud state.
-      nativeStorageSetItem.call(localStorage, `${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(cloudState))
-      nativeStorageSetItem.call(localStorage, `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
-
-      window.__p64RestoreSetSummary = {
-        sets: expectedSets,
-        assignments: expectedAssignments,
-        verified: true,
-      }
-
-      console.info(`Pocket 64 restore verified: ${expectedSets} Sets and ${expectedAssignments} assignments saved.`)
-
-      // Give the normal restore flow time to finish its final render, then reload once so
-      // the app hydrates from the verified cloud Sets state and card icons are guaranteed current.
-      setTimeout(() => {
-        try {
-          const expectedRestore = (() => {
-            try { return JSON.parse(sessionStorage.getItem('p64-v508-restore-expected') || '{}') } catch { return {} }
-          })()
-          const carPhotoSummary = (() => {
-            try { return JSON.parse(sessionStorage.getItem('p64-v508-car-photo-summary') || '{}') } catch { return {} }
-          })()
-          sessionStorage.setItem('p64-v506-exact-restore-state', JSON.stringify({
-            state: cloudState,
-            expectedSets,
-            expectedAssignments,
-            expectedCars: Number(carPhotoSummary.cars || expectedRestore.expectedCars || 0),
-            expectedPhotos: Number(carPhotoSummary.photos || expectedRestore.expectedPhotos || 0),
-          }))
-        } catch {}
-        window.location.reload()
-      }, 900)
-    } catch (error) {
-      console.error('Pocket 64 v5.0.4 Sets restore failed', error)
-      try {
-        window.alert(`Cars and photos restored, but Sets could not be saved: ${error.message || error}`)
-      } catch {}
-    } finally {
-      restoreSetsPersisting = false
-      pendingRestoreContext = null
+    const [
+      { count:setCount, error:setCountError },
+      { count:assignmentCount, error:assignmentCountError },
+    ] = await Promise.all([
+      client.from('pocket64_sets').select('id', { count:'exact', head:true }).eq('user_id', userId),
+      client.from('pocket64_set_assignments').select('car_id', { count:'exact', head:true }).eq('user_id', userId),
+    ])
+    if (setCountError) throw setCountError
+    if (assignmentCountError) throw assignmentCountError
+    if (Number(setCount || 0) !== state.sets.length) {
+      throw new Error(`Set verification found ${Number(setCount || 0)}/${state.sets.length} Sets.`)
+    }
+    if (Number(assignmentCount || 0) !== Object.keys(state.assignments).length) {
+      throw new Error(`Assignment verification found ${Number(assignmentCount || 0)}/${Object.keys(state.assignments).length} assignments.`)
     }
   }
 
-  function parseRestoreCompleteMessage(message) {
-    const text = String(message || '')
-    const match = text.match(/Restore complete:\s*(\d+)\s+cars?\s+and\s+(\d+)\s+embedded photos?\s+processed/i)
-    if (!match) return null
-    return { cars:Number(match[1]), photos:Number(match[2]) }
-  }
+  async function runOwnedRestore(file, input) {
+    const client = await helperSupabase()
+    const { data:{ session }, error:sessionError } = await client.auth.getSession()
+    if (sessionError) throw sessionError
+    const userId = session?.user?.id
+    if (!userId) throw new Error('Your session expired. Sign in again and retry.')
 
-  function installRestoreSetsCaptureFix() {
-    if (document.documentElement.dataset.restoreSetsCaptureFix === '1') return
-    document.documentElement.dataset.restoreSetsCaptureFix = '1'
+    const { backup, zip, legacyJson } = await readBackupForRestore(file)
+    if (!validRestoreBackup(backup)) throw new Error('This is not a valid Pocket 64 backup.')
 
-    // Keep the normal car/photo completion popup from appearing in the middle of a
-    // restore. We show one consolidated result only after Sets are verified too.
-    window.alert = (message) => {
-      if (restoreFlowActive) {
-        const parsed = parseRestoreCompleteMessage(message)
-        if (parsed) {
-          suppressedRestoreSummary = parsed
+    const { count:existingCars, error:existingError } = await client
+      .from('cars')
+      .select('id', { count:'exact', head:true })
+      .eq('user_id', userId)
+    if (existingError) throw existingError
+
+    if (Number(existingCars || 0) > 0) {
+      const proceed = window.confirm(
+        `This garage already contains ${existingCars} car${existingCars === 1 ? '' : 's'}.\n\n` +
+        `For a clean backup restore, use Clear Collection first.\n\n` +
+        `Continuing can create duplicates or a mixed collection.\n\nContinue anyway?`
+      )
+      if (!proceed) return
+    }
+
+    const sourceUserId = String(backup.source_user_id || '').trim()
+    const sameAccount = Boolean(sourceUserId && sourceUserId === userId)
+    const photoMap = backup.photos && typeof backup.photos === 'object' ? backup.photos : {}
+
+    const approved = window.confirm(
+      `Restore this Pocket 64 backup?\n\n` +
+      `${backup.cars.length} car${backup.cars.length === 1 ? '' : 's'}\n` +
+      `${Number(backup.photo_count || 0)} photo${Number(backup.photo_count || 0) === 1 ? '' : 's'}\n` +
+      `${Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0} Set${Array.isArray(backup?.sets?.sets) && backup.sets.sets.length === 1 ? '' : 's'}\n\n` +
+      `Restore will reproduce the backup's saved Set state.`
+    )
+    if (!approved) return
+
+    const restoreButton = document.getElementById('restore-button')
+    const backupButton = document.getElementById('backup-button')
+    const originalRestoreText = restoreButton?.textContent || 'Restore Backup'
+    if (restoreButton) { restoreButton.disabled = true; restoreButton.textContent = 'Restoring…' }
+    if (backupButton) backupButton.disabled = true
+
+    try {
+      const { data:existingRows, error:existingRowsError } = await client
+        .from('cars')
+        .select('id,photo_path,photo2_path,photo3_path')
+        .eq('user_id', userId)
+      if (existingRowsError) throw existingRowsError
+      const existingById = new Map((existingRows || []).map((row) => [String(row.id), row]))
+
+      const carIdMap = new Map()
+      const rows = []
+      const restoreItems = []
+      for (const car of backup.cars) {
+        const oldId = String(car?.id || '')
+        const targetId = sameAccount && /^[0-9a-f-]{36}$/i.test(oldId) ? oldId : crypto.randomUUID()
+        carIdMap.set(oldId, targetId)
+
+        const existing = existingById.get(targetId)
+        const row = {
+          id:targetId,
+          user_id:userId,
+          photo_path:existing?.photo_path || null,
+          photo2_path:existing?.photo2_path || null,
+          photo3_path:existing?.photo3_path || null,
+          diecast_brand:cleanNullable(car?.diecast_brand),
+          make:cleanNullable(car?.make),
+          model:cleanNullable(car?.model),
+          model_year:cleanNullable(car?.model_year),
+          scale:cleanNullable(car?.scale),
+          series_collection:cleanNullable(car?.series_collection),
+          category:cleanNullable(car?.category),
+          quantity:cleanQuantity(car?.quantity),
+          notes:cleanNullable(car?.notes),
+          created_at:cleanDate(car?.created_at),
+          updated_at:cleanDate(car?.updated_at),
+          package_status:cleanNullable(car?.package_status),
+          special_status:cleanNullable(car?.special_status),
+          exclusive_retailer:cleanNullable(car?.exclusive_retailer),
+          exclusive_type:cleanNullable(car?.exclusive_retailer) ? cleanNullable(car?.exclusive_type) : null,
+          general_number:cleanNullable(car?.general_number),
+          series_collection_number:cleanNullable(car?.series_collection_number),
+          color:cleanNullable(car?.color),
+          hotwheels_toy_number:cleanNullable(car?.hotwheels_toy_number),
+          is_custom:cleanBoolean(car?.is_custom),
+          is_favorite:cleanBoolean(car?.is_favorite),
+          is_showcase:cleanBoolean(car?.is_showcase),
+          pack_size:cleanNullable(car?.special_status) === 'Multipack'
+            ? Math.max(2, Math.floor(Number(car?.pack_size) || 5))
+            : null,
+        }
+        rows.push(row)
+        restoreItems.push({ oldId, targetId })
+      }
+
+      for (let i = 0; i < rows.length; i += 100) {
+        if (restoreButton) restoreButton.textContent = `Cars ${Math.min(i + 100, rows.length)}/${rows.length}`
+        const { error } = await client.from('cars').upsert(rows.slice(i, i + 100), { onConflict:'id' })
+        if (error) throw error
+      }
+
+      let processedPhotos = 0
+      const photoFailures = []
+      if (zip) {
+        const photoTasks = []
+        for (const item of restoreItems) {
+          for (const slot of [1,2,3]) {
+            const backupPath = backupPhotoPath(photoMap, item.oldId, slot)
+            if (backupPath) photoTasks.push({ ...item, slot, backupPath })
+          }
+        }
+
+        for (let i = 0; i < photoTasks.length; i += 1) {
+          const task = photoTasks[i]
+          if (restoreButton) restoreButton.textContent = `Photos ${i + 1}/${photoTasks.length}`
           try {
-            sessionStorage.setItem('p64-v508-car-photo-summary', JSON.stringify(parsed))
-          } catch {}
-          return
+            const entry = zip.file(task.backupPath)
+            if (!entry) throw new Error(`Missing ${task.backupPath}`)
+            const blob = await entry.async('blob')
+            const suffix = task.slot === 1 ? '' : `-p${task.slot}`
+            const targetPath = `${userId}/${task.targetId}${suffix}.jpg`
+            const { error:uploadError } = await client.storage
+              .from('car-photos')
+              .upload(targetPath, blob, { contentType:'image/jpeg', upsert:true })
+            if (uploadError) throw uploadError
+
+            const column = task.slot === 1 ? 'photo_path' : `photo${task.slot}_path`
+            const { error:updateError } = await client
+              .from('cars')
+              .update({ [column]:targetPath, updated_at:new Date().toISOString() })
+              .eq('id', task.targetId)
+              .eq('user_id', userId)
+            if (updateError) throw updateError
+            processedPhotos += 1
+          } catch (error) {
+            console.error('Photo restore failed', error)
+            photoFailures.push(`${task.oldId} photo ${task.slot}`)
+          }
         }
       }
-      return nativeAlert(message)
-    }
 
-    // Gate Restore before app.js sees the file. This fixes the race that sometimes
-    // allowed cars/photos to restore before the backup's Sets metadata was captured.
-    document.addEventListener('change', async (event) => {
-      const input = event.target
-      if (!(input instanceof HTMLInputElement) || input.id !== 'restore-input') return
-
-      if (restoreGateBypass) {
-        restoreGateBypass = false
-        return
+      if (photoFailures.length) {
+        throw new Error(`${photoFailures.length} embedded photo${photoFailures.length === 1 ? '' : 's'} failed to restore.`)
       }
 
+      if (restoreButton) restoreButton.textContent = 'Restoring Sets…'
+      const exactSetState = buildRestoredSetState(backup.sets, carIdMap, sameAccount)
+      await replaceCloudSetsExactly(client, userId, exactSetState)
+      await verifyExactRestore(client, userId, restoreItems.map((item) => item.targetId), exactSetState)
+
+      sessionStorage.setItem('p64-v509-finalize-restore', JSON.stringify({
+        userId,
+        state:exactSetState,
+        cars:restoreItems.length,
+        photos:processedPhotos,
+        sets:exactSetState.sets.length,
+        assignments:Object.keys(exactSetState.assignments).length,
+        legacyJson:Boolean(legacyJson),
+      }))
+
+      if (restoreButton) restoreButton.textContent = 'Finalizing…'
+      window.location.reload()
+    } finally {
+      if (restoreButton) {
+        restoreButton.disabled = false
+        restoreButton.textContent = originalRestoreText
+      }
+      if (backupButton) backupButton.disabled = false
+      if (input) input.value = ''
+    }
+  }
+
+  function installOwnedRestore() {
+    if (document.documentElement.dataset.p64OwnedRestore === '1') return
+    document.documentElement.dataset.p64OwnedRestore = '1'
+
+    document.addEventListener('change', (event) => {
+      const input = event.target
+      if (!(input instanceof HTMLInputElement) || input.id !== 'restore-input') return
       const file = input.files?.[0]
       if (!file) return
 
+      // v5.0.9 owns the complete restore. app.js never receives this event,
+      // so there is no second restore path and no timing race.
       event.preventDefault()
       event.stopImmediatePropagation()
 
-      try {
-        const backup = await readBackupForSetRestore(file)
-        const expectedSets = Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0
-        const expectedAssignments = backup?.sets?.assignments && typeof backup.sets.assignments === 'object'
-          ? Object.keys(backup.sets.assignments).length
-          : 0
-        const expectedCars = Number(backup?.car_count) || (Array.isArray(backup?.cars) ? backup.cars.length : 0)
-        const expectedPhotos = Number(backup?.photo_count) || 0
-
-        const client = await helperSupabase()
-        const { data:{ session }, error:sessionError } = await client.auth.getSession()
-        if (sessionError) throw sessionError
-        const userId = session?.user?.id
-        if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
-
-        const { count:existingCars, error:countError } = await client
-          .from('cars')
-          .select('id', { count:'exact', head:true })
-          .eq('user_id', userId)
-        if (countError) throw countError
-
-        if ((existingCars ?? 0) > 0) {
-          const proceed = window.confirm(
-            `This garage already contains ${existingCars} car${existingCars === 1 ? '' : 's'}.\n\n` +
-            `For a clean backup restore, use Clear Collection first.\n\n` +
-            `Continuing may create duplicate cars or a mixed collection.\n\nContinue anyway?`
-          )
-          if (!proceed) {
-            input.value = ''
-            return
-          }
-        }
-
-        pendingRestoreContext = {
-          backup,
-          expectedSets,
-          expectedAssignments,
-          expectedCars,
-          expectedPhotos,
-        }
-        restoreFlowActive = true
-        suppressedRestoreSummary = null
-        try {
-          sessionStorage.setItem('p64-v508-restore-expected', JSON.stringify({
-            expectedCars, expectedPhotos, expectedSets, expectedAssignments
-          }))
-        } catch {}
-
-        // Now that backup metadata is safely captured, let the normal restore handler run.
-        restoreGateBypass = true
-        input.dispatchEvent(new Event('change', { bubbles:true }))
-      } catch (error) {
-        restoreFlowActive = false
-        pendingRestoreContext = null
-        console.error('Pocket 64 restore preflight failed', error)
-        nativeAlert(`Restore could not start: ${error.message || error}`)
-      }
+      runOwnedRestore(file, input).catch((error) => {
+        console.error('Pocket 64 v5.0.9 restore failed', error)
+        nativeAlert(`Restore failed: ${error.message || error}`)
+        try { input.value = '' } catch {}
+        const restoreButton = document.getElementById('restore-button')
+        const backupButton = document.getElementById('backup-button')
+        if (restoreButton) { restoreButton.disabled = false; restoreButton.textContent = 'Restore Backup' }
+        if (backupButton) backupButton.disabled = false
+      })
     }, true)
-
-    // app.js builds the exact old-car-ID -> new-car-ID mapping and writes the remapped
-    // Sets state locally. Capture that state immediately and persist it to Supabase.
-    Storage.prototype.setItem = function(key, value) {
-      const result = nativeStorageSetItem.call(this, key, value)
-      try {
-        if (
-          this === localStorage &&
-          pendingRestoreContext &&
-          String(key).startsWith(`${SETS_STORAGE_PREFIX}-`)
-        ) {
-          const state = normalizeCapturedSetsState(value)
-          if (
-            state &&
-            state.sets.length === pendingRestoreContext.expectedSets &&
-            Object.keys(state.assignments || {}).length === pendingRestoreContext.expectedAssignments
-          ) {
-            queueMicrotask(() => persistCapturedRestoreSets(String(key), state, pendingRestoreContext.backup))
-          }
-        }
-      } catch (error) {
-        console.warn('Sets restore capture hook failed', error)
-      }
-      return result
-    }
   }
 
-  async function enforceExactRestoreStateAfterReload() {
+  async function finalizeOwnedRestoreAfterReload() {
     let payload = null
     try {
-      const raw = sessionStorage.getItem('p64-v506-exact-restore-state')
-      if (!raw) return
-      payload = JSON.parse(raw)
-    } catch {
-      return
-    }
-    const state = payload?.state
-    const expectedSets = Number(payload?.expectedSets) || 0
-    const expectedAssignments = Number(payload?.expectedAssignments) || 0
-    const expectedCars = Number(payload?.expectedCars) || 0
-    const expectedPhotos = Number(payload?.expectedPhotos) || 0
-    if (!state || !Array.isArray(state.sets) || !state.assignments || !expectedSets) return
+      payload = JSON.parse(sessionStorage.getItem('p64-v509-finalize-restore') || 'null')
+    } catch {}
+    if (!payload?.userId || !payload?.state) return
 
     try {
       const client = await helperSupabase()
       const { data:{ session }, error:sessionError } = await client.auth.getSession()
       if (sessionError) throw sessionError
-      const userId = session?.user?.id
-      if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
+      if (!session?.user?.id || session.user.id !== payload.userId) return
 
-      // Wait until normal app startup/retro-linking has had a chance to finish.
+      // Normal startup may run the legacy retro-linker. Let it finish, then put the
+      // exact backup Sets/assignments back once and re-render the cards.
       await new Promise((resolve) => setTimeout(resolve, 1800))
+      await replaceCloudSetsExactly(client, payload.userId, payload.state)
+      await verifyExactRestore(
+        client,
+        payload.userId,
+        Object.keys(payload.state.assignments).length
+          ? Object.keys(payload.state.assignments)
+          : [],
+        payload.state
+      ).catch(async (error) => {
+        // If there were restored cars with no Set assignment, car verification is
+        // already completed before reload; only Set verification matters here.
+        const [
+          { count:setCount, error:setError },
+          { count:assignmentCount, error:assignmentError },
+        ] = await Promise.all([
+          client.from('pocket64_sets').select('id', { count:'exact', head:true }).eq('user_id', payload.userId),
+          client.from('pocket64_set_assignments').select('car_id', { count:'exact', head:true }).eq('user_id', payload.userId),
+        ])
+        if (setError) throw setError
+        if (assignmentError) throw assignmentError
+        if (Number(setCount || 0) !== Number(payload.sets || 0) ||
+            Number(assignmentCount || 0) !== Number(payload.assignments || 0)) throw error
+      })
 
-      const setRows = state.sets.map((set) => ({
-        id:String(set.id),
-        user_id:userId,
-        year:Number(set.year),
-        name:String(set.name || '').trim().toUpperCase(),
-        total:Math.max(1, Math.floor(Number(set.total) || 1)),
-        updated_at:new Date().toISOString(),
-      }))
-      const validSetIds = new Set(setRows.map((row) => row.id))
-      const assignmentRows = Object.entries(state.assignments || {})
-        .filter(([, assignment]) => assignment && validSetIds.has(String(assignment.setId)))
-        .map(([carId, assignment]) => ({
-          user_id:userId,
-          set_id:String(assignment.setId),
-          car_id:String(carId),
-          position:Math.max(1, Math.floor(Number(assignment.position) || 1)),
-          updated_at:new Date().toISOString(),
-        }))
+      sessionStorage.removeItem('p64-v509-finalize-restore')
 
-      if (setRows.length !== expectedSets || assignmentRows.length !== expectedAssignments) {
-        throw new Error(`Exact restore state is ${setRows.length}/${expectedSets} Sets and ${assignmentRows.length}/${expectedAssignments} assignments.`)
-      }
-
-      // Remove anything retro-linking or migration added after the restore.
-      const { error:assignmentDeleteError } = await client.from('pocket64_set_assignments').delete().eq('user_id', userId)
-      if (assignmentDeleteError) throw assignmentDeleteError
-      const { error:setDeleteError } = await client.from('pocket64_sets').delete().eq('user_id', userId)
-      if (setDeleteError) throw setDeleteError
-
-      const { error:setInsertError } = await client.from('pocket64_sets').insert(setRows)
-      if (setInsertError) throw setInsertError
-      for (let start = 0; start < assignmentRows.length; start += 100) {
-        const { error:assignmentInsertError } = await client.from('pocket64_set_assignments').insert(assignmentRows.slice(start, start + 100))
-        if (assignmentInsertError) throw assignmentInsertError
-      }
-
-      nativeStorageSetItem.call(localStorage, `${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(state))
-      nativeStorageSetItem.call(localStorage, `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
-
-      const [
-        { count:setCount, error:setCountError },
-        { count:assignmentCount, error:assignmentCountError },
-        { count:carCount, error:carCountError },
-      ] = await Promise.all([
-        client.from('pocket64_sets').select('id', { count:'exact', head:true }).eq('user_id', userId),
-        client.from('pocket64_set_assignments').select('car_id', { count:'exact', head:true }).eq('user_id', userId),
-        client.from('cars').select('id', { count:'exact', head:true }).eq('user_id', userId),
-      ])
-      if (setCountError) throw setCountError
-      if (assignmentCountError) throw assignmentCountError
-      if (carCountError) throw carCountError
-      if (setCount !== expectedSets || assignmentCount !== expectedAssignments) {
-        throw new Error(`Final verification found ${setCount ?? 0}/${expectedSets} Sets and ${assignmentCount ?? 0}/${expectedAssignments} assignments.`)
-      }
-      if (expectedCars && carCount !== expectedCars) {
-        throw new Error(`Final verification found ${carCount ?? 0}/${expectedCars} cars.`)
-      }
-
-      sessionStorage.removeItem('p64-v506-exact-restore-state')
-      sessionStorage.removeItem('p64-v508-restore-expected')
-      sessionStorage.removeItem('p64-v508-car-photo-summary')
-      restoreFlowActive = false
-      pendingRestoreContext = null
-
-      // Re-render collection cards from the exact local Sets state without another reload.
       const search = document.getElementById('search-input')
       if (search) search.dispatchEvent(new Event('input', { bubbles:true }))
 
-      setTimeout(() => {
-        const pieces = []
-        if (expectedCars) pieces.push(`${expectedCars} cars`)
-        if (expectedPhotos) pieces.push(`${expectedPhotos} photos processed`)
-        pieces.push(`${expectedSets} Sets`)
-        pieces.push(`${expectedAssignments} Set assignments`)
-        nativeAlert(`Restore complete ✓\n\n${pieces.join(' · ')}\n\nBackup restored and verified.`)
-      }, 250)
+      nativeAlert(
+        `Restore complete ✓\n\n` +
+        `${payload.cars} cars · ${payload.photos} photos · ${payload.sets} Sets · ${payload.assignments} Set assignments\n\n` +
+        `Backup restored and verified.`
+      )
     } catch (error) {
-      restoreFlowActive = false
-      pendingRestoreContext = null
-      console.error('Pocket 64 v5.0.8 restore verification failed', error)
-      try { nativeAlert(`Restore verification failed: ${error.message || error}`) } catch {}
+      console.error('Pocket 64 v5.0.9 final verification failed', error)
+      nativeAlert(`Restore verification failed: ${error.message || error}`)
     }
   }
 
@@ -788,7 +784,7 @@
     installSetsCollapsedByDefault()
     updateVisibleVersion()
     installRestoreRetryGuard()
-    installRestoreSetsCaptureFix()
+    installOwnedRestore()
     showAccountEmail()
   }
 
@@ -796,7 +792,7 @@
 
   function init() {
     applyPatch()
-    enforceExactRestoreStateAfterReload()
+    finalizeOwnedRestoreAfterReload()
 
     setTimeout(applyPatch, 300)
     setTimeout(applyPatch, 1200)
