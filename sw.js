@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v2'
+const CACHE = 'pocket64-shell-v3'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -36,8 +36,8 @@ async function latestCoreResponse(request) {
   const response = await fetchFresh(cleanUrl)
   if (!response.ok) return response
 
-  // APP_VERSION now follows version.json automatically. Future releases only
-  // need version.json changed; stale app.js version strings cannot get stuck.
+  // APP_VERSION follows version.json automatically. Future releases only
+  // require version.json to change; stale query strings cannot pin the badge.
   if (requestUrl.pathname.endsWith('/app.js')) {
     const version = await currentVersion()
     const text = await response.text()
@@ -69,8 +69,8 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    Promise.all([
+  event.waitUntil((async () => {
+    await Promise.all([
       caches.keys().then((keys) => Promise.all(
         keys
           .filter((key) => !key.startsWith(PRIVATE_PHOTO_CACHE_PREFIX))
@@ -78,7 +78,18 @@ self.addEventListener('activate', (event) => {
       )),
       self.clients.claim(),
     ])
-  )
+
+    // Bootstrap escape hatch: when a newer worker finally arrives, reload all
+    // open Pocket 64 tabs once under the new worker. This breaks clients out
+    // of an old cached app shell without asking the user to clear site data.
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    await Promise.all(clients.map(async (client) => {
+      try {
+        const url = new URL(client.url)
+        if (url.origin === self.location.origin) await client.navigate(client.url)
+      } catch {}
+    }))
+  })())
 })
 
 self.addEventListener('fetch', (event) => {
@@ -98,7 +109,5 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Non-core assets can use the browser normally. Private photo caching is
-  // handled separately by the app and is intentionally left untouched.
   event.respondWith(fetch(event.request))
 })
