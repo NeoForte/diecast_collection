@@ -1029,6 +1029,8 @@
   }
 
   ensureDangerZone()
+  installOwnedRestore()
+  installCloudOwnedBackup()
 
   function init() {
     applyPatch()

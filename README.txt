@@ -1,43 +1,33 @@
-Pocket 64 v5.1.1 — Authoritative Cloud Backup
+Pocket 64 v5.1.2 — Cache-busted backup fix
 
-THIS IS THE IMPORTANT BACKUP FIX.
+WHY 5.1.1 STILL EXPORTED 0 SETS
+The visible version comes from version.json, but index.html was still loading:
+  app.js?v=5.0.0
+  showcase-sync.js?v=5.0.0
 
-The Backup button is now fully owned by the v5.1.1 backup handler.
-The old app.js backup handler does not run.
+That allowed Safari/PWA caching to keep running an older showcase-sync.js even while Settings showed Version 5.1.1.
 
-WHY
-v5.1.0 fetched Sets from Supabase, wrote them to localStorage, then handed control back to the old exporter.
-Safari could still leave the exporter reading stale/empty Set state.
+The uploaded 5.1.1 backup proved this: it was old backup format v7 and contained 0 Sets.
 
-v5.1.1 removes that handoff completely.
+WHAT 5.1.2 CHANGES
+- index.html now loads showcase-sync.js?v=5.1.2
+- showcase-sync.js loads BEFORE app.js
+- app.js URL is also cache-busted to ?v=5.1.2
+- the owned Backup and Restore event interceptors install immediately
+- the v5.1.1 authoritative Supabase-backed exporter is retained
 
-BACKUP SOURCE OF TRUTH
-The ZIP is built directly from Supabase:
-- cars table
-- pocket64_sets
-- pocket64_set_assignments
-- private car-photos storage
-
-The backup does NOT depend on the browser's local Sets cache.
-
-HARD SAFETY CHECKS
-Before a ZIP is downloadable:
-- every Set assignment must point to a car in the account
-- every Set assignment must point to an existing Set
-- packed Set count must equal Supabase Set count
-- packed assignment count must equal Supabase assignment count
-- if cloud Sets exist, a 0-Set ZIP is refused
-
-SUCCESS MESSAGE
-Backup complete ✓
-[cars] · [photos] · [Sets] · [Set assignments]
-Backup built from Supabase cloud data and verified.
+EXPECTED BACKUP
+MAIN currently has 209 cars / 23 Sets / 60 Set assignments.
+A fresh 5.1.2 backup should report those non-zero Set counts in its success popup.
 
 TEST
-1. Deploy and confirm Version 5.1.1.
-2. On MAIN, tap Backup.
-3. The backup success popup itself should report the expected cloud counts.
-4. On an empty dummy, choose Restore.
-5. BEFORE pressing OK, the restore preview should show the same non-zero Set count.
-6. If the preview says 0 Sets, CANCEL and do not restore.
-7. If counts are correct, restore and then verify Set cars/icons.
+1. Replace ALL THREE files from this ZIP:
+   index.html
+   showcase-sync.js
+   version.json
+2. Commit/deploy.
+3. Confirm Version 5.1.2.
+4. Make a NEW backup from MAIN.
+5. The backup success popup should include Sets and Set assignments.
+6. On an empty dummy, choose that NEW ZIP for Restore.
+7. The restore preview must show a non-zero Set count. If it says 0, CANCEL.
