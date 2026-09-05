@@ -1,39 +1,19 @@
-Pocket 64 v5.0.4 — Restore Sets Fix
+Pocket 64 v5.0.5
 
-Confirmed backup used for diagnosis:
-- 207 cars
-- 226 photos
-- 13 Sets
-- 44 Set assignments
+Fixes a packaging regression in v5.0.4:
+- Restores Settings > Danger Zone > Clear Collection.
+- Restores the Sets default-collapsed behavior so 2026 does NOT auto-expand.
+- Keeps the v5.0.4 Sets restore/verification fix intact.
+- Visible version: 5.0.5.
 
-WHAT v5.0.4 CHANGES
-- Keeps the successful car/photo restore untouched.
-- Captures the exact Sets state at the moment Pocket 64 remaps old car IDs to the newly restored car IDs.
-- For a different account, generates new Set IDs so they cannot collide with the source account.
-- Writes the restored Sets and car-to-Set assignments to Supabase.
-- Verifies the exact cloud counts before calling the Sets portion successful.
-- Reloads once after verification so Sets and card Set icons hydrate from the verified cloud data.
-- Shows a confirmation after reload with the restored Set/assignment counts.
-- Retains v5.0.3 Clear Collection and all-years-collapsed behavior.
-- Visible version is 5.0.4.
+Why this happened:
+v5.0.4 still called the Clear Collection / collapse helpers, but those helper definitions were accidentally omitted from the packaged showcase-sync.js. That caused the sidecar script to stop when it reached those missing functions.
 
-INSTALL
-Replace these two files in the repository:
-  showcase-sync.js
-  version.json
+Install:
+Replace showcase-sync.js and version.json in GitHub, commit, and wait for Cloudflare deploy.
 
-Then commit and wait for Cloudflare Pages to deploy.
-
-CLEAN DUMMY TEST
-1. Confirm Settings shows Version 5.0.4.
-2. Settings > Danger Zone > Clear Collection.
-3. Restore Pocket64_Backup_2026-09-04.zip.
-4. The app may reload once automatically near the end.
-5. You should get:
-   Restore verified ✓
-   13 Sets and 44 Set assignments restored and saved.
-6. Check Sets page.
-7. Check Set icons on collection cards.
-8. Refresh, sign out, and sign back in. Sets and icons should remain.
-
-If v5.0.4 cannot verify the cloud counts, it will explicitly say the Sets portion failed instead of silently reporting a successful full restore.
+Before doing another full restore:
+1. Confirm Settings shows Version 5.0.5.
+2. Confirm Danger Zone / Clear Collection is visible.
+3. Open Sets and confirm ALL years are collapsed.
+4. Only then Clear Collection on the dummy account and rerun the backup restore.
