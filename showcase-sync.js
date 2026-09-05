@@ -1,5 +1,10 @@
 (() => {
   const RESTORE_FINGERPRINT_KEY = 'pocket64-last-restore-file-v400'
+  const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
+  const SETS_STORAGE_PREFIX = 'pocket64-sets-v1'
+  const SETS_CLOUD_MIGRATION_PREFIX = 'pocket64-sets-cloud-migrated-v1'
+  let helperSupabasePromise = null
 
   function hideShowcase() {
     const screen = document.getElementById('social-screen')
@@ -128,11 +133,161 @@
     }, true)
   }
 
+  async function helperSupabase() {
+    if (!helperSupabasePromise) {
+      helperSupabasePromise = import('https://esm.sh/@supabase/supabase-js@2.102.0')
+        .then(({ createClient }) => createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY))
+    }
+    return helperSupabasePromise
+  }
+
+  async function readBackupForSetRestore(file) {
+    const name = String(file?.name || '').toLowerCase()
+    if (name.endsWith('.json') || file?.type === 'application/json') {
+      return JSON.parse(await file.text())
+    }
+    if (!window.JSZip) throw new Error('ZIP support is not available.')
+    const zip = await window.JSZip.loadAsync(file)
+    const entry = zip.file('backup.json')
+    if (!entry) throw new Error('backup.json is missing.')
+    return JSON.parse(await entry.async('string'))
+  }
+
+  function readLocalSetsState(userId) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(`${SETS_STORAGE_PREFIX}-${userId}`) || 'null')
+      if (!parsed || !Array.isArray(parsed.sets) || !parsed.assignments || typeof parsed.assignments !== 'object') return null
+      return parsed
+    } catch {
+      return null
+    }
+  }
+
+  function waitForRestoredLocalSets(userId, expectedSetCount, timeoutMs = 180000) {
+    return new Promise((resolve, reject) => {
+      const started = Date.now()
+      const check = () => {
+        const state = readLocalSetsState(userId)
+        if (state && state.sets.length >= expectedSetCount) {
+          resolve(state)
+          return
+        }
+        if (Date.now() - started >= timeoutMs) {
+          reject(new Error('Timed out waiting for restored Sets data.'))
+          return
+        }
+        setTimeout(check, 250)
+      }
+      check()
+    })
+  }
+
+  function remapSetIdsForNewAccount(state) {
+    const map = new Map()
+    const sets = state.sets.map((set) => {
+      const oldId = String(set?.id || '')
+      const newId = crypto.randomUUID()
+      map.set(oldId, newId)
+      return { ...set, id:newId }
+    })
+    const assignments = {}
+    for (const [carId, assignment] of Object.entries(state.assignments || {})) {
+      const mappedSetId = map.get(String(assignment?.setId || ''))
+      if (!mappedSetId) continue
+      assignments[String(carId)] = { ...assignment, setId:mappedSetId }
+    }
+    return { version:1, sets, assignments }
+  }
+
+  async function writeRestoredSetsToCloud(file) {
+    const backup = await readBackupForSetRestore(file)
+    const backupSets = backup?.sets
+    if (!backupSets || !Array.isArray(backupSets.sets) || !backupSets.sets.length || !backupSets.assignments) return
+
+    const client = await helperSupabase()
+    const { data:{ session }, error:sessionError } = await client.auth.getSession()
+    if (sessionError) throw sessionError
+    const userId = session?.user?.id
+    if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
+
+    const localState = await waitForRestoredLocalSets(userId, backupSets.sets.length)
+    const sourceUserId = String(backup?.source_user_id || '').trim()
+    const sameAccount = Boolean(sourceUserId && sourceUserId === userId)
+    const nextState = sameAccount ? localState : remapSetIdsForNewAccount(localState)
+
+    const setRows = nextState.sets.map((set) => ({
+      id:String(set.id),
+      user_id:userId,
+      year:Number(set.year),
+      name:String(set.name || '').trim().toUpperCase(),
+      total:Math.max(1, Math.floor(Number(set.total) || 1)),
+      updated_at:new Date().toISOString(),
+    }))
+
+    const validSetIds = new Set(setRows.map((row) => row.id))
+    const assignmentRows = Object.entries(nextState.assignments || {})
+      .filter(([, assignment]) => assignment && validSetIds.has(String(assignment.setId)))
+      .map(([carId, assignment]) => ({
+        user_id:userId,
+        set_id:String(assignment.setId),
+        car_id:String(carId),
+        position:Math.max(1, Math.floor(Number(assignment.position) || 1)),
+        updated_at:new Date().toISOString(),
+      }))
+
+    const { error:assignmentDeleteError } = await client
+      .from('pocket64_set_assignments')
+      .delete()
+      .eq('user_id', userId)
+    if (assignmentDeleteError) throw assignmentDeleteError
+
+    const { error:setDeleteError } = await client
+      .from('pocket64_sets')
+      .delete()
+      .eq('user_id', userId)
+    if (setDeleteError) throw setDeleteError
+
+    if (setRows.length) {
+      const { error:setInsertError } = await client.from('pocket64_sets').insert(setRows)
+      if (setInsertError) throw setInsertError
+    }
+
+    for (let start = 0; start < assignmentRows.length; start += 100) {
+      const chunk = assignmentRows.slice(start, start + 100)
+      const { error:assignmentInsertError } = await client.from('pocket64_set_assignments').insert(chunk)
+      if (assignmentInsertError) throw assignmentInsertError
+    }
+
+    try {
+      localStorage.setItem(`${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(nextState))
+      localStorage.setItem(`${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
+    } catch {}
+
+    console.info(`Pocket 64 Sets restore saved: ${setRows.length} sets, ${assignmentRows.length} assignments.`)
+  }
+
+  function installRestoreSetsCloudFix() {
+    if (document.documentElement.dataset.restoreSetsCloudFix === '1') return
+    document.documentElement.dataset.restoreSetsCloudFix = '1'
+
+    document.addEventListener('change', (event) => {
+      const input = event.target
+      if (!(input instanceof HTMLInputElement) || input.id !== 'restore-input') return
+      const file = input.files?.[0]
+      if (!file) return
+
+      writeRestoredSetsToCloud(file).catch((error) => {
+        console.warn('Pocket 64 Sets cloud restore fix failed', error)
+      })
+    }, true)
+  }
+
   function applyPatch() {
     hideShowcase()
     installUppercaseSearch()
     updateVisibleVersion()
     installRestoreRetryGuard()
+    installRestoreSetsCloudFix()
     showAccountEmail()
   }
 
