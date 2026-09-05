@@ -282,14 +282,77 @@
     }, true)
   }
 
+
+  function ensureDangerZone() {
+    if (document.getElementById('clear-collection-button')) return
+    const settingsList = document.querySelector('#settings-screen .settings-list')
+    if (!settingsList) return
+
+    const card = document.createElement('div')
+    card.className = 'settings-card'
+    card.id = 'p64-danger-zone'
+    card.style.borderColor = 'rgba(255,88,88,.28)'
+
+    const copy = document.createElement('div')
+    copy.className = 'settings-copy'
+
+    const title = document.createElement('strong')
+    title.textContent = 'Danger Zone'
+    title.style.color = '#ff9a9a'
+
+    const description = document.createElement('span')
+    description.textContent = 'Permanently remove every car, saved photo, Set, and Set assignment from this signed-in account.'
+
+    copy.append(title, description)
+
+    const button = document.createElement('button')
+    button.id = 'clear-collection-button'
+    button.type = 'button'
+    button.className = 'settings-mini-button'
+    button.textContent = 'Clear Collection'
+    button.style.borderColor = 'rgba(255,88,88,.5)'
+    button.style.color = '#ffaaaa'
+
+    card.append(copy, button)
+
+    const aboutCard = [...settingsList.children].find((node) =>
+      node.querySelector?.('.settings-copy strong')?.textContent?.trim() === 'About'
+    )
+    if (aboutCard) settingsList.insertBefore(card, aboutCard)
+    else settingsList.append(card)
+  }
+
+  function collapseRenderedSetYears() {
+    document.querySelectorAll('#sets-years .set-year-card.expanded').forEach((section) => {
+      section.classList.remove('expanded')
+    })
+  }
+
+  function installSetsCollapsedByDefault() {
+    const host = document.getElementById('sets-years')
+    if (!host || host.dataset.defaultCollapsed === '1') return
+    host.dataset.defaultCollapsed = '1'
+    collapseRenderedSetYears()
+
+    new MutationObserver((mutations) => {
+      if (mutations.some((mutation) => mutation.type === 'childList')) {
+        collapseRenderedSetYears()
+      }
+    }).observe(host, { childList:true })
+  }
+
   function applyPatch() {
+    ensureDangerZone()
     hideShowcase()
     installUppercaseSearch()
+    installSetsCollapsedByDefault()
     updateVisibleVersion()
     installRestoreRetryGuard()
     installRestoreSetsCloudFix()
     showAccountEmail()
   }
+
+  ensureDangerZone()
 
   function init() {
     applyPatch()

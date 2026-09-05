@@ -1,41 +1,29 @@
-Pocket 64 v5.0.2 — Sets Restore Fix
+Pocket 64 v5.0.3
 
-WHAT THIS IS
-This ZIP contains one replacement file:
-  showcase-sync.js
+Changes:
+1. Restores the Settings > Danger Zone > Clear Collection control.
+   - Uses Pocket 64's existing protected clear function.
+   - Requires the existing confirmation and typing CLEAR.
+   - Clears the currently signed-in account only.
+   - Cars, saved car photos, Sets, and Set assignments are removed.
 
-WHAT IT FIXES
-During a backup restore, cars and photos were restoring correctly, but Sets and Set assignments
-were only being rebuilt in browser-local state and were not reliably persisted to Supabase.
-On a new account, the cloud sync could then replace that local Sets state with an empty cloud state.
+2. Sets page now opens with ALL years collapsed.
+   - 2026 no longer auto-expands.
+   - You can still tap any year to expand/collapse it normally.
 
-This patch watches a restore, waits until Pocket 64 has remapped the restored car IDs, then:
-- restores the Sets to Supabase,
-- restores each car-to-Set assignment,
-- creates new Set IDs when the backup is restored into a different account,
-- preserves Set IDs on a same-account restore,
-- keeps the local Sets state in sync with the cloud copy.
+3. Includes the v5.0.2 Sets restore cloud fix.
 
-HOW TO USE
-1. Unzip this package.
-2. In your Pocket 64 GitHub repository, replace the existing showcase-sync.js with the one in this ZIP.
-3. Commit the change.
-4. Wait for Cloudflare Pages to finish deploying.
-5. Use the EMPTY dummy account for the clean retest.
-6. Clear the dummy collection first, then restore the same backup ZIP again.
-7. Check:
-   - Set names exist
-   - cars appear inside the Sets
-   - Set badges/icons appear on collection cards
-   - refresh/sign-out/sign-in and verify the Sets remain
+4. version.json is now 5.0.3.
 
-IMPORTANT
-Do not test by repeatedly restoring the same cross-account backup into a populated dummy account.
-Use Clear Collection first so the car restore remains a clean test.
+Install:
+Replace showcase-sync.js and version.json in the repository with these files,
+commit, then wait for Cloudflare Pages to deploy.
 
-This is intentionally a narrow patch for the failed Sets restore test.
-
-
-VERSION
-This patch is Pocket 64 v5.0.2.
-Going forward, each app change should increment the visible version sequentially (5.0.3, 5.0.4, etc.).
+Test order on the DUMMY account:
+- Confirm Settings shows Version 5.0.3.
+- Confirm Danger Zone / Clear Collection appears.
+- Open Sets: no year should be expanded initially.
+- Use Clear Collection on the dummy account.
+- Restore your backup again.
+- Verify cars, all photos, Sets, Set assignments, and card Set icons.
+- Refresh/sign out/sign in and verify everything persists.
