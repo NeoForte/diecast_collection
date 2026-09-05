@@ -2,7 +2,7 @@
   const RESTORE_FINGERPRINT_KEY = 'pocket64-last-restore-file-v400'
 
   function hideShowcase() {
-        const screen = document.getElementById('social-screen')
+    const screen = document.getElementById('social-screen')
     const toggle = document.querySelector('.custom-toggle[for="is-showcase"]')
     const mainNav = document.getElementById('main-nav')
 
@@ -28,10 +28,19 @@
     })
   }
 
-  function updateVisibleVersion() {
-    document.querySelectorAll('.version-badge').forEach((badge) => {
-      if (badge.textContent !== 'Version 4.2.2') badge.textContent = 'Version 4.2.2'
-    })
+  async function updateVisibleVersion() {
+    try {
+      const url = new URL('./version.json', window.location.href)
+      url.searchParams.set('_', Date.now().toString())
+      const response = await fetch(url, { cache: 'no-store' })
+      if (!response.ok) return
+      const data = await response.json()
+      const version = String(data?.version || '').trim()
+      if (!version) return
+      document.querySelectorAll('.version-badge').forEach((badge) => {
+        badge.textContent = `Version ${version}`
+      })
+    } catch {}
   }
 
   function authEmailFromStorage() {
