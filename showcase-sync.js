@@ -135,6 +135,10 @@
 
 
   const nativeStorageSetItem = Storage.prototype.setItem
+  const nativeAlert = window.alert.bind(window)
+  let restoreGateBypass = false
+  let restoreFlowActive = false
+  let suppressedRestoreSummary = null
   let pendingRestoreContext = null
   let restoreSetsPersisting = false
 
@@ -298,10 +302,18 @@
       // the app hydrates from the verified cloud Sets state and card icons are guaranteed current.
       setTimeout(() => {
         try {
+          const expectedRestore = (() => {
+            try { return JSON.parse(sessionStorage.getItem('p64-v508-restore-expected') || '{}') } catch { return {} }
+          })()
+          const carPhotoSummary = (() => {
+            try { return JSON.parse(sessionStorage.getItem('p64-v508-car-photo-summary') || '{}') } catch { return {} }
+          })()
           sessionStorage.setItem('p64-v506-exact-restore-state', JSON.stringify({
             state: cloudState,
             expectedSets,
             expectedAssignments,
+            expectedCars: Number(carPhotoSummary.cars || expectedRestore.expectedCars || 0),
+            expectedPhotos: Number(carPhotoSummary.photos || expectedRestore.expectedPhotos || 0),
           }))
         } catch {}
         window.location.reload()
@@ -317,34 +329,111 @@
     }
   }
 
+  function parseRestoreCompleteMessage(message) {
+    const text = String(message || '')
+    const match = text.match(/Restore complete:\s*(\d+)\s+cars?\s+and\s+(\d+)\s+embedded photos?\s+processed/i)
+    if (!match) return null
+    return { cars:Number(match[1]), photos:Number(match[2]) }
+  }
+
   function installRestoreSetsCaptureFix() {
     if (document.documentElement.dataset.restoreSetsCaptureFix === '1') return
     document.documentElement.dataset.restoreSetsCaptureFix = '1'
 
-    // Capture the backup before app.js begins its restore.
+    // Keep the normal car/photo completion popup from appearing in the middle of a
+    // restore. We show one consolidated result only after Sets are verified too.
+    window.alert = (message) => {
+      if (restoreFlowActive) {
+        const parsed = parseRestoreCompleteMessage(message)
+        if (parsed) {
+          suppressedRestoreSummary = parsed
+          try {
+            sessionStorage.setItem('p64-v508-car-photo-summary', JSON.stringify(parsed))
+          } catch {}
+          return
+        }
+      }
+      return nativeAlert(message)
+    }
+
+    // Gate Restore before app.js sees the file. This fixes the race that sometimes
+    // allowed cars/photos to restore before the backup's Sets metadata was captured.
     document.addEventListener('change', async (event) => {
       const input = event.target
       if (!(input instanceof HTMLInputElement) || input.id !== 'restore-input') return
+
+      if (restoreGateBypass) {
+        restoreGateBypass = false
+        return
+      }
+
       const file = input.files?.[0]
       if (!file) return
+
+      event.preventDefault()
+      event.stopImmediatePropagation()
+
       try {
         const backup = await readBackupForSetRestore(file)
         const expectedSets = Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0
         const expectedAssignments = backup?.sets?.assignments && typeof backup.sets.assignments === 'object'
           ? Object.keys(backup.sets.assignments).length
           : 0
-        pendingRestoreContext = expectedSets
-          ? { backup, expectedSets, expectedAssignments }
-          : null
+        const expectedCars = Number(backup?.car_count) || (Array.isArray(backup?.cars) ? backup.cars.length : 0)
+        const expectedPhotos = Number(backup?.photo_count) || 0
+
+        const client = await helperSupabase()
+        const { data:{ session }, error:sessionError } = await client.auth.getSession()
+        if (sessionError) throw sessionError
+        const userId = session?.user?.id
+        if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
+
+        const { count:existingCars, error:countError } = await client
+          .from('cars')
+          .select('id', { count:'exact', head:true })
+          .eq('user_id', userId)
+        if (countError) throw countError
+
+        if ((existingCars ?? 0) > 0) {
+          const proceed = window.confirm(
+            `This garage already contains ${existingCars} car${existingCars === 1 ? '' : 's'}.\n\n` +
+            `For a clean backup restore, use Clear Collection first.\n\n` +
+            `Continuing may create duplicate cars or a mixed collection.\n\nContinue anyway?`
+          )
+          if (!proceed) {
+            input.value = ''
+            return
+          }
+        }
+
+        pendingRestoreContext = {
+          backup,
+          expectedSets,
+          expectedAssignments,
+          expectedCars,
+          expectedPhotos,
+        }
+        restoreFlowActive = true
+        suppressedRestoreSummary = null
+        try {
+          sessionStorage.setItem('p64-v508-restore-expected', JSON.stringify({
+            expectedCars, expectedPhotos, expectedSets, expectedAssignments
+          }))
+        } catch {}
+
+        // Now that backup metadata is safely captured, let the normal restore handler run.
+        restoreGateBypass = true
+        input.dispatchEvent(new Event('change', { bubbles:true }))
       } catch (error) {
-        console.warn('Could not inspect restore backup for Sets', error)
+        restoreFlowActive = false
         pendingRestoreContext = null
+        console.error('Pocket 64 restore preflight failed', error)
+        nativeAlert(`Restore could not start: ${error.message || error}`)
       }
     }, true)
 
-    // app.js already builds the exact old-car-ID -> new-car-ID mapping and writes the
-    // correctly remapped Sets state to localStorage. Capture that exact moment before
-    // any later cloud sync can replace it.
+    // app.js builds the exact old-car-ID -> new-car-ID mapping and writes the remapped
+    // Sets state locally. Capture that state immediately and persist it to Supabase.
     Storage.prototype.setItem = function(key, value) {
       const result = nativeStorageSetItem.call(this, key, value)
       try {
@@ -359,7 +448,6 @@
             state.sets.length === pendingRestoreContext.expectedSets &&
             Object.keys(state.assignments || {}).length === pendingRestoreContext.expectedAssignments
           ) {
-            // Fire-and-wait in our own task; app.js can continue its normal restore UI.
             queueMicrotask(() => persistCapturedRestoreSets(String(key), state, pendingRestoreContext.backup))
           }
         }
@@ -382,6 +470,8 @@
     const state = payload?.state
     const expectedSets = Number(payload?.expectedSets) || 0
     const expectedAssignments = Number(payload?.expectedAssignments) || 0
+    const expectedCars = Number(payload?.expectedCars) || 0
+    const expectedPhotos = Number(payload?.expectedPhotos) || 0
     if (!state || !Array.isArray(state.sets) || !state.assignments || !expectedSets) return
 
     try {
@@ -433,28 +523,48 @@
       nativeStorageSetItem.call(localStorage, `${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(state))
       nativeStorageSetItem.call(localStorage, `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
 
-      const [{ count:setCount, error:setCountError }, { count:assignmentCount, error:assignmentCountError }] = await Promise.all([
+      const [
+        { count:setCount, error:setCountError },
+        { count:assignmentCount, error:assignmentCountError },
+        { count:carCount, error:carCountError },
+      ] = await Promise.all([
         client.from('pocket64_sets').select('id', { count:'exact', head:true }).eq('user_id', userId),
         client.from('pocket64_set_assignments').select('car_id', { count:'exact', head:true }).eq('user_id', userId),
+        client.from('cars').select('id', { count:'exact', head:true }).eq('user_id', userId),
       ])
       if (setCountError) throw setCountError
       if (assignmentCountError) throw assignmentCountError
+      if (carCountError) throw carCountError
       if (setCount !== expectedSets || assignmentCount !== expectedAssignments) {
         throw new Error(`Final verification found ${setCount ?? 0}/${expectedSets} Sets and ${assignmentCount ?? 0}/${expectedAssignments} assignments.`)
       }
+      if (expectedCars && carCount !== expectedCars) {
+        throw new Error(`Final verification found ${carCount ?? 0}/${expectedCars} cars.`)
+      }
 
       sessionStorage.removeItem('p64-v506-exact-restore-state')
+      sessionStorage.removeItem('p64-v508-restore-expected')
+      sessionStorage.removeItem('p64-v508-car-photo-summary')
+      restoreFlowActive = false
+      pendingRestoreContext = null
 
       // Re-render collection cards from the exact local Sets state without another reload.
       const search = document.getElementById('search-input')
       if (search) search.dispatchEvent(new Event('input', { bubbles:true }))
 
       setTimeout(() => {
-        window.alert(`Restore verified ✓\n\n${expectedSets} Sets and ${expectedAssignments} Set assignments restored exactly.`)
+        const pieces = []
+        if (expectedCars) pieces.push(`${expectedCars} cars`)
+        if (expectedPhotos) pieces.push(`${expectedPhotos} photos processed`)
+        pieces.push(`${expectedSets} Sets`)
+        pieces.push(`${expectedAssignments} Set assignments`)
+        nativeAlert(`Restore complete ✓\n\n${pieces.join(' · ')}\n\nBackup restored and verified.`)
       }, 250)
     } catch (error) {
-      console.error('Pocket 64 v5.0.6 exact Sets enforcement failed', error)
-      try { window.alert(`Sets restore verification failed: ${error.message || error}`) } catch {}
+      restoreFlowActive = false
+      pendingRestoreContext = null
+      console.error('Pocket 64 v5.0.8 restore verification failed', error)
+      try { nativeAlert(`Restore verification failed: ${error.message || error}`) } catch {}
     }
   }
 
@@ -518,6 +628,8 @@
 
 
   const FAQ_ITEMS = [
+    ['Can I restore a backup into a garage that already has cars?',
+     'Pocket 64 will warn you first. For a true backup replacement, Clear Collection before restoring. Continuing into a non-empty garage can create duplicates or a mixed collection.'],
     ['What does a Pocket 64 backup save?',
      'A backup is a snapshot of your collection at the time you create it. It includes your cars, saved car photos, Sets, and Set assignments. Keep the ZIP file somewhere safe.'],
     ['How often should I make a backup?',
