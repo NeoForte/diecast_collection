@@ -133,6 +133,11 @@
     }, true)
   }
 
+
+  const nativeStorageSetItem = Storage.prototype.setItem
+  let pendingRestoreContext = null
+  let restoreSetsPersisting = false
+
   async function helperSupabase() {
     if (!helperSupabasePromise) {
       helperSupabasePromise = import('https://esm.sh/@supabase/supabase-js@2.102.0')
@@ -153,192 +158,227 @@
     return JSON.parse(await entry.async('string'))
   }
 
-  function readLocalSetsState(userId) {
+  function normalizeCapturedSetsState(value) {
     try {
-      const parsed = JSON.parse(localStorage.getItem(`${SETS_STORAGE_PREFIX}-${userId}`) || 'null')
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value
       if (!parsed || !Array.isArray(parsed.sets) || !parsed.assignments || typeof parsed.assignments !== 'object') return null
-      return parsed
+      return {
+        version: 1,
+        sets: parsed.sets.map((set) => ({
+          id: String(set?.id || ''),
+          year: String(set?.year || ''),
+          name: String(set?.name || '').trim().toUpperCase(),
+          total: Math.max(1, Math.floor(Number(set?.total) || 1)),
+        })).filter((set) => set.id && set.name),
+        assignments: { ...parsed.assignments },
+      }
     } catch {
       return null
     }
   }
 
-  function waitForRestoredLocalSets(userId, expectedSetCount, timeoutMs = 180000) {
-    return new Promise((resolve, reject) => {
-      const started = Date.now()
-      const check = () => {
-        const state = readLocalSetsState(userId)
-        if (state && state.sets.length >= expectedSetCount) {
-          resolve(state)
-          return
-        }
-        if (Date.now() - started >= timeoutMs) {
-          reject(new Error('Timed out waiting for restored Sets data.'))
-          return
-        }
-        setTimeout(check, 250)
-      }
-      check()
-    })
-  }
-
-  function remapSetIdsForNewAccount(state) {
-    const map = new Map()
+  function remapSetIdsForAccount(state, sameAccount) {
+    if (sameAccount) return state
+    const setIdMap = new Map()
     const sets = state.sets.map((set) => {
-      const oldId = String(set?.id || '')
-      const newId = crypto.randomUUID()
-      map.set(oldId, newId)
-      return { ...set, id:newId }
+      const nextId = crypto.randomUUID()
+      setIdMap.set(String(set.id), nextId)
+      return { ...set, id: nextId }
     })
     const assignments = {}
     for (const [carId, assignment] of Object.entries(state.assignments || {})) {
-      const mappedSetId = map.get(String(assignment?.setId || ''))
+      const mappedSetId = setIdMap.get(String(assignment?.setId || ''))
       if (!mappedSetId) continue
-      assignments[String(carId)] = { ...assignment, setId:mappedSetId }
+      assignments[String(carId)] = {
+        setId: mappedSetId,
+        position: Math.max(1, Math.floor(Number(assignment?.position) || 1)),
+      }
     }
-    return { version:1, sets, assignments }
+    return { version: 1, sets, assignments }
   }
 
-  async function writeRestoredSetsToCloud(file) {
-    const backup = await readBackupForSetRestore(file)
-    const backupSets = backup?.sets
-    if (!backupSets || !Array.isArray(backupSets.sets) || !backupSets.sets.length || !backupSets.assignments) return
+  async function persistCapturedRestoreSets(localKey, capturedState, backup) {
+    if (restoreSetsPersisting) return
+    restoreSetsPersisting = true
+    try {
+      const client = await helperSupabase()
+      const { data:{ session }, error:sessionError } = await client.auth.getSession()
+      if (sessionError) throw sessionError
+      const userId = session?.user?.id
+      if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
 
-    const client = await helperSupabase()
-    const { data:{ session }, error:sessionError } = await client.auth.getSession()
-    if (sessionError) throw sessionError
-    const userId = session?.user?.id
-    if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
+      const expectedSets = Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0
+      const expectedAssignments = backup?.sets?.assignments && typeof backup.sets.assignments === 'object'
+        ? Object.keys(backup.sets.assignments).length
+        : 0
 
-    const localState = await waitForRestoredLocalSets(userId, backupSets.sets.length)
-    const sourceUserId = String(backup?.source_user_id || '').trim()
-    const sameAccount = Boolean(sourceUserId && sourceUserId === userId)
-    const nextState = sameAccount ? localState : remapSetIdsForNewAccount(localState)
+      if (!expectedSets) return
+      if (capturedState.sets.length !== expectedSets) {
+        throw new Error(`Captured ${capturedState.sets.length} Sets but backup contains ${expectedSets}.`)
+      }
+      if (Object.keys(capturedState.assignments || {}).length !== expectedAssignments) {
+        throw new Error(`Captured ${Object.keys(capturedState.assignments || {}).length} assignments but backup contains ${expectedAssignments}.`)
+      }
 
-    const setRows = nextState.sets.map((set) => ({
-      id:String(set.id),
-      user_id:userId,
-      year:Number(set.year),
-      name:String(set.name || '').trim().toUpperCase(),
-      total:Math.max(1, Math.floor(Number(set.total) || 1)),
-      updated_at:new Date().toISOString(),
-    }))
+      const sourceUserId = String(backup?.source_user_id || '').trim()
+      const sameAccount = Boolean(sourceUserId && sourceUserId === userId)
+      const cloudState = remapSetIdsForAccount(capturedState, sameAccount)
 
-    const validSetIds = new Set(setRows.map((row) => row.id))
-    const assignmentRows = Object.entries(nextState.assignments || {})
-      .filter(([, assignment]) => assignment && validSetIds.has(String(assignment.setId)))
-      .map(([carId, assignment]) => ({
-        user_id:userId,
-        set_id:String(assignment.setId),
-        car_id:String(carId),
-        position:Math.max(1, Math.floor(Number(assignment.position) || 1)),
-        updated_at:new Date().toISOString(),
+      const setRows = cloudState.sets.map((set) => ({
+        id: String(set.id),
+        user_id: userId,
+        year: Number(set.year),
+        name: String(set.name || '').trim().toUpperCase(),
+        total: Math.max(1, Math.floor(Number(set.total) || 1)),
+        updated_at: new Date().toISOString(),
       }))
 
-    const { error:assignmentDeleteError } = await client
-      .from('pocket64_set_assignments')
-      .delete()
-      .eq('user_id', userId)
-    if (assignmentDeleteError) throw assignmentDeleteError
+      const validSetIds = new Set(setRows.map((row) => row.id))
+      const assignmentRows = Object.entries(cloudState.assignments || {})
+        .filter(([, assignment]) => assignment && validSetIds.has(String(assignment.setId)))
+        .map(([carId, assignment]) => ({
+          user_id: userId,
+          set_id: String(assignment.setId),
+          car_id: String(carId),
+          position: Math.max(1, Math.floor(Number(assignment.position) || 1)),
+          updated_at: new Date().toISOString(),
+        }))
 
-    const { error:setDeleteError } = await client
-      .from('pocket64_sets')
-      .delete()
-      .eq('user_id', userId)
-    if (setDeleteError) throw setDeleteError
+      if (assignmentRows.length !== expectedAssignments) {
+        throw new Error(`Prepared ${assignmentRows.length} assignments but backup contains ${expectedAssignments}.`)
+      }
 
-    if (setRows.length) {
-      const { error:setInsertError } = await client.from('pocket64_sets').insert(setRows)
-      if (setInsertError) throw setInsertError
+      // Replace only this signed-in account's Sets state.
+      const { error:assignmentDeleteError } = await client
+        .from('pocket64_set_assignments')
+        .delete()
+        .eq('user_id', userId)
+      if (assignmentDeleteError) throw assignmentDeleteError
+
+      const { error:setDeleteError } = await client
+        .from('pocket64_sets')
+        .delete()
+        .eq('user_id', userId)
+      if (setDeleteError) throw setDeleteError
+
+      if (setRows.length) {
+        const { error:setInsertError } = await client.from('pocket64_sets').insert(setRows)
+        if (setInsertError) throw setInsertError
+      }
+
+      for (let start = 0; start < assignmentRows.length; start += 100) {
+        const chunk = assignmentRows.slice(start, start + 100)
+        const { error:assignmentInsertError } = await client.from('pocket64_set_assignments').insert(chunk)
+        if (assignmentInsertError) throw assignmentInsertError
+      }
+
+      const [{ count:setCount, error:setCountError }, { count:assignmentCount, error:assignmentCountError }] = await Promise.all([
+        client.from('pocket64_sets').select('id', { count:'exact', head:true }).eq('user_id', userId),
+        client.from('pocket64_set_assignments').select('car_id', { count:'exact', head:true }).eq('user_id', userId),
+      ])
+      if (setCountError) throw setCountError
+      if (assignmentCountError) throw assignmentCountError
+      if (setCount !== expectedSets || assignmentCount !== expectedAssignments) {
+        throw new Error(`Cloud verification found ${setCount ?? 0}/${expectedSets} Sets and ${assignmentCount ?? 0}/${expectedAssignments} assignments.`)
+      }
+
+      // Keep browser-local Sets state identical to the verified cloud state.
+      nativeStorageSetItem.call(localStorage, `${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(cloudState))
+      nativeStorageSetItem.call(localStorage, `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
+
+      window.__p64RestoreSetSummary = {
+        sets: expectedSets,
+        assignments: expectedAssignments,
+        verified: true,
+      }
+
+      console.info(`Pocket 64 restore verified: ${expectedSets} Sets and ${expectedAssignments} assignments saved.`)
+
+      // Give the normal restore flow time to finish its final render, then reload once so
+      // the app hydrates from the verified cloud Sets state and card icons are guaranteed current.
+      setTimeout(() => {
+        try {
+          sessionStorage.setItem('p64-v504-sets-restored', JSON.stringify({
+            sets: expectedSets,
+            assignments: expectedAssignments,
+          }))
+        } catch {}
+        window.location.reload()
+      }, 900)
+    } catch (error) {
+      console.error('Pocket 64 v5.0.4 Sets restore failed', error)
+      try {
+        window.alert(`Cars and photos restored, but Sets could not be saved: ${error.message || error}`)
+      } catch {}
+    } finally {
+      restoreSetsPersisting = false
+      pendingRestoreContext = null
     }
-
-    for (let start = 0; start < assignmentRows.length; start += 100) {
-      const chunk = assignmentRows.slice(start, start + 100)
-      const { error:assignmentInsertError } = await client.from('pocket64_set_assignments').insert(chunk)
-      if (assignmentInsertError) throw assignmentInsertError
-    }
-
-    try {
-      localStorage.setItem(`${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(nextState))
-      localStorage.setItem(`${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
-    } catch {}
-
-    console.info(`Pocket 64 Sets restore saved: ${setRows.length} sets, ${assignmentRows.length} assignments.`)
   }
 
-  function installRestoreSetsCloudFix() {
-    if (document.documentElement.dataset.restoreSetsCloudFix === '1') return
-    document.documentElement.dataset.restoreSetsCloudFix = '1'
+  function installRestoreSetsCaptureFix() {
+    if (document.documentElement.dataset.restoreSetsCaptureFix === '1') return
+    document.documentElement.dataset.restoreSetsCaptureFix = '1'
 
-    document.addEventListener('change', (event) => {
+    // Capture the backup before app.js begins its restore.
+    document.addEventListener('change', async (event) => {
       const input = event.target
       if (!(input instanceof HTMLInputElement) || input.id !== 'restore-input') return
       const file = input.files?.[0]
       if (!file) return
-
-      writeRestoredSetsToCloud(file).catch((error) => {
-        console.warn('Pocket 64 Sets cloud restore fix failed', error)
-      })
-    }, true)
-  }
-
-
-  function ensureDangerZone() {
-    if (document.getElementById('clear-collection-button')) return
-    const settingsList = document.querySelector('#settings-screen .settings-list')
-    if (!settingsList) return
-
-    const card = document.createElement('div')
-    card.className = 'settings-card'
-    card.id = 'p64-danger-zone'
-    card.style.borderColor = 'rgba(255,88,88,.28)'
-
-    const copy = document.createElement('div')
-    copy.className = 'settings-copy'
-
-    const title = document.createElement('strong')
-    title.textContent = 'Danger Zone'
-    title.style.color = '#ff9a9a'
-
-    const description = document.createElement('span')
-    description.textContent = 'Permanently remove every car, saved photo, Set, and Set assignment from this signed-in account.'
-
-    copy.append(title, description)
-
-    const button = document.createElement('button')
-    button.id = 'clear-collection-button'
-    button.type = 'button'
-    button.className = 'settings-mini-button'
-    button.textContent = 'Clear Collection'
-    button.style.borderColor = 'rgba(255,88,88,.5)'
-    button.style.color = '#ffaaaa'
-
-    card.append(copy, button)
-
-    const aboutCard = [...settingsList.children].find((node) =>
-      node.querySelector?.('.settings-copy strong')?.textContent?.trim() === 'About'
-    )
-    if (aboutCard) settingsList.insertBefore(card, aboutCard)
-    else settingsList.append(card)
-  }
-
-  function collapseRenderedSetYears() {
-    document.querySelectorAll('#sets-years .set-year-card.expanded').forEach((section) => {
-      section.classList.remove('expanded')
-    })
-  }
-
-  function installSetsCollapsedByDefault() {
-    const host = document.getElementById('sets-years')
-    if (!host || host.dataset.defaultCollapsed === '1') return
-    host.dataset.defaultCollapsed = '1'
-    collapseRenderedSetYears()
-
-    new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.type === 'childList')) {
-        collapseRenderedSetYears()
+      try {
+        const backup = await readBackupForSetRestore(file)
+        const expectedSets = Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0
+        const expectedAssignments = backup?.sets?.assignments && typeof backup.sets.assignments === 'object'
+          ? Object.keys(backup.sets.assignments).length
+          : 0
+        pendingRestoreContext = expectedSets
+          ? { backup, expectedSets, expectedAssignments }
+          : null
+      } catch (error) {
+        console.warn('Could not inspect restore backup for Sets', error)
+        pendingRestoreContext = null
       }
-    }).observe(host, { childList:true })
+    }, true)
+
+    // app.js already builds the exact old-car-ID -> new-car-ID mapping and writes the
+    // correctly remapped Sets state to localStorage. Capture that exact moment before
+    // any later cloud sync can replace it.
+    Storage.prototype.setItem = function(key, value) {
+      const result = nativeStorageSetItem.call(this, key, value)
+      try {
+        if (
+          this === localStorage &&
+          pendingRestoreContext &&
+          String(key).startsWith(`${SETS_STORAGE_PREFIX}-`)
+        ) {
+          const state = normalizeCapturedSetsState(value)
+          if (
+            state &&
+            state.sets.length === pendingRestoreContext.expectedSets &&
+            Object.keys(state.assignments || {}).length === pendingRestoreContext.expectedAssignments
+          ) {
+            // Fire-and-wait in our own task; app.js can continue its normal restore UI.
+            queueMicrotask(() => persistCapturedRestoreSets(String(key), state, pendingRestoreContext.backup))
+          }
+        }
+      } catch (error) {
+        console.warn('Sets restore capture hook failed', error)
+      }
+      return result
+    }
+  }
+
+  function showVerifiedRestoreSummaryAfterReload() {
+    try {
+      const raw = sessionStorage.getItem('p64-v504-sets-restored')
+      if (!raw) return
+      sessionStorage.removeItem('p64-v504-sets-restored')
+      const summary = JSON.parse(raw)
+      setTimeout(() => {
+        window.alert(`Restore verified ✓\n\n${summary.sets} Sets and ${summary.assignments} Set assignments restored and saved.`)
+      }, 700)
+    } catch {}
   }
 
   function applyPatch() {
@@ -348,7 +388,7 @@
     installSetsCollapsedByDefault()
     updateVisibleVersion()
     installRestoreRetryGuard()
-    installRestoreSetsCloudFix()
+    installRestoreSetsCaptureFix()
     showAccountEmail()
   }
 
@@ -356,6 +396,7 @@
 
   function init() {
     applyPatch()
+    showVerifiedRestoreSummaryAfterReload()
 
     setTimeout(applyPatch, 300)
     setTimeout(applyPatch, 1200)

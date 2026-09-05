@@ -1,29 +1,39 @@
-Pocket 64 v5.0.3
+Pocket 64 v5.0.4 — Restore Sets Fix
 
-Changes:
-1. Restores the Settings > Danger Zone > Clear Collection control.
-   - Uses Pocket 64's existing protected clear function.
-   - Requires the existing confirmation and typing CLEAR.
-   - Clears the currently signed-in account only.
-   - Cars, saved car photos, Sets, and Set assignments are removed.
+Confirmed backup used for diagnosis:
+- 207 cars
+- 226 photos
+- 13 Sets
+- 44 Set assignments
 
-2. Sets page now opens with ALL years collapsed.
-   - 2026 no longer auto-expands.
-   - You can still tap any year to expand/collapse it normally.
+WHAT v5.0.4 CHANGES
+- Keeps the successful car/photo restore untouched.
+- Captures the exact Sets state at the moment Pocket 64 remaps old car IDs to the newly restored car IDs.
+- For a different account, generates new Set IDs so they cannot collide with the source account.
+- Writes the restored Sets and car-to-Set assignments to Supabase.
+- Verifies the exact cloud counts before calling the Sets portion successful.
+- Reloads once after verification so Sets and card Set icons hydrate from the verified cloud data.
+- Shows a confirmation after reload with the restored Set/assignment counts.
+- Retains v5.0.3 Clear Collection and all-years-collapsed behavior.
+- Visible version is 5.0.4.
 
-3. Includes the v5.0.2 Sets restore cloud fix.
+INSTALL
+Replace these two files in the repository:
+  showcase-sync.js
+  version.json
 
-4. version.json is now 5.0.3.
+Then commit and wait for Cloudflare Pages to deploy.
 
-Install:
-Replace showcase-sync.js and version.json in the repository with these files,
-commit, then wait for Cloudflare Pages to deploy.
+CLEAN DUMMY TEST
+1. Confirm Settings shows Version 5.0.4.
+2. Settings > Danger Zone > Clear Collection.
+3. Restore Pocket64_Backup_2026-09-04.zip.
+4. The app may reload once automatically near the end.
+5. You should get:
+   Restore verified ✓
+   13 Sets and 44 Set assignments restored and saved.
+6. Check Sets page.
+7. Check Set icons on collection cards.
+8. Refresh, sign out, and sign back in. Sets and icons should remain.
 
-Test order on the DUMMY account:
-- Confirm Settings shows Version 5.0.3.
-- Confirm Danger Zone / Clear Collection appears.
-- Open Sets: no year should be expanded initially.
-- Use Clear Collection on the dummy account.
-- Restore your backup again.
-- Verify cars, all photos, Sets, Set assignments, and card Set icons.
-- Refresh/sign out/sign in and verify everything persists.
+If v5.0.4 cannot verify the cloud counts, it will explicitly say the Sets portion failed instead of silently reporting a successful full restore.
