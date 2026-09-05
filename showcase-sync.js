@@ -516,8 +516,161 @@
     }).observe(host, { childList:true, subtree:false })
   }
 
+
+  const FAQ_ITEMS = [
+    ['What does a Pocket 64 backup save?',
+     'A backup is a snapshot of your collection at the time you create it. It includes your cars, saved car photos, Sets, and Set assignments. Keep the ZIP file somewhere safe.'],
+    ['How often should I make a backup?',
+     'Any time you make a lot of changes, and periodically as your collection grows. A fresh backup gives you the best restore point if you ever need it.'],
+    ['Does Restore erase my current collection first?',
+     'No. Restore is not intended to be your everyday delete tool. For a clean test or a true replacement restore, use Clear Collection first, then restore the backup you want.'],
+    ['What should a Restore bring back?',
+     'A restore should reproduce the data that existed when that backup was created — including cars, photos, Sets, and Set assignments. It does not recreate changes made after the backup date.'],
+    ['Why might a restored collection look older than my main collection?',
+     'Because a backup is a snapshot. Cars, Sets, photos, or other changes added after that backup was made will not be in that file.'],
+    ['Where is Clear Collection?',
+     'Open Settings and look for Danger Zone. Clear Collection permanently removes the signed-in account’s cars, saved photos, Sets, and Set assignments. Use it carefully — it cannot be undone unless you have a backup.'],
+    ['Does Clear Collection affect another user?',
+     'No. Collection data is tied to the signed-in account. Clearing one account should not clear another user’s garage.'],
+    ['Are my car photos included in a backup?',
+     'Yes. Pocket 64 portable backups are designed to include the saved car photos along with the collection data. Larger collections can take longer to export or restore because of the images.'],
+    ['What are Sets?',
+     'Sets are your manually created groups of cars. You can create a Set, give it a year/name/size, and assign owned cars to positions inside it.'],
+    ['Will Pocket 64 automatically create Sets for me?',
+     'No. Set creation stays manual so your Sets list remains under your control. When applicable, Pocket 64 can help match a car to an existing Set, but it should not invent new Sets during a backup restore.'],
+    ['What does the Set icon on a car mean?',
+     'It means that car is assigned to one of your Sets. Open the car or Sets area to view the assignment.'],
+    ['Can two people use Pocket 64 separately?',
+     'Yes. Each person should use their own Pocket 64 account. Collections, Sets, favorites, photos, and other personal data are associated with that account.'],
+    ['What does Favorite do?',
+     'Favorite is your personal marker for cars you especially like. Favorites can be identified in the collection and viewed through the related Stats/filter tools.'],
+    ['What is Showcase?',
+     'Showcase lets you flag cars you want highlighted separately from the rest of the collection. It does not change ownership or quantity.'],
+    ['How does Search work?',
+     'Search can help find cars using identifying information such as model or toy number. Entering a Hot Wheels toy number is especially useful when multiple releases have similar names.'],
+    ['Why can the same toy number show more than one result?',
+     'A toy number can sometimes be associated with multiple releases, variants, packaging, or catalog records. Use the photo and other details to choose the correct one.'],
+    ['Why does Pocket 64 ask me to verify my email?',
+     'Email verification helps confirm that the address belongs to you and protects account access. Follow the verification link sent after account creation.'],
+    ['I forgot my password. What do I do?',
+     'Use the password-reset option on the sign-in screen. Follow the email link and return to Pocket 64 to choose a new password.'],
+    ['How do I contact support?',
+     'Open Settings and use Contact Support. Choose the closest category and describe what happened. Include useful details such as what you were doing and any message you saw.'],
+    ['Where can I see my Pocket 64 version?',
+     'Open Settings and look at the About section. The version number is useful when reporting a problem or checking that an update has deployed.'],
+    ['The app updated but something still looks old. What should I try?',
+     'First confirm the version number in Settings. If the new version is shown, close and reopen Pocket 64. If needed, refresh the browser/PWA before doing anything destructive.'],
+    ['Can I use Pocket 64 on more than one device?',
+     'Yes, as long as you sign in with the same account. Your Supabase-backed collection data follows the account; local browser state and caches can differ by device.'],
+  ]
+
+  function ensureFaqStyles() {
+    if (document.getElementById('p64-faq-styles')) return
+    const style = document.createElement('style')
+    style.id = 'p64-faq-styles'
+    style.textContent = `
+      #p64-faq-overlay{position:fixed;inset:0;z-index:9999;background:var(--page-bg,#000);overflow:auto;padding:env(safe-area-inset-top) 16px calc(32px + env(safe-area-inset-bottom));}
+      #p64-faq-overlay.hidden{display:none!important}
+      .p64-faq-shell{max-width:760px;margin:0 auto}
+      .p64-faq-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;padding:14px 0 12px;background:inherit}
+      .p64-faq-top h2{margin:0;flex:1;font-size:24px}
+      .p64-faq-back{min-width:76px}
+      .p64-faq-intro{opacity:.78;line-height:1.45;margin:0 0 14px}
+      .p64-faq-search{width:100%;box-sizing:border-box;margin:0 0 14px;padding:12px 14px;border-radius:12px;border:1px solid rgba(128,128,128,.35);background:rgba(128,128,128,.10);color:inherit;font:inherit}
+      .p64-faq-item{border:1px solid rgba(128,128,128,.22);border-radius:14px;margin:0 0 10px;overflow:hidden;background:rgba(128,128,128,.06)}
+      .p64-faq-item summary{cursor:pointer;padding:14px 16px;font-weight:700;list-style:none}
+      .p64-faq-item summary::-webkit-details-marker{display:none}
+      .p64-faq-item summary:after{content:'+';float:right;opacity:.65}
+      .p64-faq-item[open] summary:after{content:'–'}
+      .p64-faq-answer{padding:0 16px 15px;line-height:1.48;opacity:.86}
+      .p64-faq-empty{padding:24px 4px;text-align:center;opacity:.7}
+    `
+    document.head.append(style)
+  }
+
+  function ensureFaqPage() {
+    ensureFaqStyles()
+    if (!document.getElementById('p64-faq-overlay')) {
+      const overlay = document.createElement('section')
+      overlay.id = 'p64-faq-overlay'
+      overlay.className = 'hidden'
+      overlay.innerHTML = `
+        <div class="p64-faq-shell">
+          <div class="p64-faq-top">
+            <button type="button" class="settings-mini-button p64-faq-back">Back</button>
+            <h2>Help & FAQs</h2>
+          </div>
+          <p class="p64-faq-intro">Quick answers for the things people are most likely to wonder about while using Pocket 64.</p>
+          <input id="p64-faq-search" class="p64-faq-search" type="search" placeholder="Search FAQs…" autocomplete="off">
+          <div id="p64-faq-list"></div>
+          <div id="p64-faq-empty" class="p64-faq-empty hidden">No matching questions found.</div>
+        </div>`
+      document.body.append(overlay)
+
+      const list = overlay.querySelector('#p64-faq-list')
+      for (const [question, answer] of FAQ_ITEMS) {
+        const item = document.createElement('details')
+        item.className = 'p64-faq-item'
+        item.dataset.search = `${question} ${answer}`.toLowerCase()
+        const summary = document.createElement('summary')
+        summary.textContent = question
+        const body = document.createElement('div')
+        body.className = 'p64-faq-answer'
+        body.textContent = answer
+        item.append(summary, body)
+        list.append(item)
+      }
+
+      const close = () => {
+        overlay.classList.add('hidden')
+        document.body.style.overflow = ''
+      }
+      overlay.querySelector('.p64-faq-back').addEventListener('click', close)
+      overlay.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') close()
+      })
+      overlay.querySelector('#p64-faq-search').addEventListener('input', (event) => {
+        const term = String(event.target.value || '').trim().toLowerCase()
+        let visible = 0
+        overlay.querySelectorAll('.p64-faq-item').forEach((item) => {
+          const show = !term || item.dataset.search.includes(term)
+          item.classList.toggle('hidden', !show)
+          if (show) visible += 1
+        })
+        overlay.querySelector('#p64-faq-empty').classList.toggle('hidden', visible !== 0)
+      })
+    }
+
+    if (!document.getElementById('p64-faq-settings-card')) {
+      const settingsList = document.querySelector('#settings-screen .settings-list')
+      if (!settingsList) return
+      const card = document.createElement('div')
+      card.className = 'settings-card'
+      card.id = 'p64-faq-settings-card'
+      card.innerHTML = `
+        <div class="settings-copy">
+          <strong>Help & FAQs</strong>
+          <span>Backups, restores, Sets, accounts, photos, search, updates, and other common questions.</span>
+        </div>
+        <button id="p64-open-faq" type="button" class="settings-mini-button">Open</button>`
+      const supportCard = [...settingsList.children].find((node) =>
+        node.querySelector?.('.settings-copy strong')?.textContent?.trim() === 'Contact Support'
+      )
+      if (supportCard) settingsList.insertBefore(card, supportCard)
+      else settingsList.append(card)
+
+      card.querySelector('#p64-open-faq').addEventListener('click', () => {
+        const overlay = document.getElementById('p64-faq-overlay')
+        overlay?.classList.remove('hidden')
+        document.body.style.overflow = 'hidden'
+        setTimeout(() => document.getElementById('p64-faq-search')?.focus(), 80)
+      })
+    }
+  }
+
   function applyPatch() {
     ensureDangerZone()
+    ensureFaqPage()
     hideShowcase()
     installUppercaseSearch()
     installSetsCollapsedByDefault()
