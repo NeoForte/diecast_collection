@@ -482,17 +482,55 @@
   }
 
 
-  async function refreshSetsFromCloudBeforeBackup() {
+
+  function p64BackupFilename(extension = 'zip') {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `Pocket64_Backup_${year}-${month}-${day}.${extension}`
+  }
+
+  function p64DownloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  async function p64Sha256Hex(value) {
+    const buffer = value instanceof Blob
+      ? await value.arrayBuffer()
+      : (value instanceof ArrayBuffer ? value : new TextEncoder().encode(String(value)))
+    const digest = await crypto.subtle.digest('SHA-256', buffer)
+    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  }
+
+  async function buildAuthoritativeBackupFromCloud(button) {
     const client = await helperSupabase()
     const { data:{ session }, error:sessionError } = await client.auth.getSession()
     if (sessionError) throw sessionError
     const userId = session?.user?.id
     if (!userId) throw new Error('Your session expired. Sign in again and retry.')
+    if (!window.JSZip) throw new Error('ZIP support is not available. Refresh Pocket 64 and try again.')
+
+    button.textContent = 'Reading cloud data…'
 
     const [
+      { data:cars, error:carsError },
       { data:setRows, error:setError },
       { data:assignmentRows, error:assignmentError },
     ] = await Promise.all([
+      client
+        .from('cars')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending:false }),
       client
         .from('pocket64_sets')
         .select('id,year,name,total')
@@ -504,9 +542,11 @@
         .select('car_id,set_id,position')
         .eq('user_id', userId),
     ])
+    if (carsError) throw carsError
     if (setError) throw setError
     if (assignmentError) throw assignmentError
 
+    const cloudCars = Array.isArray(cars) ? cars : []
     const sets = (setRows || []).map((row) => ({
       id:String(row.id),
       year:String(row.year ?? '').replace(/[^0-9]/g,'').slice(0,4),
@@ -514,78 +554,169 @@
       total:Math.max(1, Math.floor(Number(row.total) || 1)),
     }))
 
-    const validSetIds = new Set(sets.map((set) => set.id))
+    const carIds = new Set(cloudCars.map((car) => String(car.id)))
+    const setIds = new Set(sets.map((set) => set.id))
     const assignments = {}
     for (const row of assignmentRows || []) {
       const carId = String(row.car_id || '')
       const setId = String(row.set_id || '')
-      if (!carId || !setId || !validSetIds.has(setId)) continue
+      if (!carIds.has(carId)) {
+        throw new Error('Backup stopped because a Set assignment points to a car that is not in this account.')
+      }
+      if (!setIds.has(setId)) {
+        throw new Error('Backup stopped because a Set assignment points to a missing Set.')
+      }
       assignments[carId] = {
         setId,
         position:Math.max(1, Math.floor(Number(row.position) || 1)),
       }
     }
 
-    const state = { version:1, sets, assignments }
+    // Keep the browser Sets cache aligned with the authoritative cloud state,
+    // but the backup below uses the cloud data directly — it does not read local cache.
+    const cloudSetState = { version:1, sets, assignments }
     nativeStorageSetItem.call(
       localStorage,
       `${SETS_STORAGE_PREFIX}-${userId}`,
-      JSON.stringify(state)
+      JSON.stringify(cloudSetState)
     )
     nativeStorageSetItem.call(
       localStorage,
       `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`,
       '1'
     )
-    return {
-      sets:sets.length,
-      assignments:Object.keys(assignments).length,
+
+    const zip = new window.JSZip()
+    const photoMap = {}
+    const integrityFiles = {}
+
+    const photoEntries = cloudCars.flatMap((car) => [
+      { car, slot:1, path:car.photo_path },
+      { car, slot:2, path:car.photo2_path },
+      { car, slot:3, path:car.photo3_path },
+    ].filter((item) => Boolean(item.path)))
+
+    for (let index = 0; index < photoEntries.length; index += 1) {
+      const { car, slot, path } = photoEntries[index]
+      button.textContent = `Photos ${index + 1}/${photoEntries.length}`
+
+      const { data:blob, error:photoError } = await client.storage
+        .from('car-photos')
+        .download(path)
+      if (photoError || !blob) {
+        throw new Error(`Could not download a saved photo for ${car.model || car.id}. No backup file was created.`)
+      }
+
+      const photoFile = `photos/${car.id}-${slot}.jpg`
+      if (!photoMap[car.id]) photoMap[car.id] = {}
+      photoMap[car.id][String(slot)] = photoFile
+      zip.file(photoFile, blob, { binary:true, compression:'STORE' })
+      integrityFiles[photoFile] = await p64Sha256Hex(blob)
     }
+
+    const exportedAt = new Date().toISOString()
+    const backup = {
+      format:'ajs-garage-backup',
+      version:8,
+      exported_at:exportedAt,
+      source_user_id:userId,
+      car_count:cloudCars.length,
+      photo_count:photoEntries.length,
+      note:'Self-contained Pocket 64 backup built directly from Supabase cloud data. Includes cars, private car photos, Sets, and Set assignments.',
+      photos:photoMap,
+      sets:cloudSetState,
+      cars:cloudCars.map((car) => ({ ...car })),
+    }
+
+    // Sanity checks before creating a downloadable ZIP.
+    const backupSetCount = Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0
+    const backupAssignmentCount = backup?.sets?.assignments
+      ? Object.keys(backup.sets.assignments).length
+      : 0
+
+    if (backupSetCount !== sets.length) {
+      throw new Error(`Backup verification failed: ${backupSetCount}/${sets.length} Sets were packed.`)
+    }
+    if (backupAssignmentCount !== Object.keys(assignments).length) {
+      throw new Error(
+        `Backup verification failed: ${backupAssignmentCount}/${Object.keys(assignments).length} Set assignments were packed.`
+      )
+    }
+
+    const backupText = JSON.stringify(backup, null, 2)
+    zip.file('backup.json', backupText)
+    integrityFiles['backup.json'] = await p64Sha256Hex(backupText)
+
+    zip.file('integrity.json', JSON.stringify({
+      format:'pocket64-integrity',
+      version:1,
+      algorithm:'SHA-256',
+      generated_at:exportedAt,
+      files:integrityFiles,
+    }, null, 2))
+
+    zip.file('README.txt', [
+      'Pocket 64 Disaster-Recovery Backup',
+      '',
+      `Exported: ${exportedAt}`,
+      `Cars: ${cloudCars.length}`,
+      `Photos: ${photoEntries.length}`,
+      `Sets: ${sets.length}`,
+      `Set assignments: ${Object.keys(assignments).length}`,
+      '',
+      'This backup was built directly from the signed-in account’s Supabase cloud data.',
+      'Keep this ZIP somewhere safe. Do not unzip or modify it before restoring in Pocket 64.',
+    ].join('\n'))
+
+    button.textContent = 'Packing…'
+    const blob = await zip.generateAsync(
+      { type:'blob', compression:'STORE' },
+      (metadata) => { button.textContent = `Packing ${Math.round(metadata.percent)}%` }
+    )
+
+    // Last hard stop: if cloud says Sets exist, a 0-Set backup is never downloadable.
+    if (sets.length > 0 && backupSetCount === 0) {
+      throw new Error('Backup stopped because cloud Sets exist but the ZIP contained 0 Sets.')
+    }
+
+    p64DownloadBlob(blob, p64BackupFilename('zip'))
+
+    nativeAlert(
+      `Backup complete ✓\n\n` +
+      `${cloudCars.length} cars · ${photoEntries.length} photos · ${sets.length} Sets · ${Object.keys(assignments).length} Set assignments\n\n` +
+      `Backup built from Supabase cloud data and verified.`
+    )
   }
 
-  function installCloudBackedBackup() {
-    if (document.documentElement.dataset.p64CloudBackedBackup === '1') return
-    document.documentElement.dataset.p64CloudBackedBackup = '1'
+  function installCloudOwnedBackup() {
+    if (document.documentElement.dataset.p64CloudOwnedBackup === '1') return
+    document.documentElement.dataset.p64CloudOwnedBackup = '1'
 
-    let bypass = false
-
-    document.addEventListener('click', async (event) => {
+    document.addEventListener('click', (event) => {
       const button = event.target?.closest?.('#backup-button')
       if (!button) return
 
-      if (bypass) {
-        bypass = false
-        return
-      }
-
+      // v5.1.1 owns backup completely. app.js never receives this click,
+      // so there is no local-cache handoff between cloud Sets and backup.json.
       event.preventDefault()
       event.stopImmediatePropagation()
 
+      const restoreButton = document.getElementById('restore-button')
       const originalText = button.textContent || 'Backup'
+
       button.disabled = true
-      button.textContent = 'Syncing Sets…'
+      if (restoreButton) restoreButton.disabled = true
 
-      try {
-        const counts = await refreshSetsFromCloudBeforeBackup()
-        console.info(
-          `Pocket 64 v5.1.0 backup preflight: ${counts.sets} Sets / ${counts.assignments} assignments loaded from Supabase`
-        )
-
-        button.disabled = false
-        button.textContent = originalText
-
-        bypass = true
-        button.dispatchEvent(new MouseEvent('click', {
-          bubbles:true,
-          cancelable:true,
-          view:window,
-        }))
-      } catch (error) {
-        console.error('Pocket 64 v5.1.0 backup preflight failed', error)
-        button.disabled = false
-        button.textContent = originalText
-        nativeAlert(`Backup could not start: ${error.message || error}`)
-      }
+      buildAuthoritativeBackupFromCloud(button)
+        .catch((error) => {
+          console.error('Pocket 64 v5.1.1 backup failed', error)
+          nativeAlert(`Backup failed: ${error.message || error}`)
+        })
+        .finally(() => {
+          button.disabled = false
+          button.textContent = originalText
+          if (restoreButton) restoreButton.disabled = false
+        })
     }, true)
   }
 
@@ -893,7 +1024,7 @@
     updateVisibleVersion()
     installRestoreRetryGuard()
     installOwnedRestore()
-    installCloudBackedBackup()
+    installCloudOwnedBackup()
     showAccountEmail()
   }
 

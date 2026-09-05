@@ -1,33 +1,43 @@
-Pocket 64 v5.1.0 — Cloud-backed Sets in Backup
+Pocket 64 v5.1.1 — Authoritative Cloud Backup
 
-WHAT CHANGED
+THIS IS THE IMPORTANT BACKUP FIX.
 
-Backup now refreshes Sets and Set assignments directly from Supabase BEFORE the normal ZIP export begins.
+The Backup button is now fully owned by the v5.1.1 backup handler.
+The old app.js backup handler does not run.
 
 WHY
-The previous backup path used the browser's local Sets cache. If that local cache was stale or empty, a perfectly good account with cloud Sets could create a backup that reported 0 Sets.
+v5.1.0 fetched Sets from Supabase, wrote them to localStorage, then handed control back to the old exporter.
+Safari could still leave the exporter reading stale/empty Set state.
 
-v5.1.0 makes Supabase the source of truth for Sets at backup time.
+v5.1.1 removes that handoff completely.
 
-FLOW
-1. Tap Backup.
-2. Pocket 64 reads the signed-in user's Sets from pocket64_sets.
-3. Pocket 64 reads Set assignments from pocket64_set_assignments.
-4. The authoritative cloud state is written into the app's local Sets state.
-5. The normal self-contained ZIP backup runs.
-6. backup.json therefore receives the cloud-backed Sets/assignments.
+BACKUP SOURCE OF TRUTH
+The ZIP is built directly from Supabase:
+- cars table
+- pocket64_sets
+- pocket64_set_assignments
+- private car-photos storage
 
-RETAINED
-- v5.0.9 deterministic restore
-- non-empty garage restore warning
-- Help & FAQs
-- Clear Collection / Danger Zone
-- collapsed Set years
+The backup does NOT depend on the browser's local Sets cache.
+
+HARD SAFETY CHECKS
+Before a ZIP is downloadable:
+- every Set assignment must point to a car in the account
+- every Set assignment must point to an existing Set
+- packed Set count must equal Supabase Set count
+- packed assignment count must equal Supabase assignment count
+- if cloud Sets exist, a 0-Set ZIP is refused
+
+SUCCESS MESSAGE
+Backup complete ✓
+[cars] · [photos] · [Sets] · [Set assignments]
+Backup built from Supabase cloud data and verified.
 
 TEST
-1. Deploy and confirm Version 5.1.0.
-2. On MAIN, create a fresh full backup.
-3. Restore that ZIP on a truly empty dummy account.
-4. The restore confirmation should show the expected non-zero Set count.
-5. After restore, Set pages should contain assigned cars and card Set icons should appear.
-6. Then compare MAIN vs DUMMY in Supabase.
+1. Deploy and confirm Version 5.1.1.
+2. On MAIN, tap Backup.
+3. The backup success popup itself should report the expected cloud counts.
+4. On an empty dummy, choose Restore.
+5. BEFORE pressing OK, the restore preview should show the same non-zero Set count.
+6. If the preview says 0 Sets, CANCEL and do not restore.
+7. If counts are correct, restore and then verify Set cars/icons.
