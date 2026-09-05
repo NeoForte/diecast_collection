@@ -298,9 +298,10 @@
       // the app hydrates from the verified cloud Sets state and card icons are guaranteed current.
       setTimeout(() => {
         try {
-          sessionStorage.setItem('p64-v504-sets-restored', JSON.stringify({
-            sets: expectedSets,
-            assignments: expectedAssignments,
+          sessionStorage.setItem('p64-v506-exact-restore-state', JSON.stringify({
+            state: cloudState,
+            expectedSets,
+            expectedAssignments,
           }))
         } catch {}
         window.location.reload()
@@ -369,18 +370,93 @@
     }
   }
 
-  function showVerifiedRestoreSummaryAfterReload() {
+  async function enforceExactRestoreStateAfterReload() {
+    let payload = null
     try {
-      const raw = sessionStorage.getItem('p64-v504-sets-restored')
+      const raw = sessionStorage.getItem('p64-v506-exact-restore-state')
       if (!raw) return
-      sessionStorage.removeItem('p64-v504-sets-restored')
-      const summary = JSON.parse(raw)
-      setTimeout(() => {
-        window.alert(`Restore verified ✓\n\n${summary.sets} Sets and ${summary.assignments} Set assignments restored and saved.`)
-      }, 700)
-    } catch {}
-  }
+      payload = JSON.parse(raw)
+    } catch {
+      return
+    }
+    const state = payload?.state
+    const expectedSets = Number(payload?.expectedSets) || 0
+    const expectedAssignments = Number(payload?.expectedAssignments) || 0
+    if (!state || !Array.isArray(state.sets) || !state.assignments || !expectedSets) return
 
+    try {
+      const client = await helperSupabase()
+      const { data:{ session }, error:sessionError } = await client.auth.getSession()
+      if (sessionError) throw sessionError
+      const userId = session?.user?.id
+      if (!userId) throw new Error('No signed-in Pocket 64 session was found.')
+
+      // Wait until normal app startup/retro-linking has had a chance to finish.
+      await new Promise((resolve) => setTimeout(resolve, 1800))
+
+      const setRows = state.sets.map((set) => ({
+        id:String(set.id),
+        user_id:userId,
+        year:Number(set.year),
+        name:String(set.name || '').trim().toUpperCase(),
+        total:Math.max(1, Math.floor(Number(set.total) || 1)),
+        updated_at:new Date().toISOString(),
+      }))
+      const validSetIds = new Set(setRows.map((row) => row.id))
+      const assignmentRows = Object.entries(state.assignments || {})
+        .filter(([, assignment]) => assignment && validSetIds.has(String(assignment.setId)))
+        .map(([carId, assignment]) => ({
+          user_id:userId,
+          set_id:String(assignment.setId),
+          car_id:String(carId),
+          position:Math.max(1, Math.floor(Number(assignment.position) || 1)),
+          updated_at:new Date().toISOString(),
+        }))
+
+      if (setRows.length !== expectedSets || assignmentRows.length !== expectedAssignments) {
+        throw new Error(`Exact restore state is ${setRows.length}/${expectedSets} Sets and ${assignmentRows.length}/${expectedAssignments} assignments.`)
+      }
+
+      // Remove anything retro-linking or migration added after the restore.
+      const { error:assignmentDeleteError } = await client.from('pocket64_set_assignments').delete().eq('user_id', userId)
+      if (assignmentDeleteError) throw assignmentDeleteError
+      const { error:setDeleteError } = await client.from('pocket64_sets').delete().eq('user_id', userId)
+      if (setDeleteError) throw setDeleteError
+
+      const { error:setInsertError } = await client.from('pocket64_sets').insert(setRows)
+      if (setInsertError) throw setInsertError
+      for (let start = 0; start < assignmentRows.length; start += 100) {
+        const { error:assignmentInsertError } = await client.from('pocket64_set_assignments').insert(assignmentRows.slice(start, start + 100))
+        if (assignmentInsertError) throw assignmentInsertError
+      }
+
+      nativeStorageSetItem.call(localStorage, `${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(state))
+      nativeStorageSetItem.call(localStorage, `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
+
+      const [{ count:setCount, error:setCountError }, { count:assignmentCount, error:assignmentCountError }] = await Promise.all([
+        client.from('pocket64_sets').select('id', { count:'exact', head:true }).eq('user_id', userId),
+        client.from('pocket64_set_assignments').select('car_id', { count:'exact', head:true }).eq('user_id', userId),
+      ])
+      if (setCountError) throw setCountError
+      if (assignmentCountError) throw assignmentCountError
+      if (setCount !== expectedSets || assignmentCount !== expectedAssignments) {
+        throw new Error(`Final verification found ${setCount ?? 0}/${expectedSets} Sets and ${assignmentCount ?? 0}/${expectedAssignments} assignments.`)
+      }
+
+      sessionStorage.removeItem('p64-v506-exact-restore-state')
+
+      // Re-render collection cards from the exact local Sets state without another reload.
+      const search = document.getElementById('search-input')
+      if (search) search.dispatchEvent(new Event('input', { bubbles:true }))
+
+      setTimeout(() => {
+        window.alert(`Restore verified ✓\n\n${expectedSets} Sets and ${expectedAssignments} Set assignments restored exactly.`)
+      }, 250)
+    } catch (error) {
+      console.error('Pocket 64 v5.0.6 exact Sets enforcement failed', error)
+      try { window.alert(`Sets restore verification failed: ${error.message || error}`) } catch {}
+    }
+  }
 
   function ensureDangerZone() {
     if (document.getElementById('clear-collection-button')) return
@@ -455,7 +531,7 @@
 
   function init() {
     applyPatch()
-    showVerifiedRestoreSummaryAfterReload()
+    enforceExactRestoreStateAfterReload()
 
     setTimeout(applyPatch, 300)
     setTimeout(applyPatch, 1200)
