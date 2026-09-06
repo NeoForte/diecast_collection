@@ -1,0 +1,21 @@
+Pocket 64 v5.3.0
+===================
+
+PHOTO VIEWER
+- Rebuilt the enlarged Edit Car photo viewer presentation for a professional mobile-first experience.
+- Removes the legacy inline 320px / reduced-height sizing cap that kept photos too small on iPhone.
+- Uses nearly the full available phone width while preserving the whole photo with no forced crop.
+- Keeps the existing pinch-to-zoom and pan behavior for close inspection.
+- Keeps swipe navigation between Main / Photo 2 / Photo 3 when multiple photos exist.
+- Adds polished full-screen black presentation, safe-area-aware close control, subtle navigation, and photo count treatment.
+- Removes the prior FIT/FILL-style behavior from the active viewer experience.
+
+STABILITY
+- Preserves the v5.2.7 Add Car Cancel/reset fix so unsaved Add Car state is cleared when Cancel is used.
+- No Supabase, database, auth, Sets, collection-data, or saved-car schema changes.
+
+VERSION
+- Version bumped to 5.3.0.
+
+BACKUP
+- Release package is intended to be delivered as a complete full-project ZIP, not a patch-only ZIP.
