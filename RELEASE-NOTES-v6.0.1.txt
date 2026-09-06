@@ -1,0 +1,18 @@
+Pocket 64 v6.0.1
+===================
+
+SET UI CLEANUP
+- Removes the small NEW SET label above the Create Set button on Add/Edit Car.
+- Aligns the existing Add to Set dropdown and Create Set button on the same horizontal row.
+- Keeps the v6.0.0 Set behavior unchanged: existing Sets remain grouped by year and Create Set stays separate.
+
+UNCHANGED
+- No Set save/assignment logic changes.
+- No photo viewer changes.
+- No database/schema changes.
+
+VERSION
+- Version bumped to 6.0.1.
+
+BACKUP
+- Release packaged as a complete full-project ZIP for rollback/recovery safety.
