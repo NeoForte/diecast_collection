@@ -1,5 +1,5 @@
 (() => {
-  const PATCH_VERSION = '5.2.7'
+  const PATCH_VERSION = '5.3.0'
   const UI_STATE_PREFIX = 'pocket64-ui-state-v1-'
 
   function isNewCarEditor() {
@@ -54,107 +54,239 @@
     button.addEventListener('click', clearNewCarDraftState, true)
   }
 
-  let viewerMode = 'fill'
-  let lastViewerTap = 0
+  function syncDisplayedVersion() {
+    document.querySelectorAll('.version-badge').forEach((el) => {
+      el.textContent = `Version ${PATCH_VERSION}`
+    })
+  }
 
-  function ensureProViewerStyles() {
-    if (document.getElementById('p64-pro-viewer-styles')) return
+  function ensureProfessionalViewerStyles() {
+    if (document.getElementById('p64-v530-viewer-styles')) return
     const style = document.createElement('style')
-    style.id = 'p64-pro-viewer-styles'
+    style.id = 'p64-v530-viewer-styles'
     style.textContent = `
-      #photo-viewer.photo-viewer{position:fixed!important;inset:0!important;z-index:20000!important;width:100vw!important;height:100dvh!important;min-height:100vh!important;background:#000!important;overflow:hidden!important;padding:0!important;margin:0!important;}
-      #photo-viewer-stage.photo-viewer-stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:grid!important;place-items:center!important;padding:0!important;margin:0!important;overflow:hidden!important;touch-action:none!important;}
-      #photo-viewer-image{display:block!important;margin:0!important;width:100vw!important;height:88dvh!important;max-width:none!important;max-height:none!important;transform-origin:center center!important;will-change:transform!important;box-shadow:none!important;border:0!important;border-radius:0!important;background:#000!important;}
-      #photo-viewer[data-p64-view-mode="fill"] #photo-viewer-image{object-fit:cover!important;}
-      #photo-viewer[data-p64-view-mode="fit"] #photo-viewer-image{object-fit:contain!important;}
-      #photo-viewer-close.photo-viewer-close{position:absolute!important;z-index:5!important;top:calc(env(safe-area-inset-top) + 12px)!important;right:14px!important;width:46px!important;height:46px!important;border-radius:999px!important;display:grid!important;place-items:center!important;background:rgba(16,20,27,.74)!important;border:1px solid rgba(255,255,255,.18)!important;color:#f8fbff!important;font-size:31px!important;line-height:1!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;}
-      #p64-view-mode-toggle{position:absolute!important;z-index:5!important;top:calc(env(safe-area-inset-top) + 14px)!important;left:14px!important;min-width:58px!important;height:40px!important;padding:0 13px!important;border-radius:999px!important;border:1px solid rgba(255,255,255,.17)!important;background:rgba(16,20,27,.68)!important;color:#d7efff!important;font:800 11px/1 system-ui,-apple-system,sans-serif!important;letter-spacing:.12em!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;}
-      #photo-viewer .photo-viewer-nav{position:absolute!important;z-index:5!important;top:50%!important;transform:translateY(-50%)!important;width:42px!important;height:64px!important;border:0!important;border-radius:14px!important;background:rgba(8,12,18,.24)!important;color:#cdeaff!important;font-size:46px!important;line-height:1!important;backdrop-filter:blur(7px)!important;-webkit-backdrop-filter:blur(7px)!important;}
-      #photo-viewer-prev{left:0!important} #photo-viewer-next{right:0!important}
-      #photo-viewer-count.photo-viewer-count{position:absolute!important;z-index:5!important;left:50%!important;transform:translateX(-50%)!important;bottom:calc(env(safe-area-inset-bottom) + 14px)!important;width:auto!important;max-width:80vw!important;margin:0!important;padding:7px 12px!important;border-radius:999px!important;background:rgba(8,12,18,.50)!important;color:#b9ddf7!important;font-size:12px!important;font-weight:800!important;letter-spacing:.14em!important;white-space:nowrap!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;}
-      @media (orientation:landscape){#photo-viewer-image{width:92vw!important;height:100dvh!important}#photo-viewer-close.photo-viewer-close{top:calc(env(safe-area-inset-top) + 8px)!important}#p64-view-mode-toggle{top:calc(env(safe-area-inset-top) + 10px)!important}#photo-viewer-count.photo-viewer-count{bottom:calc(env(safe-area-inset-bottom) + 8px)!important}}
+      #photo-viewer.photo-viewer {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 20000 !important;
+        display: block !important;
+        width: 100vw !important;
+        height: 100dvh !important;
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        overscroll-behavior: contain !important;
+        background: rgba(0,0,0,.985) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+
+      #photo-viewer.photo-viewer.hidden {
+        display: none !important;
+      }
+
+      #photo-viewer-stage.photo-viewer-stage {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        padding: 4px !important;
+        overflow: hidden !important;
+        touch-action: none !important;
+        overscroll-behavior: contain !important;
+      }
+
+      #photo-viewer-image {
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 8px) !important;
+        max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8px) !important;
+        margin: 0 !important;
+        object-fit: contain !important;
+        object-position: center center !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #000 !important;
+        transform-origin: center center !important;
+        will-change: transform !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -webkit-user-drag: none !important;
+        touch-action: none !important;
+      }
+
+      #photo-viewer-close.photo-viewer-close {
+        position: absolute !important;
+        z-index: 8 !important;
+        top: calc(env(safe-area-inset-top) + 10px) !important;
+        right: calc(env(safe-area-inset-right) + 10px) !important;
+        width: 46px !important;
+        height: 46px !important;
+        display: grid !important;
+        place-items: center !important;
+        margin: 0 !important;
+        padding: 0 0 3px !important;
+        border-radius: 999px !important;
+        border: 1px solid rgba(255,255,255,.20) !important;
+        background: rgba(12,16,22,.72) !important;
+        color: #f7fbff !important;
+        box-shadow: 0 5px 22px rgba(0,0,0,.34) !important;
+        font: 300 31px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+      }
+
+      #photo-viewer .photo-viewer-nav {
+        position: absolute !important;
+        z-index: 7 !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: 42px !important;
+        height: 72px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 14px !important;
+        background: rgba(8,12,18,.28) !important;
+        color: rgba(225,242,255,.88) !important;
+        box-shadow: none !important;
+        font: 300 44px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+      }
+
+      #photo-viewer-prev { left: calc(env(safe-area-inset-left) + 2px) !important; }
+      #photo-viewer-next { right: calc(env(safe-area-inset-right) + 2px) !important; }
+
+      #photo-viewer-count.photo-viewer-count {
+        position: absolute !important;
+        z-index: 7 !important;
+        left: 50% !important;
+        bottom: calc(env(safe-area-inset-bottom) + 12px) !important;
+        transform: translateX(-50%) !important;
+        width: auto !important;
+        max-width: 82vw !important;
+        margin: 0 !important;
+        padding: 7px 12px !important;
+        border-radius: 999px !important;
+        background: rgba(8,12,18,.52) !important;
+        color: rgba(206,232,250,.94) !important;
+        font: 800 11px/1.1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing: .12em !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+      }
+
+      body.photo-viewer-open {
+        overflow: hidden !important;
+        overscroll-behavior: none !important;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        #photo-viewer-image { cursor: zoom-in !important; }
+        #photo-viewer-close.photo-viewer-close:hover,
+        #photo-viewer .photo-viewer-nav:hover { background: rgba(24,31,41,.80) !important; }
+      }
+
+      @media (max-width: 480px) {
+        #photo-viewer-stage.photo-viewer-stage { padding: 2px !important; }
+        #photo-viewer-image {
+          max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 4px) !important;
+          max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4px) !important;
+        }
+        #photo-viewer .photo-viewer-nav {
+          width: 38px !important;
+          height: 64px !important;
+          border-radius: 12px !important;
+          font-size: 40px !important;
+          background: rgba(8,12,18,.20) !important;
+        }
+      }
     `
     document.head.append(style)
   }
 
-  function ensureViewModeToggle() {
+  function installProfessionalPhotoViewer() {
+    ensureProfessionalViewerStyles()
+
     const viewer = document.getElementById('photo-viewer')
-    if (!viewer) return null
-    let button = document.getElementById('p64-view-mode-toggle')
-    if (!button) {
-      button = document.createElement('button')
-      button.id = 'p64-view-mode-toggle'
-      button.type = 'button'
-      button.setAttribute('aria-label', 'Toggle photo fit or fill')
-      viewer.append(button)
-      button.addEventListener('click', (event) => {
-        event.preventDefault(); event.stopPropagation(); toggleViewerMode()
+    const image = document.getElementById('photo-viewer-image')
+    if (!viewer || !image || image.dataset.p64V530Viewer === '1') return
+    image.dataset.p64V530Viewer = '1'
+
+    let cleanupQueued = false
+    let cleaning = false
+
+    function clearLegacyInlineSizing() {
+      if (cleaning) return
+      const props = ['width', 'height', 'max-width', 'max-height', 'object-fit', 'object-position']
+      const hasLegacySizing = props.some((prop) => image.style.getPropertyValue(prop))
+      if (!hasLegacySizing) return
+
+      cleaning = true
+      for (const prop of props) image.style.removeProperty(prop)
+      cleaning = false
+    }
+
+    function queueSizingCleanup() {
+      if (cleanupQueued) return
+      cleanupQueued = true
+      requestAnimationFrame(() => {
+        cleanupQueued = false
+        clearLegacyInlineSizing()
       })
     }
-    return button
-  }
 
-  function applyViewerMode(mode = viewerMode) {
-    const viewer = document.getElementById('photo-viewer')
-    const image = document.getElementById('photo-viewer-image')
-    if (!viewer || !image) return
-    viewerMode = mode === 'fit' ? 'fit' : 'fill'
-    viewer.dataset.p64ViewMode = viewerMode
-    image.style.removeProperty('width')
-    image.style.removeProperty('height')
-    image.style.removeProperty('max-width')
-    image.style.removeProperty('max-height')
-    image.style.removeProperty('object-fit')
-    const button = ensureViewModeToggle()
-    if (button) {
-      button.textContent = viewerMode === 'fill' ? 'FIT' : 'FILL'
-      button.title = viewerMode === 'fill' ? 'Show the whole photo' : 'Fill the screen'
-    }
-  }
-
-  function toggleViewerMode() {
-    applyViewerMode(viewerMode === 'fill' ? 'fit' : 'fill')
-  }
-
-  function openViewerInFillMode() {
-    viewerMode = 'fill'
-    requestAnimationFrame(() => applyViewerMode('fill'))
-  }
-
-  function installProPhotoViewer() {
-    ensureProViewerStyles()
-    const image = document.getElementById('photo-viewer-image')
-    const viewer = document.getElementById('photo-viewer')
-    if (!image || !viewer || image.dataset.p64ProViewer === '1') return
-    image.dataset.p64ProViewer = '1'
-    ensureViewModeToggle()
-
-    image.addEventListener('load', () => requestAnimationFrame(() => applyViewerMode(viewerMode)))
-
-    image.addEventListener('click', (event) => {
-      const now = Date.now()
-      if (now - lastViewerTap < 320) {
-        event.preventDefault(); event.stopPropagation(); lastViewerTap = 0; toggleViewerMode(); return
-      }
-      lastViewerTap = now
-    }, true)
+    image.addEventListener('load', () => {
+      queueSizingCleanup()
+      requestAnimationFrame(queueSizingCleanup)
+    })
 
     new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.attributeName === 'src')) requestAnimationFrame(() => applyViewerMode(viewerMode))
-    }).observe(image, { attributes:true, attributeFilter:['src'] })
+      if (mutations.some((mutation) => mutation.attributeName === 'style' || mutation.attributeName === 'src')) {
+        queueSizingCleanup()
+      }
+    }).observe(image, { attributes:true, attributeFilter:['style','src'] })
 
     new MutationObserver(() => {
-      if (!viewer.classList.contains('hidden')) openViewerInFillMode()
+      if (!viewer.classList.contains('hidden')) {
+        queueSizingCleanup()
+        requestAnimationFrame(queueSizingCleanup)
+      }
     }).observe(viewer, { attributes:true, attributeFilter:['class'] })
 
-    window.addEventListener('resize', () => requestAnimationFrame(() => applyViewerMode(viewerMode)))
-    window.visualViewport?.addEventListener?.('resize', () => requestAnimationFrame(() => applyViewerMode(viewerMode)))
+    window.addEventListener('resize', queueSizingCleanup)
+    window.visualViewport?.addEventListener?.('resize', queueSizingCleanup)
+
+    document.addEventListener('keydown', (event) => {
+      if (viewer.classList.contains('hidden')) return
+      if (event.key === 'ArrowLeft') document.getElementById('photo-viewer-prev')?.click()
+      if (event.key === 'ArrowRight') document.getElementById('photo-viewer-next')?.click()
+    })
+
+    queueSizingCleanup()
   }
 
   function installPatch() {
-    installCancelReset(); installProPhotoViewer(); document.documentElement.dataset.p64PatchVersion = PATCH_VERSION
+    installCancelReset()
+    installProfessionalPhotoViewer()
+    syncDisplayedVersion()
+    document.documentElement.dataset.p64PatchVersion = PATCH_VERSION
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installPatch, { once:true })
-  else installPatch()
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installPatch, { once:true })
+  } else {
+    installPatch()
+  }
 })()
