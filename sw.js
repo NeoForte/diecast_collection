@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v10'
+const CACHE = 'pocket64-shell-v11'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -10,6 +10,7 @@ const CORE_ASSET_NAMES = new Set([
   'p64-v538-set-flow.js',
   'p64-v606-cleanup.js',
   'p64-v609-set-ui.js',
+  'p64-v612-camera-guard.js',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -74,6 +75,13 @@ async function latestCoreResponse(request) {
     let text = await response.text()
 
     text = text.replace(/(styles\.css|jszip\.min\.js|showcase-sync\.js|p64-v525-patch\.js|app\.js)\?v=[^\"']+/g, `$1?v=${version}`)
+
+    if (!text.includes('p64-v612-camera-guard.js')) {
+      text = text.replace(
+        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
+        `<script src="p64-v612-camera-guard.js?v=${version}"></script>\n  $1`
+      )
+    }
 
     if (!text.includes('p64-v531-viewer.js')) {
       text = text.replace(
