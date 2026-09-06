@@ -5,6 +5,7 @@ const CORE_ASSET_NAMES = new Set([
   'styles.css',
   'app.js',
   'showcase-sync.js',
+  'p64-v525-patch.js',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -36,13 +37,11 @@ async function latestCoreResponse(request) {
   const response = await fetchFresh(cleanUrl)
   if (!response.ok) return response
 
-  // APP_VERSION follows version.json automatically. Future releases only
-  // require version.json to change; stale query strings cannot pin the badge.
   if (requestUrl.pathname.endsWith('/app.js')) {
     const version = await currentVersion()
     const text = await response.text()
     const patched = text.replace(
-      /const APP_VERSION = ['"][^'"]+['"]/, 
+      /const APP_VERSION = ['\"][^'\"]+['\"]/, 
       `const APP_VERSION = '${version}'`
     )
     return new Response(patched, {
@@ -79,9 +78,6 @@ self.addEventListener('activate', (event) => {
       self.clients.claim(),
     ])
 
-    // Bootstrap escape hatch: when a newer worker finally arrives, reload all
-    // open Pocket 64 tabs once under the new worker. This breaks clients out
-    // of an old cached app shell without asking the user to clear site data.
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
     await Promise.all(clients.map(async (client) => {
       try {
