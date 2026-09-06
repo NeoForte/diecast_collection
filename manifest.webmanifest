@@ -1,7 +1,7 @@
 {
   "name": "Pocket 64",
   "short_name": "Pocket 64",
-  "start_url": "./",
+  "start_url": "./pwa-loader.html?v=6.1.1",
   "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
