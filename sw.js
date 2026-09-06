@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v9'
+const CACHE = 'pocket64-shell-v10'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -47,10 +47,18 @@ async function latestCoreResponse(request) {
   if (requestUrl.pathname.endsWith('/app.js')) {
     const version = await currentVersion()
     const text = await response.text()
-    const patched = text.replace(
+    let patched = text.replace(
       /const APP_VERSION = ['\"][^'\"]+['\"]/, 
       `const APP_VERSION = '${version}'`
     )
+
+    // Load the modern Set UI from the same guaranteed app.js path. This keeps
+    // Safari and the installed iOS PWA on identical Set controls even when iOS
+    // launches a stored app shell instead of a freshly transformed navigation.
+    if (!patched.includes('p64-v609-set-ui.js')) {
+      patched += `\nimport('./p64-v609-set-ui.js?v=${version}').catch((error) => console.warn('Pocket 64 Set UI load failed', error))\n`
+    }
+
     return new Response(patched, {
       status: response.status,
       statusText: response.statusText,
@@ -88,12 +96,9 @@ async function latestCoreResponse(request) {
       )
     }
 
-    if (!text.includes('p64-v609-set-ui.js')) {
-      text = text.replace(
-        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
-        `$1\n  <script src="p64-v609-set-ui.js?v=${version}"></script>`
-      )
-    }
+    // p64-v609-set-ui.js is intentionally NOT injected into navigation here.
+    // It is loaded by the patched app.js response above so installed PWAs and
+    // normal Safari tabs cannot diverge on this UI layer.
 
     return new Response(text, {
       status: response.status,
