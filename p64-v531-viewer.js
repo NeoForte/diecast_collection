@@ -1,5 +1,5 @@
 (() => {
-  const FIX_VERSION = '6.0.1'
+  const FIX_VERSION = '6.0.2'
   const SETS_PREFIX = 'pocket64-sets-v1-'
   const AUTH_KEY = 'sb-ftjayqjpgifdipmjloxx-auth-token'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
@@ -52,20 +52,19 @@
   }
 
   function installSetFlowStyles() {
-    if (document.getElementById('p64-v601-set-styles')) return
+    if (document.getElementById('p64-v602-set-styles')) return
     document.getElementById('p64-v600-set-styles')?.remove()
+    document.getElementById('p64-v601-set-styles')?.remove()
     const style = document.createElement('style')
-    style.id = 'p64-v601-set-styles'
+    style.id = 'p64-v602-set-styles'
     style.textContent = `
       .set-assignment-row {
         grid-template-columns:minmax(0,1.35fr) minmax(112px,.65fr) !important;
-        align-items:start !important;
+        align-items:end !important;
       }
+      .set-assignment-row > label:first-child { margin-bottom:0 !important; }
       .p64-create-set-wrap {
-        min-width:0;
-        display:flex;
-        align-items:flex-end;
-        padding-top:24px;
+        min-width:0; display:flex; align-items:flex-end; align-self:end; padding:0; margin:0;
       }
       .p64-create-set-button {
         min-height:46px; width:100%; box-sizing:border-box; padding:0 10px;
@@ -102,8 +101,7 @@
     removeEmbeddedCreateOption()
     const existing = document.getElementById('p64-create-set-button')
     if (existing) {
-      const wrap = existing.closest('.p64-create-set-wrap')
-      wrap?.querySelector('.p64-create-set-label')?.remove()
+      existing.closest('.p64-create-set-wrap')?.querySelector('.p64-create-set-label')?.remove()
       return
     }
 
