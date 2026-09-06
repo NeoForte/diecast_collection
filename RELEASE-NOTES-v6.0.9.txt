@@ -1,0 +1,10 @@
+Pocket 64 v6.0.9
+
+- Replaces the competing Set UI cleanup patches with one dedicated Set action row.
+- Shows only ADD TO SET and CREATE SET side-by-side on Add/Edit Car.
+- Keeps the original Set select hidden for assignment logic.
+- ADD TO SET opens the saved Set picker grouped by year and refreshes from Supabase when available.
+- CREATE SET continues to use the existing create-and-assign flow.
+- Removes the 6.0.7 mutation-observer freeze path and retires the destructive 6.0.8 cleanup behavior.
+- Keeps the smaller 12px editor field text requested in v6.0.5.
+- Photo viewer unchanged.
