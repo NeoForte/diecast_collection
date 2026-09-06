@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v3'
+const CACHE = 'pocket64-shell-v4'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -6,6 +6,7 @@ const CORE_ASSET_NAMES = new Set([
   'app.js',
   'showcase-sync.js',
   'p64-v525-patch.js',
+  'p64-v531-viewer.js',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -37,6 +38,9 @@ async function latestCoreResponse(request) {
   const response = await fetchFresh(cleanUrl)
   if (!response.ok) return response
 
+  const filename = requestUrl.pathname.split('/').pop() || 'index.html'
+  const isNavigation = request.mode === 'navigate'
+
   if (requestUrl.pathname.endsWith('/app.js')) {
     const version = await currentVersion()
     const text = await response.text()
@@ -49,6 +53,29 @@ async function latestCoreResponse(request) {
       statusText: response.statusText,
       headers: {
         'Content-Type': 'text/javascript; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    })
+  }
+
+  if (isNavigation || filename === 'index.html') {
+    const version = await currentVersion()
+    let text = await response.text()
+
+    text = text.replace(/(styles\.css|jszip\.min\.js|showcase-sync\.js|p64-v525-patch\.js|app\.js)\?v=[^\"']+/g, `$1?v=${version}`)
+
+    if (!text.includes('p64-v531-viewer.js')) {
+      text = text.replace(
+        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
+        `<script src="p64-v531-viewer.js?v=${version}"></script>\n  $1`
+      )
+    }
+
+    return new Response(text, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     })
