@@ -1,5 +1,10 @@
 (() => {
-  const FIX_VERSION = '5.3.8'
+  const FIX_VERSION = '6.0.0'
+  const SETS_PREFIX = 'pocket64-sets-v1-'
+  const AUTH_KEY = 'sb-ftjayqjpgifdipmjloxx-auth-token'
+  const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
+  const SUPABASE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
+  let refreshing = false
 
   function syncDisplayedVersion() {
     document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${FIX_VERSION}` })
@@ -19,9 +24,193 @@
     ;['hotwheels-toy-number','general-number','series-collection-number'].forEach((id) => tuneTextInput(document.getElementById(id), { autocorrect:false, spellcheck:false }))
   }
 
+  function authContext() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null')
+      const session = raw?.currentSession || raw?.session || raw
+      return {
+        accessToken: session?.access_token || raw?.access_token || '',
+        userId: session?.user?.id || raw?.user?.id || '',
+      }
+    } catch { return { accessToken:'', userId:'' } }
+  }
+
+  function stateKey(userId) { return `${SETS_PREFIX}${userId}` }
+
+  function readState(userId) {
+    if (!userId) return { sets:[], assignments:{} }
+    try {
+      const parsed = JSON.parse(localStorage.getItem(stateKey(userId)) || 'null')
+      if (parsed && Array.isArray(parsed.sets) && parsed.assignments && typeof parsed.assignments === 'object') return parsed
+    } catch {}
+    return { sets:[], assignments:{} }
+  }
+
+  function writeState(userId, state) {
+    if (!userId) return
+    try { localStorage.setItem(stateKey(userId), JSON.stringify(state)) } catch {}
+  }
+
+  function installSetFlowStyles() {
+    if (document.getElementById('p64-v600-set-styles')) return
+    const style = document.createElement('style')
+    style.id = 'p64-v600-set-styles'
+    style.textContent = `
+      .set-assignment-row {
+        grid-template-columns:minmax(0,1.35fr) minmax(112px,.65fr) !important;
+        align-items:end !important;
+      }
+      .p64-create-set-wrap { min-width:0; display:grid; gap:6px; }
+      .p64-create-set-label {
+        color:#8798a8; font-size:10px; font-weight:800; letter-spacing:.10em;
+      }
+      .p64-create-set-button {
+        min-height:46px; width:100%; box-sizing:border-box; padding:0 10px;
+        border:1px solid rgba(65,161,255,.58); border-radius:11px;
+        background:linear-gradient(145deg,#15375a,#07111d); color:#dff1ff;
+        font:900 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+        letter-spacing:.065em; text-transform:uppercase;
+        box-shadow:inset 0 0 16px rgba(36,135,235,.08);
+      }
+      .p64-create-set-button:active { transform:translateY(1px); }
+      #set-position-label { grid-column:1 / -1 !important; }
+      @media (max-width:390px) {
+        .set-assignment-row { grid-template-columns:minmax(0,1.18fr) minmax(108px,.82fr) !important; }
+        .p64-create-set-button { font-size:10.5px; padding:0 7px; }
+      }
+    `
+    document.head.append(style)
+  }
+
+  function removeEmbeddedCreateOption() {
+    const select = document.getElementById('set-select')
+    if (!select) return
+    ;[...select.options].forEach((option) => {
+      if (option.value === '__new__') option.remove()
+    })
+  }
+
+  function installCreateSetButton() {
+    const row = document.querySelector('.set-assignment-row')
+    const select = document.getElementById('set-select')
+    const positionLabel = document.getElementById('set-position-label')
+    if (!row || !select || !positionLabel) return
+
+    removeEmbeddedCreateOption()
+    if (document.getElementById('p64-create-set-button')) return
+
+    const wrap = document.createElement('div')
+    wrap.className = 'p64-create-set-wrap'
+    wrap.innerHTML = '<span class="p64-create-set-label">New Set</span><button id="p64-create-set-button" class="p64-create-set-button" type="button">Create Set</button>'
+    row.insertBefore(wrap, positionLabel)
+
+    wrap.querySelector('button').addEventListener('click', () => {
+      const trigger = new Option('CREATE SET', '__new__')
+      select.insertBefore(trigger, select.firstChild)
+      select.value = '__new__'
+      select.dispatchEvent(new Event('change', { bubbles:true }))
+      removeEmbeddedCreateOption()
+    })
+  }
+
+  function renderExistingSets(sets) {
+    const select = document.getElementById('set-select')
+    if (!select) return
+    const previous = select.value && select.value !== '__new__' ? select.value : ''
+    const groups = new Map()
+
+    for (const raw of sets || []) {
+      const id = String(raw?.id || '')
+      const year = String(raw?.year || '').replace(/[^0-9]/g,'').slice(0,4)
+      const name = String(raw?.name || '').trim().toUpperCase()
+      const total = Math.max(1, Math.min(99, Math.floor(Number(raw?.total) || 1)))
+      if (!id || !year || !name) continue
+      if (!groups.has(year)) groups.set(year, [])
+      groups.get(year).push({ id, year, name, total })
+    }
+
+    select.replaceChildren(new Option('', ''))
+    const years = [...groups.keys()].sort((a,b) => Number(b) - Number(a))
+    for (const year of years) {
+      const group = document.createElement('optgroup')
+      group.label = year
+      groups.get(year)
+        .sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }))
+        .forEach((set) => group.append(new Option(`${set.name} (${set.total})`, set.id)))
+      select.append(group)
+    }
+    if ([...select.options].some((option) => option.value === previous)) select.value = previous
+  }
+
+  async function refreshSetsFromCloud() {
+    if (refreshing) return
+    const select = document.getElementById('set-select')
+    if (!select) return
+    const { accessToken, userId } = authContext()
+    if (!userId) { removeEmbeddedCreateOption(); return }
+
+    refreshing = true
+    try {
+      let state = readState(userId)
+      renderExistingSets(state.sets)
+
+      if (!accessToken) return
+      const url = `${SUPABASE_URL}/rest/v1/pocket64_sets?select=id,year,name,total&user_id=eq.${encodeURIComponent(userId)}&order=year.desc,name.asc`
+      const response = await fetch(url, {
+        cache:'no-store',
+        headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${accessToken}` },
+      })
+      if (!response.ok) return
+      const cloudSets = await response.json()
+      if (!Array.isArray(cloudSets)) return
+
+      const byId = new Map((state.sets || []).map((set) => [String(set.id || ''), set]))
+      for (const set of cloudSets) byId.set(String(set.id || ''), {
+        id:String(set.id || ''),
+        year:String(set.year || ''),
+        name:String(set.name || '').trim().toUpperCase(),
+        total:Math.max(1, Math.min(99, Math.floor(Number(set.total) || 1))),
+      })
+      state = { ...state, sets:[...byId.values()].filter((set) => set.id && set.year && set.name) }
+      writeState(userId, state)
+      renderExistingSets(state.sets)
+    } catch (error) {
+      console.warn('Pocket 64 v6 Set refresh failed', error)
+    } finally {
+      refreshing = false
+      removeEmbeddedCreateOption()
+    }
+  }
+
+  function watchBasePickerRefreshes() {
+    const select = document.getElementById('set-select')
+    if (!select || select.dataset.p64V600Watch === '1') return
+    select.dataset.p64V600Watch = '1'
+    new MutationObserver(() => removeEmbeddedCreateOption()).observe(select, { childList:true, subtree:true })
+  }
+
+  function queueEditorRefresh() {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      installCreateSetButton()
+      watchBasePickerRefreshes()
+      refreshSetsFromCloud()
+    }))
+  }
+
   function boot() {
     syncDisplayedVersion()
     tuneEditorInputs()
+    installSetFlowStyles()
+    installCreateSetButton()
+    watchBasePickerRefreshes()
+    refreshSetsFromCloud()
+
+    for (const id of ['add-button','empty-add-button']) {
+      document.getElementById(id)?.addEventListener('click', queueEditorRefresh, true)
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && document.getElementById('editor-screen')?.classList.contains('active')) queueEditorRefresh()
+    })
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true })
