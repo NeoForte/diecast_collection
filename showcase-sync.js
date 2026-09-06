@@ -340,7 +340,8 @@
       `Restore this Pocket 64 backup?\n\n` +
       `${backup.cars.length} car${backup.cars.length === 1 ? '' : 's'}\n` +
       `${Number(backup.photo_count || 0)} photo${Number(backup.photo_count || 0) === 1 ? '' : 's'}\n` +
-      `${Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0} Set${Array.isArray(backup?.sets?.sets) && backup.sets.sets.length === 1 ? '' : 's'}\n\n` +
+      `${Array.isArray(backup?.sets?.sets) ? backup.sets.sets.length : 0} Set${Array.isArray(backup?.sets?.sets) && backup.sets.sets.length === 1 ? '' : 's'}\n` +
+      `${backup?.sets?.assignments && typeof backup.sets.assignments === 'object' ? Object.keys(backup.sets.assignments).length : 0} Set assignment${backup?.sets?.assignments && typeof backup.sets.assignments === 'object' && Object.keys(backup.sets.assignments).length === 1 ? '' : 's'}\n\n` +
       `Restore will reproduce the backup's saved Set state.`
     )
     if (!approved) return
@@ -862,6 +863,236 @@
   }
 
 
+  function ensureSimpleSetStyles() {
+    if (document.getElementById('p64-simple-set-styles')) return
+    const style = document.createElement('style')
+    style.id = 'p64-simple-set-styles'
+    style.textContent = `
+      .p64-original-set-label{display:none!important}
+      .p64-simple-set-panel{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+      .p64-simple-set-button{min-height:42px;padding:0 14px;border-radius:11px;border:1px solid rgba(128,128,128,.35);background:rgba(128,128,128,.12);color:inherit;font:inherit;font-weight:800;letter-spacing:.02em}
+      .p64-simple-set-button.primary{flex:1 1 150px}
+      .p64-simple-set-button.secondary{flex:0 0 auto;font-size:12px;opacity:.82}
+      .p64-simple-set-status{flex-basis:100%;font-size:12px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:16px}
+      .p64-simple-set-status.assigned{opacity:.9;font-weight:700}
+      .p64-simple-set-overlay{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:18px}
+      .p64-simple-set-card{width:min(440px,100%);border-radius:18px;border:1px solid rgba(128,128,128,.32);background:var(--page-bg,#0b0b0b);color:inherit;padding:18px;box-shadow:0 22px 70px rgba(0,0,0,.48)}
+      .p64-simple-set-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+      .p64-simple-set-head strong{flex:1;font-size:18px;letter-spacing:.03em}
+      .p64-simple-set-close{width:38px;height:38px;border-radius:10px;border:1px solid rgba(128,128,128,.3);background:rgba(128,128,128,.1);color:inherit;font-size:24px;line-height:1}
+      .p64-simple-set-card label{display:block;margin:0 0 12px;font-weight:700;font-size:12px;letter-spacing:.04em}
+      .p64-simple-set-card input,.p64-simple-set-card select{display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:46px;border-radius:11px;border:1px solid rgba(128,128,128,.35);background:rgba(128,128,128,.10);color:inherit;padding:10px 12px;font:inherit}
+      .p64-simple-set-create{width:100%;min-height:46px;margin-top:4px;border:0;border-radius:12px;font:inherit;font-weight:850}
+      .p64-simple-set-message{min-height:18px;margin:10px 0 0;font-size:12px;opacity:.78}
+      @media(max-width:520px){.p64-simple-set-panel{width:100%}.p64-simple-set-button.primary{flex-basis:100%}.p64-simple-set-button.secondary{flex:1 1 auto}}
+    `
+    document.head.append(style)
+  }
+
+  async function simpleSetSession() {
+    const client = await helperSupabase()
+    const { data:{ session }, error } = await client.auth.getSession()
+    if (error) throw error
+    if (!session?.user?.id) throw new Error('Your session expired. Sign in again and retry.')
+    return { client, userId:session.user.id }
+  }
+
+  function readSimpleSetState(userId) {
+    try {
+      const raw = localStorage.getItem(`${SETS_STORAGE_PREFIX}-${userId}`)
+      const parsed = raw ? JSON.parse(raw) : null
+      return {
+        version:1,
+        sets:Array.isArray(parsed?.sets) ? parsed.sets : [],
+        assignments:parsed?.assignments && typeof parsed.assignments === 'object' ? parsed.assignments : {},
+      }
+    } catch {
+      return { version:1, sets:[], assignments:{} }
+    }
+  }
+
+  function writeSimpleSetState(userId, state) {
+    nativeStorageSetItem.call(localStorage, `${SETS_STORAGE_PREFIX}-${userId}`, JSON.stringify(state))
+    nativeStorageSetItem.call(localStorage, `${SETS_CLOUD_MIGRATION_PREFIX}-${userId}`, '1')
+  }
+
+  function currentEditorYear() {
+    const yearSelect = document.getElementById('model-year')
+    const customYear = document.getElementById('custom-year')
+    const raw = yearSelect?.value === 'Other' ? customYear?.value : yearSelect?.value
+    const cleaned = String(raw || '').replace(/[^0-9]/g, '').slice(0, 4)
+    return cleaned.length === 4 ? cleaned : String(new Date().getFullYear())
+  }
+
+  function setNameForSelectValue(value) {
+    const select = document.getElementById('set-select')
+    const option = select ? [...select.options].find((item) => item.value === value) : null
+    return String(option?.textContent || '').trim()
+  }
+
+  function syncSimpleSetStatus() {
+    const select = document.getElementById('set-select')
+    const status = document.getElementById('p64-simple-set-status')
+    if (!select || !status) return
+    const value = select.value
+    const assigned = Boolean(value && value !== '__new__')
+    status.classList.toggle('assigned', assigned)
+    status.textContent = assigned ? `SET: ${setNameForSelectValue(value) || 'SELECTED'}` : 'No Set selected'
+    document.getElementById('p64-clear-set')?.classList.toggle('hidden', !assigned)
+  }
+
+  function selectSetInEditor(set) {
+    const select = document.getElementById('set-select')
+    if (!select || !set?.id) return
+    if (![...select.options].some((option) => option.value === set.id)) {
+      select.append(new Option(`${set.name} (${set.total})`, set.id))
+    }
+    select.value = set.id
+    select.dispatchEvent(new Event('change', { bubbles:true }))
+    setTimeout(syncSimpleSetStatus, 0)
+  }
+
+  function closeSimpleSetOverlay(overlay) {
+    overlay?.remove()
+  }
+
+  async function openDirectNewSet() {
+    ensureSimpleSetStyles()
+    document.getElementById('p64-simple-set-overlay')?.remove()
+    const overlay = document.createElement('div')
+    overlay.id = 'p64-simple-set-overlay'
+    overlay.className = 'p64-simple-set-overlay'
+    overlay.innerHTML = `
+      <form class="p64-simple-set-card" id="p64-simple-set-form">
+        <div class="p64-simple-set-head"><strong>NEW SET</strong><button class="p64-simple-set-close" id="p64-simple-set-close" type="button" aria-label="Close">×</button></div>
+        <label>RELEASE YEAR<input id="p64-simple-set-year" type="text" inputmode="numeric" maxlength="4" value="${currentEditorYear()}"></label>
+        <label>SET NAME<input id="p64-simple-set-name" type="text" autocomplete="off" placeholder=""></label>
+        <label>CARS IN SET<input id="p64-simple-set-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
+        <button class="p64-simple-set-create" id="p64-simple-set-create" type="submit">CREATE SET</button>
+        <p class="p64-simple-set-message" id="p64-simple-set-message"></p>
+      </form>`
+    document.body.append(overlay)
+    const close = () => closeSimpleSetOverlay(overlay)
+    document.getElementById('p64-simple-set-close')?.addEventListener('click', close)
+    overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+    document.getElementById('p64-simple-set-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      const message = document.getElementById('p64-simple-set-message')
+      const createButton = document.getElementById('p64-simple-set-create')
+      const year = String(document.getElementById('p64-simple-set-year')?.value || '').replace(/[^0-9]/g, '').slice(0,4)
+      const name = String(document.getElementById('p64-simple-set-name')?.value || '').trim().toUpperCase()
+      const totalRaw = Math.floor(Number(document.getElementById('p64-simple-set-total')?.value))
+      if (year.length !== 4) { message.textContent = 'Enter a 4-digit release year.'; return }
+      if (!name) { message.textContent = 'Enter a Set name.'; return }
+      if (!Number.isFinite(totalRaw) || totalRaw < 1) { message.textContent = 'Enter how many cars are in the Set.'; return }
+      const total = Math.min(99, totalRaw)
+      createButton.disabled = true
+      createButton.textContent = 'CREATING…'
+      try {
+        const { client, userId } = await simpleSetSession()
+        const state = readSimpleSetState(userId)
+        const duplicate = state.sets.find((item) => String(item.year) === year && String(item.name || '').trim().toUpperCase() === name)
+        if (duplicate) {
+          selectSetInEditor(duplicate)
+          message.textContent = 'That Set already exists — selected it for this car.'
+          setTimeout(close, 650)
+          return
+        }
+        const set = { id:crypto.randomUUID(), year, name, total }
+        state.sets.push(set)
+        writeSimpleSetState(userId, state)
+        const { error } = await client.from('pocket64_sets').insert({ id:set.id, user_id:userId, year:Number(year), name, total })
+        if (error) {
+          state.sets = state.sets.filter((item) => item.id !== set.id)
+          writeSimpleSetState(userId, state)
+          throw error
+        }
+        selectSetInEditor(set)
+        close()
+      } catch (error) {
+        message.textContent = error?.message || 'Could not create the Set.'
+      } finally {
+        if (createButton?.isConnected) {
+          createButton.disabled = false
+          createButton.textContent = 'CREATE SET'
+        }
+      }
+    })
+    setTimeout(() => document.getElementById('p64-simple-set-name')?.focus(), 60)
+  }
+
+  async function openExistingSetChooser() {
+    ensureSimpleSetStyles()
+    document.getElementById('p64-simple-set-overlay')?.remove()
+    let client, userId, state
+    try {
+      ({ client, userId } = await simpleSetSession())
+      state = readSimpleSetState(userId)
+    } catch (error) {
+      alert(error?.message || 'Could not load your Sets.')
+      return
+    }
+    if (!state.sets.length) {
+      openDirectNewSet()
+      return
+    }
+    const overlay = document.createElement('div')
+    overlay.id = 'p64-simple-set-overlay'
+    overlay.className = 'p64-simple-set-overlay'
+    const options = [...state.sets]
+      .sort((a,b) => Number(b.year)-Number(a.year) || String(a.name).localeCompare(String(b.name)))
+      .map((set) => `<option value="${String(set.id).replace(/"/g,'&quot;')}">${String(set.year)} • ${String(set.name).replace(/</g,'&lt;').replace(/>/g,'&gt;')} (${Number(set.total) || 0})</option>`)
+      .join('')
+    overlay.innerHTML = `
+      <form class="p64-simple-set-card" id="p64-existing-set-form">
+        <div class="p64-simple-set-head"><strong>CHOOSE EXISTING SET</strong><button class="p64-simple-set-close" id="p64-simple-set-close" type="button" aria-label="Close">×</button></div>
+        <label>SET<select id="p64-existing-set-select">${options}</select></label>
+        <button class="p64-simple-set-create" type="submit">USE THIS SET</button>
+      </form>`
+    document.body.append(overlay)
+    const close = () => closeSimpleSetOverlay(overlay)
+    document.getElementById('p64-simple-set-close')?.addEventListener('click', close)
+    overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+    document.getElementById('p64-existing-set-form')?.addEventListener('submit', (event) => {
+      event.preventDefault()
+      const id = document.getElementById('p64-existing-set-select')?.value || ''
+      const set = state.sets.find((item) => item.id === id)
+      if (set) selectSetInEditor(set)
+      close()
+    })
+  }
+
+  function installSimplifiedSetEditor() {
+    ensureSimpleSetStyles()
+    const row = document.querySelector('.set-assignment-row')
+    const select = document.getElementById('set-select')
+    if (!row || !select) return
+    const originalLabel = select.closest('label')
+    originalLabel?.classList.add('p64-original-set-label')
+    if (!document.getElementById('p64-simple-set-panel')) {
+      const panel = document.createElement('div')
+      panel.id = 'p64-simple-set-panel'
+      panel.className = 'p64-simple-set-panel'
+      panel.innerHTML = `
+        <button id="p64-direct-new-set" class="p64-simple-set-button primary" type="button">ADD TO SET</button>
+        <button id="p64-choose-existing-set" class="p64-simple-set-button secondary" type="button">EXISTING</button>
+        <button id="p64-clear-set" class="p64-simple-set-button secondary hidden" type="button">CLEAR</button>
+        <div id="p64-simple-set-status" class="p64-simple-set-status">No Set selected</div>`
+      row.insertBefore(panel, document.getElementById('set-position-label'))
+      panel.querySelector('#p64-direct-new-set')?.addEventListener('click', openDirectNewSet)
+      panel.querySelector('#p64-choose-existing-set')?.addEventListener('click', openExistingSetChooser)
+      panel.querySelector('#p64-clear-set')?.addEventListener('click', () => {
+        select.value = ''
+        select.dispatchEvent(new Event('change', { bubbles:true }))
+        setTimeout(syncSimpleSetStatus, 0)
+      })
+      select.addEventListener('change', () => setTimeout(syncSimpleSetStatus, 0))
+      new MutationObserver(() => setTimeout(syncSimpleSetStatus, 0)).observe(select, { childList:true, subtree:true })
+    }
+    syncSimpleSetStatus()
+  }
+
+
   const FAQ_ITEMS = [
     ['Can I restore a backup into a garage that already has cars?',
      'Pocket 64 will warn you first. For a true backup replacement, Clear Collection before restoring. Continuing into a non-empty garage can create duplicates or a mixed collection.'],
@@ -891,8 +1122,6 @@
      'Yes. Each person should use their own Pocket 64 account. Collections, Sets, favorites, photos, and other personal data are associated with that account.'],
     ['What does Favorite do?',
      'Favorite is your personal marker for cars you especially like. Favorites can be identified in the collection and viewed through the related Stats/filter tools.'],
-    ['What is Showcase?',
-     'Showcase lets you flag cars you want highlighted separately from the rest of the collection. It does not change ownership or quantity.'],
     ['How does Search work?',
      'Search can help find cars using identifying information such as model or toy number. Entering a Hot Wheels toy number is especially useful when multiple releases have similar names.'],
     ['Why can the same toy number show more than one result?',
@@ -1021,6 +1250,7 @@
     hideShowcase()
     installUppercaseSearch()
     installSetsCollapsedByDefault()
+    installSimplifiedSetEditor()
     updateVisibleVersion()
     installRestoreRetryGuard()
     installOwnedRestore()
