@@ -1,5 +1,5 @@
 (() => {
-  const FIX_VERSION = '6.0.0'
+  const FIX_VERSION = '6.0.1'
   const SETS_PREFIX = 'pocket64-sets-v1-'
   const AUTH_KEY = 'sb-ftjayqjpgifdipmjloxx-auth-token'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
@@ -52,17 +52,20 @@
   }
 
   function installSetFlowStyles() {
-    if (document.getElementById('p64-v600-set-styles')) return
+    if (document.getElementById('p64-v601-set-styles')) return
+    document.getElementById('p64-v600-set-styles')?.remove()
     const style = document.createElement('style')
-    style.id = 'p64-v600-set-styles'
+    style.id = 'p64-v601-set-styles'
     style.textContent = `
       .set-assignment-row {
         grid-template-columns:minmax(0,1.35fr) minmax(112px,.65fr) !important;
-        align-items:end !important;
+        align-items:start !important;
       }
-      .p64-create-set-wrap { min-width:0; display:grid; gap:6px; }
-      .p64-create-set-label {
-        color:#8798a8; font-size:10px; font-weight:800; letter-spacing:.10em;
+      .p64-create-set-wrap {
+        min-width:0;
+        display:flex;
+        align-items:flex-end;
+        padding-top:24px;
       }
       .p64-create-set-button {
         min-height:46px; width:100%; box-sizing:border-box; padding:0 10px;
@@ -97,11 +100,16 @@
     if (!row || !select || !positionLabel) return
 
     removeEmbeddedCreateOption()
-    if (document.getElementById('p64-create-set-button')) return
+    const existing = document.getElementById('p64-create-set-button')
+    if (existing) {
+      const wrap = existing.closest('.p64-create-set-wrap')
+      wrap?.querySelector('.p64-create-set-label')?.remove()
+      return
+    }
 
     const wrap = document.createElement('div')
     wrap.className = 'p64-create-set-wrap'
-    wrap.innerHTML = '<span class="p64-create-set-label">New Set</span><button id="p64-create-set-button" class="p64-create-set-button" type="button">Create Set</button>'
+    wrap.innerHTML = '<button id="p64-create-set-button" class="p64-create-set-button" type="button">Create Set</button>'
     row.insertBefore(wrap, positionLabel)
 
     wrap.querySelector('button').addEventListener('click', () => {
