@@ -869,11 +869,15 @@
     style.id = 'p64-simple-set-styles'
     style.textContent = `
       .p64-original-set-label{display:none!important}
-      .p64-simple-set-panel{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+      .set-assignment-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:12px!important;align-items:start!important}
+      .p64-simple-set-panel{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;width:100%}
+      .p64-simple-set-caption{flex-basis:100%;font-size:12px;font-weight:700;letter-spacing:.04em;line-height:1.2;min-height:15px;opacity:.88}
       .p64-simple-set-button{min-height:42px;padding:0 14px;border-radius:11px;border:1px solid rgba(128,128,128,.35);background:rgba(128,128,128,.12);color:inherit;font:inherit;font-weight:800;letter-spacing:.02em}
-      .p64-simple-set-button.primary{flex:1 1 150px}
-      .p64-simple-set-button.secondary{flex:0 0 auto;font-size:12px;opacity:.82}
+      .p64-simple-set-button.primary{flex:1 1 100%;width:100%}
+      .p64-simple-set-button.secondary{flex:1 1 100%;width:100%;font-size:12px;opacity:.82}
       .p64-simple-set-status{flex-basis:100%;font-size:12px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:16px}
+      #set-position-label{align-self:start!important;width:100%!important;margin:0!important}
+      #set-position-label select{width:100%!important;box-sizing:border-box!important}
       .p64-simple-set-status.assigned{opacity:.9;font-weight:700}
       .p64-simple-set-overlay{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:18px}
       .p64-simple-set-card{width:min(440px,100%);border-radius:18px;border:1px solid rgba(128,128,128,.32);background:var(--page-bg,#0b0b0b);color:inherit;padding:18px;box-shadow:0 22px 70px rgba(0,0,0,.48)}
@@ -887,7 +891,7 @@
       #p64-db-known-total[readonly]{opacity:.88}
       .p64-simple-set-create{width:100%;min-height:46px;margin-top:4px;border:0;border-radius:12px;font:inherit;font-weight:850}
       .p64-simple-set-message{min-height:18px;margin:10px 0 0;font-size:12px;opacity:.78}
-      @media(max-width:520px){.p64-simple-set-panel{width:100%}.p64-simple-set-button.primary{flex-basis:100%}.p64-simple-set-button.secondary{flex:1 1 auto}}
+      @media(max-width:520px){.set-assignment-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.p64-simple-set-panel{width:100%}}
     `
     document.head.append(style)
   }
@@ -951,6 +955,17 @@
       select.append(new Option(`${set.name} (${set.total})`, set.id))
     }
     select.value = set.id
+
+    // Selecting a Set should also populate Series / Collection so the user
+    // does not have to enter the same Set name twice. This only happens at
+    // the moment the Set is chosen; the user can still edit Series afterward.
+    const seriesInput = document.getElementById('series')
+    if (seriesInput && set.name) {
+      seriesInput.value = String(set.name).trim()
+      seriesInput.dispatchEvent(new Event('input', { bubbles:true }))
+      seriesInput.dispatchEvent(new Event('change', { bubbles:true }))
+    }
+
     select.dispatchEvent(new Event('change', { bubbles:true }))
     setTimeout(syncSimpleSetStatus, 0)
   }
@@ -1120,6 +1135,7 @@
       panel.id = 'p64-simple-set-panel'
       panel.className = 'p64-simple-set-panel'
       panel.innerHTML = `
+        <div class="p64-simple-set-caption">Set</div>
         <button id="p64-direct-new-set" class="p64-simple-set-button primary" type="button">ADD TO SET</button>
         <button id="p64-clear-set" class="p64-simple-set-button secondary hidden" type="button">CLEAR</button>
         <div id="p64-simple-set-status" class="p64-simple-set-status">No Set selected</div>`
