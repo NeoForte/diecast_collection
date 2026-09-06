@@ -1309,13 +1309,20 @@
     if (!settingsList || document.getElementById('p64-update-card')) return
     const card = document.createElement('div')
     card.id = 'p64-update-card'
-    card.className = 'settings-card'
+    card.className = 'settings-card p64-update-row'
     card.innerHTML = `
-      <div class="settings-copy">
-        <strong>App Update</strong>
-        <span class="version-badge">Checking version…</span>
-      </div>
+      <strong class="p64-update-label">App Update</strong>
+      <span class="version-badge p64-update-version">Checking…</span>
       <button id="p64-refresh-app" class="settings-mini-button" type="button">Refresh</button>`
+    const style = document.createElement('style')
+    style.textContent = `
+      #p64-update-card.p64-update-row{display:grid;grid-template-columns:auto auto auto;align-items:center;gap:12px;padding-top:14px;padding-bottom:14px}
+      #p64-update-card .p64-update-label{white-space:nowrap}
+      #p64-update-card .p64-update-version{justify-self:center;white-space:nowrap}
+      #p64-update-card #p64-refresh-app{justify-self:end}
+      @media(max-width:430px){#p64-update-card.p64-update-row{grid-template-columns:1fr auto auto;gap:8px}#p64-update-card .p64-update-version{font-size:.86rem;padding-left:10px;padding-right:10px}}
+    `
+    document.head.append(style)
     settingsList.prepend(card)
     card.querySelector('#p64-refresh-app')?.addEventListener('click', async () => {
       const button = document.getElementById('p64-refresh-app')

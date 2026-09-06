@@ -1,11 +1,10 @@
-Pocket 64 v5.2.2 — Set assignment polish
+Pocket 64 v5.2.3 — Settings App Update cleanup
 
 WHAT CHANGED
-- Fixed the Add to Set / Set Position layout so both controls align cleanly in the two-column editor.
-- When a user chooses or creates a Set, Pocket 64 now automatically fills Series / Collection with that Set name.
-- Series / Collection remains editable afterward; the auto-fill only happens when the Set is selected.
-- Keeps the v5.2.1 database-driven Add to Set flow, no-zoom fix, and App Update / Refresh control.
-- Cache-busted Pocket 64 to v5.2.2.
+- App Update, Version, and Refresh now sit on one compact line at the top of Settings.
+- Removed the redundant Version badge from the About section.
+- Keeps all v5.2.2 Set assignment fixes and Add to Set behavior.
+- Cache-busted Pocket 64 to v5.2.3.
 
 DEPLOY
 Replace these files from this ZIP:
@@ -14,9 +13,7 @@ Replace these files from this ZIP:
   version.json
 
 TEST FIRST
-1. Open Settings and confirm Version 5.2.2.
-2. Edit a car and confirm ADD TO SET and Set Position line up cleanly.
-3. Choose a known Set and confirm Series / Collection fills with the Set name immediately.
-4. Confirm Set Position still offers the correct positions for the selected Set.
-5. Change Series / Collection manually after choosing the Set and confirm your edit is allowed.
-6. Save, reopen the car, and confirm the Set assignment and Series / Collection are preserved.
+1. Open Settings and confirm the top row reads App Update / Version 5.2.3 / Refresh on one line.
+2. Confirm the About section no longer has a Version badge.
+3. Tap Refresh and confirm Pocket 64 returns showing Version 5.2.3.
+4. Recheck Add to Set and Set Position behavior from v5.2.2.
