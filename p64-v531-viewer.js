@@ -1,289 +1,209 @@
 (() => {
-  const FIX_VERSION = '5.3.6'
+  const FIX_VERSION = '5.3.7'
+  const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
+  const SUPABASE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
+  const AUTH_KEY = 'sb-ftjayqjpgifdipmjloxx-auth-token'
   const SETS_PREFIX = 'pocket64-sets-v1-'
-  const recentSets = new Map()
-  let latestSetKey = ''
 
   function syncDisplayedVersion() {
-    document.querySelectorAll('.version-badge').forEach((el) => {
-      el.textContent = `Version ${FIX_VERSION}`
-    })
+    document.querySelectorAll('.version-badge').forEach((el) => { el.textContent = `Version ${FIX_VERSION}` })
     document.documentElement.dataset.p64FixVersion = FIX_VERSION
   }
 
-  function normalizeSetName(value) {
-    return String(value || '')
-      .trim()
-      .toUpperCase()
-      .replace(/[’‘]/g, "'")
-      .replace(/[^A-Z0-9]+/g, ' ')
-      .trim()
-      .replace(/\s+/g, ' ')
+  function authContext() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null')
+      const session = raw?.currentSession || raw?.session || raw
+      const accessToken = session?.access_token || raw?.access_token || ''
+      const userId = session?.user?.id || raw?.user?.id || ''
+      return { accessToken, userId }
+    } catch { return { accessToken:'', userId:'' } }
   }
 
-  function readSetStateForKey(key) {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) || 'null')
-      if (!parsed || !Array.isArray(parsed.sets) || !parsed.assignments || typeof parsed.assignments !== 'object') return null
-      return parsed
-    } catch {
-      return null
-    }
+  function normalize(value) {
+    return String(value || '').trim().toUpperCase().replace(/[’‘]/g, "'").replace(/[^A-Z0-9]+/g, ' ').trim().replace(/\s+/g, ' ')
   }
 
-  function validSetStorageKeys() {
-    const keys = []
+  function readState(userId) {
     try {
-      for (let i = 0; i < localStorage.length; i += 1) {
-        const key = localStorage.key(i) || ''
-        if (!key.startsWith(SETS_PREFIX) || key.endsWith('-signed-out')) continue
-        if (readSetStateForKey(key)) keys.push(key)
-      }
+      const parsed = JSON.parse(localStorage.getItem(`${SETS_PREFIX}${userId}`) || 'null')
+      if (parsed && Array.isArray(parsed.sets) && parsed.assignments && typeof parsed.assignments === 'object') return parsed
     } catch {}
-    return keys
+    return { sets:[], assignments:{} }
   }
 
-  function currentSetStorageKey() {
-    if (latestSetKey && readSetStateForKey(latestSetKey)) return latestSetKey
-
-    const select = document.getElementById('set-select')
-    const optionIds = new Set(
-      [...(select?.options || [])]
-        .map((option) => option.value)
-        .filter((value) => value && value !== '__new__')
-    )
-
-    let best = ''
-    let bestScore = -1
-    for (const key of validSetStorageKeys()) {
-      const state = readSetStateForKey(key)
-      if (!state) continue
-      const score = state.sets.reduce((sum, set) => sum + (optionIds.has(String(set.id || '')) ? 1 : 0), 0)
-      if (score > bestScore) {
-        best = key
-        bestScore = score
-      }
-    }
-    return best || validSetStorageKeys()[0] || ''
-  }
-
-  function restoreRecentSets() {
-    for (const [id, entry] of recentSets) {
-      const state = readSetStateForKey(entry.key)
-      if (!state) continue
-      if (state.sets.some((set) => String(set.id || '') === id)) continue
-      state.sets.push({ ...entry.set })
-      try { localStorage.setItem(entry.key, JSON.stringify(state)) } catch {}
-    }
+  function writeState(userId, state) {
+    localStorage.setItem(`${SETS_PREFIX}${userId}`, JSON.stringify(state))
   }
 
   function requestedPosition(total) {
-    const text = String(document.getElementById('series-collection-number')?.value || '')
-    const match = text.match(/^(\d+)\s*\/\s*(\d+)$/)
-    if (!match) return 0
-    const position = Math.floor(Number(match[1]) || 0)
-    return position >= 1 && position <= total ? position : 0
+    const match = String(document.getElementById('series-collection-number')?.value || '').trim().match(/^(\d+)\s*\/\s*(\d+)$/)
+    const value = match ? Math.floor(Number(match[1]) || 0) : 0
+    return value >= 1 && value <= total ? value : 1
   }
 
-  function firstOpenPosition(state, set, preferred = '') {
-    const total = Math.max(1, Math.min(99, Math.floor(Number(set?.total) || 1)))
-    let chosen = Math.floor(Number(preferred) || 0)
-    if (chosen >= 1 && chosen <= total) return chosen
-
-    chosen = requestedPosition(total)
-    if (chosen >= 1 && chosen <= total) return chosen
-
-    const used = new Set(
-      Object.values(state.assignments || {})
-        .filter((assignment) => String(assignment?.setId || '') === String(set?.id || ''))
-        .map((assignment) => Math.floor(Number(assignment?.position) || 0))
-    )
-    return Array.from({ length: total }, (_, index) => index + 1).find((slot) => !used.has(slot)) || 1
+  function editorIsOpen() {
+    return Boolean(document.getElementById('editor-screen')?.classList.contains('active'))
   }
 
-  function rebuildPositionPicker(state, setId, preferredPosition = '') {
-    const position = document.getElementById('set-position')
-    const label = document.getElementById('set-position-label')
-    if (!position || !label) return
-
-    const active = state.sets.find((set) => String(set.id || '') === String(setId || '')) || null
-    position.replaceChildren(new Option('', ''))
-    if (!active) {
-      label.classList.add('hidden')
-      return
-    }
-
-    const total = Math.max(1, Math.min(99, Math.floor(Number(active.total) || 1)))
-    for (let i = 1; i <= total; i += 1) position.append(new Option(`${i}/${total}`, String(i)))
-    position.value = String(firstOpenPosition(state, active, preferredPosition))
-    label.classList.remove('hidden')
-  }
-
-  function refreshSetPickerFromStorage(preferredSetId = '', preferredPosition = '') {
-    restoreRecentSets()
+  function selectCreatedSet(set, position) {
     const select = document.getElementById('set-select')
     if (!select) return
 
-    const key = currentSetStorageKey()
-    const state = key ? readSetStateForKey(key) : null
-    if (!state) return
-
-    const previous = preferredSetId || select.value
-    const groups = new Map()
-    for (const raw of state.sets) {
-      const year = String(raw.year || '').replace(/[^0-9]/g, '').slice(0, 4)
-      const id = String(raw.id || '')
-      const name = String(raw.name || '').trim().toUpperCase()
-      const total = Math.max(1, Math.min(99, Math.floor(Number(raw.total) || 1)))
-      if (!year || !id || !name) continue
-      if (!groups.has(year)) groups.set(year, [])
-      groups.get(year).push({ id, name, total })
+    if (![...select.options].some((option) => option.value === set.id)) {
+      let group = [...select.querySelectorAll('optgroup')].find((item) => item.label === String(set.year))
+      if (!group) {
+        group = document.createElement('optgroup')
+        group.label = String(set.year)
+        select.append(group)
+      }
+      group.append(new Option(`${set.name} (${set.total})`, set.id))
     }
 
-    select.replaceChildren(new Option('', ''), new Option('CREATE A NEW SET', '__new__'))
-    const years = [...groups.keys()].sort((a, b) => Number(b) - Number(a))
-    for (const year of years) {
-      const group = document.createElement('optgroup')
-      group.label = year
-      groups.get(year)
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }))
-        .forEach((set) => group.append(new Option(`${set.name} (${set.total})`, set.id)))
-      select.append(group)
-    }
+    select.value = set.id
+    select.dispatchEvent(new Event('change', { bubbles:true }))
 
-    if ([...select.options].some((option) => option.value === previous)) select.value = previous
-    rebuildPositionPicker(state, select.value, preferredPosition)
-  }
+    requestAnimationFrame(() => {
+      const refreshed = document.getElementById('set-select')
+      const pos = document.getElementById('set-position')
+      if (refreshed && [...refreshed.options].some((option) => option.value === set.id)) refreshed.value = set.id
+      if (pos && [...pos.options].some((option) => option.value === String(position))) pos.value = String(position)
 
-  function tuneCreateSetMenu() {
-    const select = document.getElementById('set-reference-select')
-    if (!select) return
-    const manual = [...select.options].find((option) => option.value === '__manual__')
-    if (!manual) return
-
-    const alreadyCorrect = manual === select.firstElementChild && manual.textContent === 'CREATE A NEW SET'
-    if (alreadyCorrect) return
-
-    const current = select.value
-    manual.textContent = 'CREATE A NEW SET'
-    if (manual !== select.firstElementChild) select.insertBefore(manual, select.firstElementChild)
-    if (current) select.value = current
-  }
-
-  function captureCreateRequest(form) {
-    const year = String(form.querySelector('#set-new-year')?.value || '').replace(/[^0-9]/g, '').slice(0, 4)
-    const manualName = String(form.querySelector('#set-new-name')?.value || '').trim().toUpperCase()
-    const reference = form.querySelector('#set-reference-select')
-    const referenceName = reference && reference.value && reference.value !== '__manual__'
-      ? String(reference.value).trim().toUpperCase()
-      : ''
-    return {
-      year,
-      name: manualName || referenceName,
-      fromEditor: Boolean(document.getElementById('editor-screen')?.classList.contains('active')),
-    }
-  }
-
-  function findCreatedSet(request) {
-    for (const key of validSetStorageKeys()) {
-      const state = readSetStateForKey(key)
-      if (!state) continue
-      const set = state.sets.find((item) =>
-        String(item.year || '') === request.year && normalizeSetName(item.name) === normalizeSetName(request.name)
-      )
-      if (set) return { key, state, set:{ ...set } }
-    }
-    return null
-  }
-
-  function finalizeCreatedSet(request, attempt = 0) {
-    if (!request || request.year.length !== 4 || !request.name) return
-    const found = findCreatedSet(request)
-    if (!found) {
-      if (attempt < 8) setTimeout(() => finalizeCreatedSet(request, attempt + 1), 40)
-      return
-    }
-
-    const id = String(found.set.id || '')
-    if (!id) return
-    recentSets.set(id, { key:found.key, set:found.set })
-    latestSetKey = found.key
-
-    if (!request.fromEditor) {
-      refreshSetPickerFromStorage()
-      return
-    }
-
-    const series = document.getElementById('series')
-    if (series && !String(series.value || '').trim()) series.value = String(found.set.name || '').toUpperCase()
-    const position = firstOpenPosition(found.state, found.set)
-    refreshSetPickerFromStorage(id, String(position))
-  }
-
-  function installSetFlowFix() {
-    if (document.documentElement.dataset.p64SetPicker536 === '1') return
-    document.documentElement.dataset.p64SetPicker536 = '1'
-
-    document.addEventListener('submit', (event) => {
-      const form = event.target
-      if (form?.id !== 'set-create-form') return
-      const request = captureCreateRequest(form)
-      // Wait until the app's own submit handler has synchronously written the Set.
-      setTimeout(() => finalizeCreatedSet(request), 0)
-    }, true)
-
-    for (const id of ['add-button', 'empty-add-button']) {
-      document.getElementById(id)?.addEventListener('click', () => {
-        requestAnimationFrame(() => requestAnimationFrame(() => refreshSetPickerFromStorage()))
-      }, true)
-    }
-
-    // Do NOT rebuild a native <select> on pointerdown/focus. Doing that while
-    // iOS is opening the picker can make the control appear frozen.
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') requestAnimationFrame(() => refreshSetPickerFromStorage())
+      const series = document.getElementById('series')
+      const seriesNumber = document.getElementById('series-collection-number')
+      if (series) series.value = set.name
+      if (seriesNumber) seriesNumber.value = `${position}/${set.total}`
     })
+  }
 
-    const observer = new MutationObserver(() => tuneCreateSetMenu())
-    observer.observe(document.body, { childList:true, subtree:true })
-    tuneCreateSetMenu()
+  async function saveSetToCloud(set, accessToken, userId) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/pocket64_sets`, {
+      method:'POST',
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:`Bearer ${accessToken}`,
+        'Content-Type':'application/json',
+        Prefer:'return=minimal',
+      },
+      body:JSON.stringify({ id:set.id, user_id:userId, year:Number(set.year), name:set.name, total:set.total }),
+    })
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '')
+      throw new Error(detail || `Set save failed (${response.status})`)
+    }
+  }
+
+  function simplifyCreateModal() {
+    const form = document.getElementById('set-create-form')
+    if (!form || form.dataset.p64V537 === '1') return
+    form.dataset.p64V537 = '1'
+
+    const fromEditor = editorIsOpen()
+    const heading = form.querySelector('.set-modal-head strong')
+    const referenceLabel = document.getElementById('set-reference-label')
+    const manualFields = document.getElementById('set-manual-fields')
+    const name = document.getElementById('set-new-name')
+    const submit = form.querySelector('.set-modal-create')
+
+    if (heading) heading.textContent = 'CREATE A NEW SET'
+    referenceLabel?.classList.add('hidden')
+    manualFields?.classList.remove('hidden')
+    if (submit) submit.textContent = fromEditor ? 'CREATE & ASSIGN' : 'CREATE SET'
+
+    if (name) {
+      name.setAttribute('autocomplete','on')
+      name.setAttribute('autocorrect','on')
+      name.setAttribute('autocapitalize','characters')
+      name.setAttribute('spellcheck','true')
+    }
+
+    setTimeout(() => name?.focus(), 25)
+  }
+
+  async function handleCreateSubmit(event) {
+    const form = event.target
+    if (form?.id !== 'set-create-form') return
+
+    event.preventDefault()
+    event.stopImmediatePropagation()
+
+    const yearInput = document.getElementById('set-new-year')
+    const nameInput = document.getElementById('set-new-name')
+    const totalInput = document.getElementById('set-new-total')
+    const submit = form.querySelector('.set-modal-create')
+    const year = String(yearInput?.value || '').replace(/[^0-9]/g,'').slice(0,4)
+    const name = String(nameInput?.value || '').trim().toUpperCase()
+    const totalRaw = Math.floor(Number(totalInput?.value))
+
+    if (year.length !== 4 || !name || !Number.isFinite(totalRaw) || totalRaw < 1) {
+      alert('Enter a 4-digit year, Set name, and number of cars.')
+      return
+    }
+
+    const total = Math.min(99, totalRaw)
+    const { accessToken, userId } = authContext()
+    if (!accessToken || !userId) {
+      alert('Your session expired. Sign out and sign back in, then create the Set again.')
+      return
+    }
+
+    const state = readState(userId)
+    const duplicate = state.sets.find((item) => String(item.year) === year && normalize(item.name) === normalize(name))
+    const position = requestedPosition(duplicate?.total || total)
+
+    if (duplicate) {
+      document.getElementById('set-modal-backdrop')?.remove()
+      if (editorIsOpen()) selectCreatedSet(duplicate, position)
+      return
+    }
+
+    const set = { id:crypto.randomUUID(), year, name, total }
+    if (submit) { submit.disabled = true; submit.textContent = 'CREATING…' }
+
+    try {
+      await saveSetToCloud(set, accessToken, userId)
+      const latest = readState(userId)
+      if (!latest.sets.some((item) => item.id === set.id)) latest.sets.push(set)
+      writeState(userId, latest)
+
+      document.getElementById('set-modal-backdrop')?.remove()
+      if (editorIsOpen()) selectCreatedSet(set, position)
+    } catch (error) {
+      console.warn('Pocket 64 Set creation failed', error)
+      alert(`Could not create Set. Nothing was assigned.\n\n${error?.message || error}`)
+      if (submit) { submit.disabled = false; submit.textContent = editorIsOpen() ? 'CREATE & ASSIGN' : 'CREATE SET' }
+    }
   }
 
   function tuneTextInput(input, { autocorrect = true, spellcheck = true } = {}) {
     if (!input) return
-    input.setAttribute('autocomplete', 'on')
+    input.setAttribute('autocomplete','on')
     input.setAttribute('autocorrect', autocorrect ? 'on' : 'off')
-    input.setAttribute('autocapitalize', 'characters')
+    input.setAttribute('autocapitalize','characters')
     input.setAttribute('spellcheck', spellcheck ? 'true' : 'false')
   }
 
-  function installIosTextEntryFixes() {
-    const naturalTextIds = ['model', 'series', 'custom-brand', 'custom-color']
-    const codeTextIds = ['hotwheels-toy-number', 'general-number', 'series-collection-number']
-
-    naturalTextIds.forEach((id) => tuneTextInput(document.getElementById(id), { autocorrect:true, spellcheck:true }))
-    codeTextIds.forEach((id) => tuneTextInput(document.getElementById(id), { autocorrect:false, spellcheck:false }))
-
-    const tuneDynamicInputs = () => {
-      tuneTextInput(document.getElementById('set-new-name'), { autocorrect:true, spellcheck:true })
-      tuneTextInput(document.getElementById('set-edit-name'), { autocorrect:true, spellcheck:true })
-      tuneCreateSetMenu()
-    }
-
-    tuneDynamicInputs()
-    const observer = new MutationObserver(tuneDynamicInputs)
-    observer.observe(document.body, { childList:true, subtree:true })
+  function tuneEditorInputs() {
+    ['model','series','custom-brand','custom-color'].forEach((id) => tuneTextInput(document.getElementById(id), { autocorrect:true, spellcheck:true }))
+    ;['hotwheels-toy-number','general-number','series-collection-number'].forEach((id) => tuneTextInput(document.getElementById(id), { autocorrect:false, spellcheck:false }))
   }
 
   function boot() {
     syncDisplayedVersion()
-    installSetFlowFix()
-    installIosTextEntryFixes()
+    tuneEditorInputs()
+    document.addEventListener('submit', handleCreateSubmit, true)
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if ([...mutation.addedNodes].some((node) => node.nodeType === 1 && (node.id === 'set-modal-backdrop' || node.querySelector?.('#set-create-form')))) {
+          simplifyCreateModal()
+        }
+      }
+    })
+    observer.observe(document.body, { childList:true, subtree:true })
+    simplifyCreateModal()
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once:true })
-  } else {
-    boot()
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true })
+  else boot()
 })()
