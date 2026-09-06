@@ -881,7 +881,10 @@
       .p64-simple-set-head strong{flex:1;font-size:18px;letter-spacing:.03em}
       .p64-simple-set-close{width:38px;height:38px;border-radius:10px;border:1px solid rgba(128,128,128,.3);background:rgba(128,128,128,.1);color:inherit;font-size:24px;line-height:1}
       .p64-simple-set-card label{display:block;margin:0 0 12px;font-weight:700;font-size:12px;letter-spacing:.04em}
-      .p64-simple-set-card input,.p64-simple-set-card select{display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:46px;border-radius:11px;border:1px solid rgba(128,128,128,.35);background:rgba(128,128,128,.10);color:inherit;padding:10px 12px;font:inherit}
+      .p64-simple-set-card input,.p64-simple-set-card select{display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:46px;border-radius:11px;border:1px solid rgba(128,128,128,.35);background:rgba(128,128,128,.10);color:inherit;padding:10px 12px;font-size:16px}
+      .p64-db-set-card input,.p64-db-set-card select{font-size:16px!important}
+      #p64-db-set-year{display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:46px}
+      #p64-db-known-total[readonly]{opacity:.88}
       .p64-simple-set-create{width:100%;min-height:46px;margin-top:4px;border:0;border-radius:12px;font:inherit;font-weight:850}
       .p64-simple-set-message{min-height:18px;margin:10px 0 0;font-size:12px;opacity:.78}
       @media(max-width:520px){.p64-simple-set-panel{width:100%}.p64-simple-set-button.primary{flex-basis:100%}.p64-simple-set-button.secondary{flex:1 1 auto}}
@@ -956,111 +959,154 @@
     overlay?.remove()
   }
 
-  async function openDirectNewSet() {
-    ensureSimpleSetStyles()
-    document.getElementById('p64-simple-set-overlay')?.remove()
-    const overlay = document.createElement('div')
-    overlay.id = 'p64-simple-set-overlay'
-    overlay.className = 'p64-simple-set-overlay'
-    overlay.innerHTML = `
-      <form class="p64-simple-set-card" id="p64-simple-set-form">
-        <div class="p64-simple-set-head"><strong>NEW SET</strong><button class="p64-simple-set-close" id="p64-simple-set-close" type="button" aria-label="Close">×</button></div>
-        <label>RELEASE YEAR<input id="p64-simple-set-year" type="text" inputmode="numeric" maxlength="4" value="${currentEditorYear()}"></label>
-        <label>SET NAME<input id="p64-simple-set-name" type="text" autocomplete="off" placeholder=""></label>
-        <label>CARS IN SET<input id="p64-simple-set-total" type="number" inputmode="numeric" min="1" max="99" value=""></label>
-        <button class="p64-simple-set-create" id="p64-simple-set-create" type="submit">CREATE SET</button>
-        <p class="p64-simple-set-message" id="p64-simple-set-message"></p>
-      </form>`
-    document.body.append(overlay)
-    const close = () => closeSimpleSetOverlay(overlay)
-    document.getElementById('p64-simple-set-close')?.addEventListener('click', close)
-    overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
-    document.getElementById('p64-simple-set-form')?.addEventListener('submit', async (event) => {
+  function knownSetTotalFromModal() {
+    const meta = String(document.getElementById('set-reference-meta')?.textContent || '')
+    const match = meta.match(/(\d+)\s+POSITIONS?/i)
+    return match ? Number(match[1]) : 0
+  }
+
+  function probeReferenceYears(yearInput, referenceLabel, referenceSelect) {
+    const original = yearInput.value
+    const years = []
+    const maxYear = new Date().getFullYear() + 2
+    for (let year = 1968; year <= maxYear; year += 1) {
+      yearInput.value = String(year)
+      yearInput.dispatchEvent(new Event('input', { bubbles:true }))
+      const hasReference = !referenceLabel.classList.contains('hidden') && [...referenceSelect.options].some((option) => option.value && option.value !== '__manual__')
+      if (hasReference) years.push(String(year))
+    }
+    yearInput.value = original
+    yearInput.dispatchEvent(new Event('input', { bubbles:true }))
+    return years.sort((a,b) => Number(b)-Number(a))
+  }
+
+  async function patchDatabaseSetModal() {
+    const overlay = document.getElementById('set-modal-backdrop')
+    const form = document.getElementById('set-create-form')
+    const yearInput = document.getElementById('set-new-year')
+    const referenceLabel = document.getElementById('set-reference-label')
+    const referenceSelect = document.getElementById('set-reference-select')
+    const referenceMeta = document.getElementById('set-reference-meta')
+    const manualFields = document.getElementById('set-manual-fields')
+    const nameInput = document.getElementById('set-new-name')
+    const totalInput = document.getElementById('set-new-total')
+    if (!overlay || !form || !yearInput || !referenceLabel || !referenceSelect || !referenceMeta || !manualFields || !nameInput || !totalInput) return
+    if (form.dataset.p64DbPatched === '1') return
+    form.dataset.p64DbPatched = '1'
+
+    overlay.classList.add('p64-db-set-overlay')
+    form.classList.add('p64-db-set-card')
+
+    // iPhone Safari/Chrome zooms form controls smaller than 16px when focused.
+    for (const control of form.querySelectorAll('input, select, textarea')) control.style.fontSize = '16px'
+
+    const yearLabel = yearInput.closest('label')
+    const years = probeReferenceYears(yearInput, referenceLabel, referenceSelect)
+    const current = currentEditorYear()
+    const visibleYear = document.createElement('select')
+    visibleYear.id = 'p64-db-set-year'
+    visibleYear.setAttribute('aria-label', 'Release year')
+    visibleYear.style.fontSize = '16px'
+    const yearChoices = years.length ? years : [current]
+    for (const year of yearChoices) visibleYear.append(new Option(year, year))
+    visibleYear.value = yearChoices.includes(current) ? current : yearChoices[0]
+    yearInput.style.display = 'none'
+    yearLabel?.append(visibleYear)
+
+    const totalWrap = document.createElement('label')
+    totalWrap.id = 'p64-db-known-total-wrap'
+    totalWrap.textContent = 'CARS IN SET'
+    const knownTotal = document.createElement('input')
+    knownTotal.id = 'p64-db-known-total'
+    knownTotal.type = 'text'
+    knownTotal.readOnly = true
+    knownTotal.inputMode = 'none'
+    knownTotal.style.fontSize = '16px'
+    totalWrap.append(knownTotal)
+    referenceLabel.insertAdjacentElement('afterend', totalWrap)
+
+    const firstText = referenceLabel.childNodes[0]
+    if (firstText?.nodeType === Node.TEXT_NODE) firstText.textContent = '\n        SET NAME\n        '
+
+    const syncKnownTotal = () => {
+      const manual = referenceSelect.value === '__manual__'
+      const total = manual ? 0 : knownSetTotalFromModal()
+      totalWrap.classList.toggle('hidden', manual || !referenceSelect.value)
+      knownTotal.value = total ? String(total) : ''
+      referenceMeta.style.display = 'none'
+    }
+
+    const setYear = (year) => {
+      yearInput.value = year
+      yearInput.dispatchEvent(new Event('input', { bubbles:true }))
+      const hasKnown = [...referenceSelect.options].some((option) => option.value && option.value !== '__manual__')
+      if (hasKnown) {
+        const firstKnown = [...referenceSelect.options].find((option) => option.value && option.value !== '__manual__')
+        if (firstKnown) {
+          referenceSelect.value = firstKnown.value
+          referenceSelect.dispatchEvent(new Event('change', { bubbles:true }))
+        }
+      }
+      syncKnownTotal()
+    }
+
+    visibleYear.addEventListener('change', () => setYear(visibleYear.value))
+    referenceSelect.addEventListener('change', () => setTimeout(syncKnownTotal, 0))
+    setYear(visibleYear.value)
+
+    form.addEventListener('submit', async (event) => {
       event.preventDefault()
-      const message = document.getElementById('p64-simple-set-message')
-      const createButton = document.getElementById('p64-simple-set-create')
-      const year = String(document.getElementById('p64-simple-set-year')?.value || '').replace(/[^0-9]/g, '').slice(0,4)
-      const name = String(document.getElementById('p64-simple-set-name')?.value || '').trim().toUpperCase()
-      const totalRaw = Math.floor(Number(document.getElementById('p64-simple-set-total')?.value))
-      if (year.length !== 4) { message.textContent = 'Enter a 4-digit release year.'; return }
-      if (!name) { message.textContent = 'Enter a Set name.'; return }
-      if (!Number.isFinite(totalRaw) || totalRaw < 1) { message.textContent = 'Enter how many cars are in the Set.'; return }
-      const total = Math.min(99, totalRaw)
-      createButton.disabled = true
-      createButton.textContent = 'CREATING…'
+      event.stopImmediatePropagation()
+      const createButton = form.querySelector('.set-modal-create')
+      const manual = referenceSelect.value === '__manual__'
+      const year = visibleYear.value
+      const name = manual ? String(nameInput.value || '').trim().toUpperCase() : String(referenceSelect.value || '').trim().toUpperCase()
+      const total = manual ? Math.floor(Number(totalInput.value)) : knownSetTotalFromModal()
+      if (!year || !name || !Number.isFinite(total) || total < 1) return
+      if (createButton) { createButton.disabled = true; createButton.textContent = 'CREATING…' }
       try {
         const { client, userId } = await simpleSetSession()
         const state = readSimpleSetState(userId)
         const duplicate = state.sets.find((item) => String(item.year) === year && String(item.name || '').trim().toUpperCase() === name)
         if (duplicate) {
           selectSetInEditor(duplicate)
-          message.textContent = 'That Set already exists — selected it for this car.'
-          setTimeout(close, 650)
+          overlay.remove()
           return
         }
-        const set = { id:crypto.randomUUID(), year, name, total }
+        const set = { id:crypto.randomUUID(), year, name, total:Math.min(99, total) }
         state.sets.push(set)
         writeSimpleSetState(userId, state)
-        const { error } = await client.from('pocket64_sets').insert({ id:set.id, user_id:userId, year:Number(year), name, total })
+        const { error } = await client.from('pocket64_sets').insert({ id:set.id, user_id:userId, year:Number(year), name:set.name, total:set.total })
         if (error) {
           state.sets = state.sets.filter((item) => item.id !== set.id)
           writeSimpleSetState(userId, state)
           throw error
         }
         selectSetInEditor(set)
-        close()
+        overlay.remove()
       } catch (error) {
-        message.textContent = error?.message || 'Could not create the Set.'
+        alert(error?.message || 'Could not create the Set.')
       } finally {
-        if (createButton?.isConnected) {
-          createButton.disabled = false
-          createButton.textContent = 'CREATE SET'
-        }
+        if (createButton?.isConnected) { createButton.disabled = false; createButton.textContent = 'CREATE SET' }
       }
-    })
-    setTimeout(() => document.getElementById('p64-simple-set-name')?.focus(), 60)
+    }, { capture:true })
+
+    // The native modal focuses a control shortly after opening. Blur it after that
+    // so tapping ADD TO SET never leaves the PWA zoomed in.
+    setTimeout(() => {
+      if (overlay.contains(document.activeElement)) document.activeElement?.blur?.()
+    }, 120)
   }
 
-  async function openExistingSetChooser() {
-    ensureSimpleSetStyles()
-    document.getElementById('p64-simple-set-overlay')?.remove()
-    let client, userId, state
-    try {
-      ({ client, userId } = await simpleSetSession())
-      state = readSimpleSetState(userId)
-    } catch (error) {
-      alert(error?.message || 'Could not load your Sets.')
-      return
-    }
-    if (!state.sets.length) {
-      openDirectNewSet()
-      return
-    }
-    const overlay = document.createElement('div')
-    overlay.id = 'p64-simple-set-overlay'
-    overlay.className = 'p64-simple-set-overlay'
-    const options = [...state.sets]
-      .sort((a,b) => Number(b.year)-Number(a.year) || String(a.name).localeCompare(String(b.name)))
-      .map((set) => `<option value="${String(set.id).replace(/"/g,'&quot;')}">${String(set.year)} • ${String(set.name).replace(/</g,'&lt;').replace(/>/g,'&gt;')} (${Number(set.total) || 0})</option>`)
-      .join('')
-    overlay.innerHTML = `
-      <form class="p64-simple-set-card" id="p64-existing-set-form">
-        <div class="p64-simple-set-head"><strong>CHOOSE EXISTING SET</strong><button class="p64-simple-set-close" id="p64-simple-set-close" type="button" aria-label="Close">×</button></div>
-        <label>SET<select id="p64-existing-set-select">${options}</select></label>
-        <button class="p64-simple-set-create" type="submit">USE THIS SET</button>
-      </form>`
-    document.body.append(overlay)
-    const close = () => closeSimpleSetOverlay(overlay)
-    document.getElementById('p64-simple-set-close')?.addEventListener('click', close)
-    overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
-    document.getElementById('p64-existing-set-form')?.addEventListener('submit', (event) => {
-      event.preventDefault()
-      const id = document.getElementById('p64-existing-set-select')?.value || ''
-      const set = state.sets.find((item) => item.id === id)
-      if (set) selectSetInEditor(set)
-      close()
-    })
+  function openDirectNewSet() {
+    const select = document.getElementById('set-select')
+    if (!select) return
+    select.value = '__new__'
+    select.dispatchEvent(new Event('change', { bubbles:true }))
+    setTimeout(patchDatabaseSetModal, 20)
+    setTimeout(patchDatabaseSetModal, 80)
   }
+
 
   function installSimplifiedSetEditor() {
     ensureSimpleSetStyles()
@@ -1075,12 +1121,10 @@
       panel.className = 'p64-simple-set-panel'
       panel.innerHTML = `
         <button id="p64-direct-new-set" class="p64-simple-set-button primary" type="button">ADD TO SET</button>
-        <button id="p64-choose-existing-set" class="p64-simple-set-button secondary" type="button">EXISTING</button>
         <button id="p64-clear-set" class="p64-simple-set-button secondary hidden" type="button">CLEAR</button>
         <div id="p64-simple-set-status" class="p64-simple-set-status">No Set selected</div>`
       row.insertBefore(panel, document.getElementById('set-position-label'))
       panel.querySelector('#p64-direct-new-set')?.addEventListener('click', openDirectNewSet)
-      panel.querySelector('#p64-choose-existing-set')?.addEventListener('click', openExistingSetChooser)
       panel.querySelector('#p64-clear-set')?.addEventListener('click', () => {
         select.value = ''
         select.dispatchEvent(new Event('change', { bubbles:true }))
@@ -1244,6 +1288,33 @@
     }
   }
 
+  function installSettingsRefresh() {
+    const settingsList = document.querySelector('#settings-screen .settings-list')
+    if (!settingsList || document.getElementById('p64-update-card')) return
+    const card = document.createElement('div')
+    card.id = 'p64-update-card'
+    card.className = 'settings-card'
+    card.innerHTML = `
+      <div class="settings-copy">
+        <strong>App Update</strong>
+        <span class="version-badge">Checking version…</span>
+      </div>
+      <button id="p64-refresh-app" class="settings-mini-button" type="button">Refresh</button>`
+    settingsList.prepend(card)
+    card.querySelector('#p64-refresh-app')?.addEventListener('click', async () => {
+      const button = document.getElementById('p64-refresh-app')
+      if (button) { button.disabled = true; button.textContent = 'Refreshing…' }
+      try {
+        await Promise.all((await navigator.serviceWorker?.getRegistrations?.() || []).map((registration) => registration.update().catch(() => {})))
+        await updateVisibleVersion()
+      } catch {}
+      const url = new URL(window.location.href)
+      url.searchParams.set('p64refresh', Date.now().toString())
+      window.location.replace(url.href)
+    })
+    updateVisibleVersion()
+  }
+
   function applyPatch() {
     ensureDangerZone()
     ensureFaqPage()
@@ -1251,6 +1322,7 @@
     installUppercaseSearch()
     installSetsCollapsedByDefault()
     installSimplifiedSetEditor()
+    installSettingsRefresh()
     updateVisibleVersion()
     installRestoreRetryGuard()
     installOwnedRestore()

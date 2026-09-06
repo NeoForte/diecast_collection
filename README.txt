@@ -1,15 +1,15 @@
-Pocket 64 v5.2.0 — Set workflow cleanup
+Pocket 64 v5.2.1 — Add to Set database flow + update refresh
 
 WHAT CHANGED
-- Simplified Add to Set on the Add/Edit Car screen.
-- Tapping ADD TO SET now opens the manual New Set form immediately.
-- Removed the extra + NEW SET step from the visible editor flow.
-- Removed the year-specific 2025/2026 reference-list step from New Set creation in the editor.
-- Existing Sets are still available behind a small EXISTING button when needed, instead of filling the editor with options.
-- Existing automatic matching can still select a matching personal Set behind the scenes.
-- Restore confirmation now shows Set assignment count as well as cars, photos, and Sets.
-- Removed the obsolete Help/FAQ question “What is Showcase?”
-- Cache-busted app.js and showcase-sync.js to v5.2.0.
+- ADD TO SET now goes directly to one clean Set picker.
+- Release Year is now a dropdown populated from every year that has known Set reference data in Pocket 64.
+- Selecting a year loads the known Set names for that year into the Set Name dropdown.
+- Selecting a known Set automatically fills Cars in Set from the reference data.
+- Manual / Other remains available for Sets that are not yet in the reference data.
+- Completely removed the separate EXISTING button from Add to Set. Existing personal Sets are reused automatically when the chosen year/name already exists.
+- Fixed the mobile zoom-in behavior when opening Add to Set by keeping modal controls at iPhone-safe font sizing and removing forced focus.
+- Added an App Update / Refresh control at the top of Settings. It checks the visible version, asks the service worker to update, and reloads the app shell so PWA updates are easier to verify.
+- Cache-busted Pocket 64 to v5.2.1.
 
 DEPLOY
 Replace these files from this ZIP:
@@ -18,10 +18,12 @@ Replace these files from this ZIP:
   version.json
 
 TEST FIRST
-1. Confirm Settings shows Version 5.2.0.
-2. Add/Edit a car and tap ADD TO SET. The New Set form should open immediately with Year, Set Name, and Cars in Set.
-3. Create a Set and verify it becomes selected for the car; choose a Set Position if desired, then Save.
-4. Use EXISTING and verify a previously created Set can still be selected.
-5. Edit a car whose Series/Collection matches an existing personal Set and verify automatic matching still works.
-6. Open Help & FAQs and confirm “What is Showcase?” is gone.
-7. Start a Restore and confirm the preview includes Set assignments.
+1. Open Settings and confirm App Update appears at the top and shows Version 5.2.1.
+2. Tap Refresh and confirm Pocket 64 reloads and still shows Version 5.2.1.
+3. Add/Edit a car and tap ADD TO SET. Confirm the app does not zoom in.
+4. Confirm Release Year is a dropdown containing the years with known Set data.
+5. Pick a year and confirm Set Name becomes a dropdown of known Sets for that year.
+6. Pick a known Set and confirm Cars in Set fills automatically.
+7. Create/choose a Set that already exists personally and confirm Pocket 64 reuses it instead of creating a duplicate.
+8. Confirm there is no separate EXISTING button.
+9. Test MANUAL / OTHER for a Set not in the reference list.
