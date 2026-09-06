@@ -1,7 +1,7 @@
 (() => {
-  const FIX_VERSION = '6.0.3'
+  const FIX_VERSION = '6.0.4'
+  const PROJECT_REF = 'ftjayqjpgifdipmjloxx'
   const SETS_PREFIX = 'pocket64-sets-v1-'
-  const AUTH_KEY = 'sb-ftjayqjpgifdipmjloxx-auth-token'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
   const SUPABASE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
   let refreshing = false
@@ -24,15 +24,39 @@
     ;['hotwheels-toy-number','general-number','series-collection-number'].forEach((id) => tuneTextInput(document.getElementById(id), { autocorrect:false, spellcheck:false }))
   }
 
-  function authContext() {
+  function decodeJwtSub(token) {
     try {
-      const raw = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null')
-      const session = raw?.currentSession || raw?.session || raw
-      return {
-        accessToken: session?.access_token || raw?.access_token || '',
-        userId: session?.user?.id || raw?.user?.id || '',
+      const payload = token.split('.')[1]
+      if (!payload) return ''
+      const normalized = payload.replace(/-/g,'+').replace(/_/g,'/')
+      const decoded = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')))
+      return String(decoded?.sub || '')
+    } catch { return '' }
+  }
+
+  function authContext() {
+    const candidateKeys = []
+    try {
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i) || ''
+        if (key.includes(PROJECT_REF) && key.includes('auth-token')) candidateKeys.push(key)
       }
-    } catch { return { accessToken:'', userId:'' } }
+    } catch {}
+    candidateKeys.unshift(`sb-${PROJECT_REF}-auth-token`)
+
+    for (const key of [...new Set(candidateKeys)]) {
+      try {
+        const raw = JSON.parse(localStorage.getItem(key) || 'null')
+        if (!raw) continue
+        const candidates = [raw?.currentSession, raw?.session, raw]
+        for (const candidate of candidates) {
+          const accessToken = candidate?.access_token || raw?.access_token || ''
+          const userId = candidate?.user?.id || raw?.user?.id || decodeJwtSub(accessToken)
+          if (accessToken && userId) return { accessToken:String(accessToken), userId:String(userId) }
+        }
+      } catch {}
+    }
+    return { accessToken:'', userId:'' }
   }
 
   function stateKey(userId) { return `${SETS_PREFIX}${userId}` }
@@ -52,21 +76,19 @@
   }
 
   function installSetFlowStyles() {
-    ;['p64-v600-set-styles','p64-v601-set-styles','p64-v602-set-styles','p64-v603-set-styles'].forEach((id) => document.getElementById(id)?.remove())
+    ;['p64-v600-set-styles','p64-v601-set-styles','p64-v602-set-styles','p64-v603-set-styles','p64-v604-set-styles'].forEach((id) => document.getElementById(id)?.remove())
     const style = document.createElement('style')
-    style.id = 'p64-v603-set-styles'
+    style.id = 'p64-v604-set-styles'
     style.textContent = `
       .set-assignment-row {
         grid-template-columns:minmax(0,1.35fr) minmax(112px,.65fr) !important;
         align-items:start !important;
       }
-      .set-assignment-row > label:first-child {
-        margin-bottom:0 !important;
-      }
+      .set-assignment-row > label:first-child { margin-bottom:0 !important; }
       .p64-create-set-wrap {
         min-width:0;
         display:grid;
-        grid-template-rows:auto auto;
+        grid-template-rows:auto 42px;
         gap:7px;
         margin:0;
         padding:0;
@@ -80,24 +102,27 @@
         user-select:none;
         pointer-events:none;
       }
-      .p64-create-set-button {
-        width:100%;
-        box-sizing:border-box;
-        padding:0 10px;
-        border:1px solid rgba(65,161,255,.58);
-        border-radius:11px;
-        background:linear-gradient(145deg,#15375a,#07111d);
-        color:#dff1ff;
-        font:900 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-        letter-spacing:.065em;
-        text-transform:uppercase;
-        box-shadow:inset 0 0 16px rgba(36,135,235,.08);
+      #editor-screen .car-form .p64-create-set-button {
+        width:100% !important;
+        min-height:42px !important;
+        height:42px !important;
+        box-sizing:border-box !important;
+        padding:0 10px !important;
+        margin:0 !important;
+        border:1px solid rgba(65,161,255,.58) !important;
+        border-radius:10px !important;
+        background:linear-gradient(180deg,#173b60,#0d2239) !important;
+        color:#e8f4ff !important;
+        font:900 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.065em !important;
+        text-transform:uppercase !important;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.04) !important;
       }
-      .p64-create-set-button:active { transform:translateY(1px); }
+      #editor-screen .car-form .p64-create-set-button:active { transform:translateY(1px); }
       #set-position-label { grid-column:1 / -1 !important; }
       @media (max-width:390px) {
         .set-assignment-row { grid-template-columns:minmax(0,1.18fr) minmax(108px,.82fr) !important; }
-        .p64-create-set-button { font-size:10.5px; padding:0 7px; }
+        #editor-screen .car-form .p64-create-set-button { font-size:10.5px !important; padding:0 7px !important; }
       }
     `
     document.head.append(style)
@@ -111,17 +136,6 @@
     })
   }
 
-  function matchCreateButtonToSelect() {
-    const select = document.getElementById('set-select')
-    const button = document.getElementById('p64-create-set-button')
-    if (!select || !button) return
-    const height = Math.round(select.getBoundingClientRect().height)
-    if (height > 0) {
-      button.style.height = `${height}px`
-      button.style.minHeight = `${height}px`
-    }
-  }
-
   function installCreateSetButton() {
     const row = document.querySelector('.set-assignment-row')
     const select = document.getElementById('set-select')
@@ -129,19 +143,7 @@
     if (!row || !select || !positionLabel) return
 
     removeEmbeddedCreateOption()
-    const existing = document.getElementById('p64-create-set-button')
-    if (existing) {
-      const wrap = existing.closest('.p64-create-set-wrap')
-      if (wrap && !wrap.querySelector('.p64-create-set-spacer')) {
-        const spacer = document.createElement('span')
-        spacer.className = 'p64-create-set-spacer'
-        spacer.setAttribute('aria-hidden','true')
-        spacer.textContent = 'Add to Set'
-        wrap.insertBefore(spacer, existing)
-      }
-      matchCreateButtonToSelect()
-      return
-    }
+    if (document.getElementById('p64-create-set-button')) return
 
     const wrap = document.createElement('div')
     wrap.className = 'p64-create-set-wrap'
@@ -153,91 +155,83 @@
       select.insertBefore(trigger, select.firstChild)
       select.value = '__new__'
       select.dispatchEvent(new Event('change', { bubbles:true }))
-      removeEmbeddedCreateOption()
+      queueMicrotask(removeEmbeddedCreateOption)
     })
-
-    requestAnimationFrame(matchCreateButtonToSelect)
   }
 
-  function renderExistingSets(sets) {
+  function mergeAndRenderSets(userId, cloudSets) {
     const select = document.getElementById('set-select')
-    if (!select) return
-    const previous = select.value && select.value !== '__new__' ? select.value : ''
-    const groups = new Map()
+    if (!select || !Array.isArray(cloudSets)) return
 
-    for (const raw of sets || []) {
+    const local = readState(userId)
+    const byId = new Map((local.sets || []).map((set) => [String(set.id || ''), set]))
+    for (const raw of cloudSets) {
       const id = String(raw?.id || '')
       const year = String(raw?.year || '').replace(/[^0-9]/g,'').slice(0,4)
       const name = String(raw?.name || '').trim().toUpperCase()
       const total = Math.max(1, Math.min(99, Math.floor(Number(raw?.total) || 1)))
-      if (!id || !year || !name) continue
+      if (id && year && name) byId.set(id, { id, year, name, total })
+    }
+
+    const sets = [...byId.values()].filter((set) => set?.id && set?.year && set?.name)
+    if (!sets.length) return
+
+    writeState(userId, { ...local, sets })
+
+    const previous = select.value && select.value !== '__new__' ? select.value : ''
+    const groups = new Map()
+    for (const set of sets) {
+      const year = String(set.year)
       if (!groups.has(year)) groups.set(year, [])
-      groups.get(year).push({ id, year, name, total })
+      groups.get(year).push(set)
     }
 
     select.replaceChildren(new Option('', ''))
-    const years = [...groups.keys()].sort((a,b) => Number(b) - Number(a))
-    for (const year of years) {
+    for (const year of [...groups.keys()].sort((a,b) => Number(b) - Number(a))) {
       const group = document.createElement('optgroup')
       group.label = year
       groups.get(year)
-        .sort((a,b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }))
-        .forEach((set) => group.append(new Option(`${set.name} (${set.total})`, set.id)))
+        .sort((a,b) => String(a.name).localeCompare(String(b.name), undefined, { sensitivity:'base' }))
+        .forEach((set) => group.append(new Option(`${String(set.name).toUpperCase()} (${set.total})`, String(set.id))))
       select.append(group)
     }
     if ([...select.options].some((option) => option.value === previous)) select.value = previous
-    requestAnimationFrame(matchCreateButtonToSelect)
   }
 
   async function refreshSetsFromCloud() {
     if (refreshing) return
     const select = document.getElementById('set-select')
     if (!select) return
+
     const { accessToken, userId } = authContext()
-    if (!userId) { removeEmbeddedCreateOption(); return }
+    if (!accessToken || !userId) {
+      removeEmbeddedCreateOption()
+      return
+    }
 
     refreshing = true
     try {
-      let state = readState(userId)
-      renderExistingSets(state.sets)
-
-      if (!accessToken) return
       const url = `${SUPABASE_URL}/rest/v1/pocket64_sets?select=id,year,name,total&user_id=eq.${encodeURIComponent(userId)}&order=year.desc,name.asc`
       const response = await fetch(url, {
         cache:'no-store',
         headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${accessToken}` },
       })
-      if (!response.ok) return
+      if (!response.ok) throw new Error(`Set refresh failed (${response.status})`)
       const cloudSets = await response.json()
-      if (!Array.isArray(cloudSets)) return
-
-      const byId = new Map((state.sets || []).map((set) => [String(set.id || ''), set]))
-      for (const set of cloudSets) byId.set(String(set.id || ''), {
-        id:String(set.id || ''),
-        year:String(set.year || ''),
-        name:String(set.name || '').trim().toUpperCase(),
-        total:Math.max(1, Math.min(99, Math.floor(Number(set.total) || 1))),
-      })
-      state = { ...state, sets:[...byId.values()].filter((set) => set.id && set.year && set.name) }
-      writeState(userId, state)
-      renderExistingSets(state.sets)
+      mergeAndRenderSets(userId, cloudSets)
     } catch (error) {
-      console.warn('Pocket 64 v6 Set refresh failed', error)
+      console.warn('Pocket 64 v6.0.4 Set refresh failed; leaving existing picker untouched', error)
     } finally {
       refreshing = false
       removeEmbeddedCreateOption()
-      requestAnimationFrame(matchCreateButtonToSelect)
     }
   }
 
   function watchBasePickerRefreshes() {
     const select = document.getElementById('set-select')
-    if (!select || select.dataset.p64V600Watch === '1') return
-    select.dataset.p64V600Watch = '1'
-    new MutationObserver(() => {
-      removeEmbeddedCreateOption()
-      requestAnimationFrame(matchCreateButtonToSelect)
-    }).observe(select, { childList:true, subtree:true })
+    if (!select || select.dataset.p64V604Watch === '1') return
+    select.dataset.p64V604Watch = '1'
+    new MutationObserver(() => queueMicrotask(removeEmbeddedCreateOption)).observe(select, { childList:true, subtree:true })
   }
 
   function queueEditorRefresh() {
@@ -245,7 +239,6 @@
       installCreateSetButton()
       watchBasePickerRefreshes()
       refreshSetsFromCloud()
-      matchCreateButtonToSelect()
     }))
   }
 
@@ -257,7 +250,6 @@
     watchBasePickerRefreshes()
     refreshSetsFromCloud()
 
-    window.addEventListener('resize', () => requestAnimationFrame(matchCreateButtonToSelect))
     for (const id of ['add-button','empty-add-button']) {
       document.getElementById(id)?.addEventListener('click', queueEditorRefresh, true)
     }
