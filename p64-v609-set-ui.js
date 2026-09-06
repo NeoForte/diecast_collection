@@ -1,9 +1,10 @@
 (() => {
-  const VERSION = '6.0.9'
+  const VERSION = '6.0.10'
   const PROJECT_REF = 'ftjayqjpgifdipmjloxx'
   const SETS_PREFIX = 'pocket64-sets-v1-'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
   const SUPABASE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
+  let referencePromise = null
 
   function decodeJwtSub(token) {
     try {
@@ -61,13 +62,55 @@
     try { localStorage.setItem(`${SETS_PREFIX}${userId}`, JSON.stringify(state)) } catch {}
   }
 
+  function normalizeName(value) {
+    return String(value || '').toUpperCase().replace(/[’‘]/g,"'").replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ')
+  }
+
+  function setKey(year,name) { return `${String(year || '')}\u0000${normalizeName(name)}` }
+
   function normalizeSets(list) {
     return (list || []).map((raw) => ({
       id:String(raw?.id || ''),
       year:String(raw?.year || '').replace(/[^0-9]/g,'').slice(0,4),
       name:String(raw?.name || '').trim().toUpperCase(),
       total:Math.max(1,Math.min(99,Math.floor(Number(raw?.total)||1))),
-    })).filter((set) => set.id && set.year && set.name)
+      reference:Boolean(raw?.reference),
+      type:String(raw?.type || ''),
+    })).filter((set) => set.year && set.name && (set.id || set.reference))
+  }
+
+  async function loadReferenceLibrary() {
+    if (referencePromise) return referencePromise
+    referencePromise = (async () => {
+      try {
+        const response = await fetch(`app.js?set-library=${encodeURIComponent(VERSION)}&_=${Date.now()}`, { cache:'no-store' })
+        if (!response.ok) throw new Error(`app.js ${response.status}`)
+        const source = await response.text()
+        const match = source.match(/const HOT_WHEELS_SET_REFERENCE = (\{[\s\S]*?\})\n\nfunction normalizeSetReferenceName/)
+        if (!match) throw new Error('Set reference library not found')
+        const parsed = JSON.parse(match[1])
+        const out = []
+        for (const [year, rows] of Object.entries(parsed || {})) {
+          for (const row of rows || []) out.push({ id:'', year:String(year), name:String(row?.name || '').trim().toUpperCase(), total:Number(row?.total)||1, type:String(row?.type || ''), reference:true })
+        }
+        return normalizeSets(out)
+      } catch (error) {
+        console.warn('Pocket 64 reference Set library could not load', error)
+        return []
+      }
+    })()
+    return referencePromise
+  }
+
+  function mergeAllSets(referenceSets, personalSets) {
+    const byKey = new Map()
+    for (const set of normalizeSets(referenceSets)) byKey.set(setKey(set.year,set.name), set)
+    for (const set of normalizeSets(personalSets)) {
+      const key = setKey(set.year,set.name)
+      const existing = byKey.get(key)
+      byKey.set(key, existing ? { ...existing, ...set, reference:true } : set)
+    }
+    return [...byKey.values()]
   }
 
   function installStyles() {
@@ -99,6 +142,14 @@
     if (el) el.textContent = text || 'No Set selected'
   }
 
+  function syncStatusFromHiddenSelect() {
+    const select = document.getElementById('set-select')
+    if (!select?.value || select.value === '__new__') { setStatus('No Set selected'); return }
+    const { userId } = currentUserContext()
+    const set = normalizeSets(readState(userId).sets).find((item) => item.id === select.value)
+    if (set) setStatus(`${set.name} · ${set.year}`)
+  }
+
   function ensureRow() {
     installStyles()
     removeOldNewButtons()
@@ -120,17 +171,55 @@
         select.value='__new__'
         select.dispatchEvent(new Event('change',{bubbles:true}))
       })
+      if (select.dataset.p64V610StatusWatch !== '1') {
+        select.dataset.p64V610StatusWatch = '1'
+        select.addEventListener('change', () => setTimeout(syncStatusFromHiddenSelect, 0))
+      }
     }
+    syncStatusFromHiddenSelect()
   }
 
-  function chooseSet(set) {
-    const select = document.getElementById('set-select')
-    if (!select) return
-    if (![...select.options].some((o) => o.value === set.id)) select.append(new Option(`${set.name} (${set.total})`,set.id))
-    select.value=set.id
-    select.dispatchEvent(new Event('change',{bubbles:true}))
-    setStatus(`${set.name} · ${set.year}`)
-    document.getElementById('p64-v609-picker-backdrop')?.remove()
+  function currentUserContext() {
+    const auth = authContext()
+    return { ...auth, userId:auth.userId || findLocalUserId() }
+  }
+
+  async function materializeReferenceSet(entry) {
+    if (entry.id) return entry
+    const { accessToken, userId } = currentUserContext()
+    if (!userId) throw new Error('Sign in again, then try this Set.')
+    const state = readState(userId)
+    const existing = normalizeSets(state.sets).find((item) => setKey(item.year,item.name) === setKey(entry.year,entry.name))
+    if (existing) return existing
+    const set = { id:crypto.randomUUID(), year:entry.year, name:entry.name, total:entry.total }
+    if (accessToken) {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/pocket64_sets`, {
+        method:'POST',
+        headers:{ apikey:SUPABASE_KEY, Authorization:`Bearer ${accessToken}`, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body:JSON.stringify({ id:set.id, user_id:userId, year:Number(set.year), name:set.name, total:set.total }),
+      })
+      if (!response.ok) throw new Error(`Could not save Set (${response.status})`)
+    }
+    state.sets.push(set)
+    writeState(userId,state)
+    return set
+  }
+
+  async function chooseSet(entry, button) {
+    try {
+      if (button) { button.disabled=true; button.style.opacity='.65' }
+      const set = entry.reference && !entry.id ? await materializeReferenceSet(entry) : entry
+      const select = document.getElementById('set-select')
+      if (!select) return
+      if (![...select.options].some((o) => o.value === set.id)) select.append(new Option(`${set.name} (${set.total})`,set.id))
+      select.value=set.id
+      select.dispatchEvent(new Event('change',{bubbles:true}))
+      setStatus(`${set.name} · ${set.year}`)
+      document.getElementById('p64-v609-picker-backdrop')?.remove()
+    } catch (error) {
+      alert(error?.message || 'Could not add that Set.')
+      if (button) { button.disabled=false; button.style.opacity='' }
+    }
   }
 
   function renderList(host,sets) {
@@ -140,23 +229,38 @@
     for (const set of sets) { if(!groups.has(set.year)) groups.set(set.year,[]); groups.get(set.year).push(set) }
     for (const year of [...groups.keys()].sort((a,b)=>Number(b)-Number(a))) {
       const y=document.createElement('div'); y.className='p64-v609-year'; y.textContent=year; host.append(y)
-      groups.get(year).sort((a,b)=>a.name.localeCompare(b.name)).forEach((set)=>{ const b=document.createElement('button'); b.type='button'; b.className='p64-v609-choice'; b.innerHTML=`<span>${set.name}</span><span>${set.total} CARS</span>`; b.addEventListener('click',()=>chooseSet(set)); host.append(b) })
+      groups.get(year).sort((a,b)=>a.name.localeCompare(b.name)).forEach((set)=>{
+        const b=document.createElement('button'); b.type='button'; b.className='p64-v609-choice'; b.innerHTML=`<span>${set.name}</span><span>${set.total} CARS</span>`; b.addEventListener('click',()=>chooseSet(set,b)); host.append(b)
+      })
     }
   }
 
   async function openPicker() {
     document.getElementById('p64-v609-picker-backdrop')?.remove()
-    const overlay=document.createElement('div'); overlay.id='p64-v609-picker-backdrop'; overlay.className='p64-v609-picker-backdrop'; overlay.innerHTML='<div class="p64-v609-picker" role="dialog" aria-modal="true"><div class="p64-v609-picker-head"><strong>ADD TO SET</strong><button class="p64-v609-close" type="button">×</button></div><p id="p64-v609-picker-status" class="p64-v609-status">Saved Sets</p><div id="p64-v609-list"></div></div>'; document.body.append(overlay)
+    const overlay=document.createElement('div'); overlay.id='p64-v609-picker-backdrop'; overlay.className='p64-v609-picker-backdrop'; overlay.innerHTML='<div class="p64-v609-picker" role="dialog" aria-modal="true"><div class="p64-v609-picker-head"><strong>ADD TO SET</strong><button class="p64-v609-close" type="button">×</button></div><p id="p64-v609-picker-status" class="p64-v609-status">Loading all Sets…</p><div id="p64-v609-list"></div></div>'; document.body.append(overlay)
     overlay.querySelector('.p64-v609-close')?.addEventListener('click',()=>overlay.remove()); overlay.addEventListener('click',(e)=>{if(e.target===overlay)overlay.remove()})
     const list=overlay.querySelector('#p64-v609-list'); const status=overlay.querySelector('#p64-v609-picker-status')
-    const auth=authContext(); const userId=auth.userId || findLocalUserId(); const local=readState(userId); let sets=normalizeSets(local.sets); renderList(list,sets)
-    if(!auth.accessToken || !userId){ if(status)status.textContent=sets.length?'Saved Sets on this device':'No saved Sets available'; return }
-    try {
-      if(status)status.textContent='Refreshing Sets…'
-      const response=await fetch(`${SUPABASE_URL}/rest/v1/pocket64_sets?select=id,year,name,total&user_id=eq.${encodeURIComponent(userId)}&order=year.desc,name.asc`,{cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${auth.accessToken}`}})
-      if(!response.ok) throw new Error(`Set refresh failed (${response.status})`)
-      const cloud=normalizeSets(await response.json()); const byId=new Map(sets.map((s)=>[s.id,s])); cloud.forEach((s)=>byId.set(s.id,s)); sets=[...byId.values()]; writeState(userId,{...local,sets}); renderList(list,sets); if(status)status.textContent=sets.length?'Choose a Set':'No saved Sets found'
-    } catch { if(status)status.textContent=sets.length?'Showing saved Sets on this device':'Could not load saved Sets' }
+    const auth=currentUserContext(); const local=readState(auth.userId)
+    const references = await loadReferenceLibrary()
+    let personal = normalizeSets(local.sets)
+
+    if(auth.accessToken && auth.userId) {
+      try {
+        if(status)status.textContent='Loading all known + saved Sets…'
+        const response=await fetch(`${SUPABASE_URL}/rest/v1/pocket64_sets?select=id,year,name,total&user_id=eq.${encodeURIComponent(auth.userId)}&order=year.desc,name.asc`,{cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${auth.accessToken}`}})
+        if(!response.ok) throw new Error(`Set refresh failed (${response.status})`)
+        const cloud=normalizeSets(await response.json())
+        const personalByKey=new Map(personal.map((s)=>[setKey(s.year,s.name),s])); cloud.forEach((s)=>personalByKey.set(setKey(s.year,s.name),s)); personal=[...personalByKey.values()]
+        writeState(auth.userId,{...local,sets:personal})
+      } catch (error) {
+        console.warn('Pocket 64 Set picker refresh failed', error)
+        if(status)status.textContent='Showing all known + saved Sets on this device'
+      }
+    }
+
+    const allSets=mergeAllSets(references,personal)
+    renderList(list,allSets)
+    if(status)status.textContent=allSets.length?'Choose a Set':'No Sets available'
   }
 
   function refreshUi() { ensureRow(); document.documentElement.dataset.p64SetUiVersion=VERSION }
