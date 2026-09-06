@@ -1,10 +1,12 @@
-Pocket 64 v5.2.3 — Settings App Update cleanup
+Pocket 64 v5.2.4 — editor cleanup
 
 WHAT CHANGED
-- App Update, Version, and Refresh now sit on one compact line at the top of Settings.
-- Removed the redundant Version badge from the About section.
-- Keeps all v5.2.2 Set assignment fixes and Add to Set behavior.
-- Cache-busted Pocket 64 to v5.2.3.
+- Removed Category from the Add/Edit Car layout.
+- Moved General Number next to Series / Collection for a cleaner row.
+- Removed Series / Collection Number from the visible UI.
+- Renamed Set Position to Car # in Set.
+- Tightened the Add to Set / Car # in Set row so both fields line up more evenly.
+- Cache-busted Pocket 64 to v5.2.4.
 
 DEPLOY
 Replace these files from this ZIP:
@@ -13,7 +15,8 @@ Replace these files from this ZIP:
   version.json
 
 TEST FIRST
-1. Open Settings and confirm the top row reads App Update / Version 5.2.3 / Refresh on one line.
-2. Confirm the About section no longer has a Version badge.
-3. Tap Refresh and confirm Pocket 64 returns showing Version 5.2.3.
-4. Recheck Add to Set and Set Position behavior from v5.2.2.
+1. Open Add Car and confirm Series / Collection and General Number now share one row.
+2. Confirm Category no longer shows in the editor.
+3. Confirm Series / Collection Number no longer shows in the editor.
+4. Confirm Add to Set and Car # in Set line up cleanly.
+5. Choose a Set and verify Series / Collection still autofills from the Set as before.

@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pocket 64" />
-  <link rel="manifest" href="manifest.webmanifest?v=5.0.0" />
+  <link rel="manifest" href="manifest.webmanifest?v=5.2.4" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=5.0.0" />
+  <link rel="stylesheet" href="styles.css?v=5.2.4" />
   <title>Pocket 64</title>
 </head>
 <body>
@@ -446,8 +446,15 @@
               </select>
             </label>
 
-            <div class="editor-row series-category-row">
-              <label>Series / Collection<input id="series" type="text" placeholder="Optional" /></label>
+            <div class="editor-row series-category-row" style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr);gap:12px;align-items:end;">
+              <label>Series / Collection
+                <input id="series" type="text" placeholder="Optional" />
+              </label>
+              <label>General Number
+                <input id="general-number" type="text" inputmode="text" placeholder="e.g. 123/250" autocomplete="off" />
+              </label>
+            </div>
+            <div aria-hidden="true" style="display:none !important;">
               <label>Category
                 <select id="category">
                   <option value=""></option>
@@ -458,26 +465,23 @@
                 </select>
               </label>
             </div>
-            <label id="custom-category-label" class="hidden compact-conditional-field">Custom Category
+            <label id="custom-category-label" class="hidden compact-conditional-field" style="display:none !important;">Custom Category
               <input id="custom-category" type="text" placeholder="Type category" />
             </label>
-            <div class="editor-row number-fields">
-              <label>General Number
-                <input id="general-number" type="text" inputmode="text" placeholder="e.g. 123/250" autocomplete="off" />
-              </label>
+            <div aria-hidden="true" style="display:none !important;">
               <label>Series / Collection Number
                 <input id="series-collection-number" type="text" inputmode="text" placeholder="e.g. 3/10" autocomplete="off" />
               </label>
             </div>
 
-            <div class="editor-row set-assignment-row">
+            <div class="editor-row set-assignment-row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:end;">
               <label>Add to Set
                 <select id="set-select">
                   <option value=""></option>
                   <option value="__new__">+ NEW SET</option>
                 </select>
               </label>
-              <label id="set-position-label" class="hidden">Set Position
+              <label id="set-position-label" class="hidden">Car # in Set
                 <select id="set-position"><option value=""></option></select>
               </label>
             </div>
@@ -551,8 +555,8 @@
 
   <button id="back-to-top-button" class="back-to-top-button hidden" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
-  <script src="jszip.min.js?v=5.0.0"></script>
-  <script src="showcase-sync.js?v=5.2.3"></script>
-  <script type="module" src="app.js?v=5.2.3"></script>
+  <script src="jszip.min.js?v=5.2.4"></script>
+  <script src="showcase-sync.js?v=5.2.4"></script>
+  <script type="module" src="app.js?v=5.2.4"></script>
 </body>
 </html>
