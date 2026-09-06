@@ -1,8 +1,10 @@
 (() => {
-  const FIX_VERSION = '5.3.4'
+  const FIX_VERSION = '5.3.5'
   const SETS_PREFIX = 'pocket64-sets-v1-'
   const recentSets = new Map()
   let latestRecentKey = ''
+  let pendingSetCreate = null
+  let tuningSetMenu = false
 
   function syncDisplayedVersion() {
     document.querySelectorAll('.version-badge').forEach((el) => {
@@ -63,35 +65,7 @@
         bestScore = score
       }
     }
-    return best
-  }
-
-  function rememberNewSetFromSubmit(form) {
-    const year = String(form.querySelector('#set-new-year')?.value || '').replace(/[^0-9]/g, '').slice(0, 4)
-    const manualName = String(form.querySelector('#set-new-name')?.value || '').trim().toUpperCase()
-    const reference = form.querySelector('#set-reference-select')
-    const referenceName = reference && reference.value && reference.value !== '__manual__'
-      ? String(reference.value).trim().toUpperCase()
-      : ''
-    const name = manualName || referenceName
-    if (year.length !== 4 || !name) return
-
-    requestAnimationFrame(() => {
-      for (const key of validSetStorageKeys()) {
-        const state = readSetStateForKey(key)
-        if (!state) continue
-        const match = state.sets.find((set) =>
-          String(set.year || '') === year && normalizeSetName(set.name) === normalizeSetName(name)
-        )
-        if (!match) continue
-        const id = String(match.id || '')
-        if (!id) continue
-        recentSets.set(id, { key, set:{ ...match } })
-        latestRecentKey = key
-        break
-      }
-      refreshSetPickerFromStorage()
-    })
+    return best || validSetStorageKeys()[0] || ''
   }
 
   function restoreRecentSets() {
@@ -106,33 +80,54 @@
     }
   }
 
-  function rebuildPositionPicker(state, selectedSetId) {
+  function requestedPositionFromEditor(total) {
+    const numberText = String(document.getElementById('series-collection-number')?.value || '')
+    const numberMatch = numberText.match(/^(\d+)\s*\/\s*(\d+)$/)
+    if (!numberMatch) return 0
+    const position = Math.floor(Number(numberMatch[1]) || 0)
+    return position >= 1 && position <= total ? position : 0
+  }
+
+  function rebuildPositionPicker(state, selectedSetId, preferredPosition = '') {
     const position = document.getElementById('set-position')
     const label = document.getElementById('set-position-label')
     if (!position || !label) return
 
     const active = state.sets.find((set) => String(set.id || '') === String(selectedSetId || '')) || null
-    const previous = position.value
     position.replaceChildren(new Option('', ''))
 
-    if (active) {
-      const total = Math.max(1, Math.min(99, Math.floor(Number(active.total) || 1)))
-      for (let i = 1; i <= total; i += 1) position.append(new Option(`${i}/${total}`, String(i)))
-      if ([...position.options].some((option) => option.value === previous)) position.value = previous
+    if (!active) {
+      label.classList.add('hidden')
+      return
     }
-    label.classList.toggle('hidden', !active)
+
+    const total = Math.max(1, Math.min(99, Math.floor(Number(active.total) || 1)))
+    for (let i = 1; i <= total; i += 1) position.append(new Option(`${i}/${total}`, String(i)))
+
+    let chosen = Math.floor(Number(preferredPosition) || 0)
+    if (!(chosen >= 1 && chosen <= total)) chosen = requestedPositionFromEditor(total)
+    if (!(chosen >= 1 && chosen <= total)) {
+      const used = new Set(
+        Object.values(state.assignments || {})
+          .filter((assignment) => String(assignment?.setId || '') === String(active.id || ''))
+          .map((assignment) => Math.floor(Number(assignment?.position) || 0))
+      )
+      chosen = Array.from({ length:total }, (_, index) => index + 1).find((slot) => !used.has(slot)) || 1
+    }
+    position.value = String(chosen)
+    label.classList.remove('hidden')
   }
 
-  function refreshSetPickerFromStorage() {
+  function refreshSetPickerFromStorage(preferredSetId = '', preferredPosition = '') {
     restoreRecentSets()
     const select = document.getElementById('set-select')
     if (!select) return
 
     const key = currentSetStorageKey()
     const state = key ? readSetStateForKey(key) : null
-    if (!state?.sets?.length) return
+    if (!state) return
 
-    const previous = select.value
+    const previous = preferredSetId || select.value
     const groups = new Map()
     for (const raw of state.sets) {
       const year = String(raw.year || '').replace(/[^0-9]/g, '').slice(0, 4)
@@ -144,7 +139,7 @@
       groups.get(year).push({ id, name, total })
     }
 
-    select.replaceChildren(new Option('', ''), new Option('+ NEW SET', '__new__'))
+    select.replaceChildren(new Option('', ''), new Option('CREATE A NEW SET', '__new__'))
     const years = [...groups.keys()].sort((a, b) => Number(b) - Number(a))
     for (const year of years) {
       const group = document.createElement('optgroup')
@@ -156,32 +151,113 @@
     }
 
     if ([...select.options].some((option) => option.value === previous)) select.value = previous
-    rebuildPositionPicker(state, select.value)
+    rebuildPositionPicker(state, select.value, preferredPosition)
+  }
+
+  function tuneCreateSetMenu() {
+    if (tuningSetMenu) return
+    const select = document.getElementById('set-reference-select')
+    if (!select) return
+    const manual = [...select.options].find((option) => option.value === '__manual__')
+    if (!manual) return
+
+    tuningSetMenu = true
+    try {
+      const current = select.value
+      manual.textContent = 'CREATE A NEW SET'
+      select.removeChild(manual)
+      select.insertBefore(manual, select.firstChild)
+      if (current) select.value = current
+    } finally {
+      tuningSetMenu = false
+    }
+  }
+
+  function captureNewSetSubmit(event) {
+    const form = event.target
+    if (form?.id !== 'set-create-form') return
+    const year = String(form.querySelector('#set-new-year')?.value || '').replace(/[^0-9]/g, '').slice(0, 4)
+    const manualName = String(form.querySelector('#set-new-name')?.value || '').trim().toUpperCase()
+    const reference = form.querySelector('#set-reference-select')
+    const referenceName = reference && reference.value && reference.value !== '__manual__'
+      ? String(reference.value).trim().toUpperCase()
+      : ''
+    pendingSetCreate = {
+      year,
+      name:manualName || referenceName,
+      openedFromEditor:Boolean(document.getElementById('editor-screen')?.classList.contains('active')),
+    }
+  }
+
+  function finalizeNewSetSubmit(event) {
+    if (event.target?.id !== 'set-create-form' || !pendingSetCreate) return
+    const request = pendingSetCreate
+    pendingSetCreate = null
+    if (request.year.length !== 4 || !request.name) return
+
+    let found = null
+    let foundKey = ''
+    for (const key of validSetStorageKeys()) {
+      const state = readSetStateForKey(key)
+      if (!state) continue
+      const match = state.sets.find((set) =>
+        String(set.year || '') === request.year && normalizeSetName(set.name) === normalizeSetName(request.name)
+      )
+      if (!match) continue
+      found = { ...match }
+      foundKey = key
+      break
+    }
+    if (!found || !foundKey) return
+
+    const id = String(found.id || '')
+    if (!id) return
+    recentSets.set(id, { key:foundKey, set:found })
+    latestRecentKey = foundKey
+
+    if (request.openedFromEditor) {
+      const series = document.getElementById('series')
+      if (series && !String(series.value || '').trim()) series.value = String(found.name || '').toUpperCase()
+      refreshSetPickerFromStorage(id, '')
+    } else {
+      refreshSetPickerFromStorage()
+    }
+
+    let passes = 0
+    const guard = setInterval(() => {
+      passes += 1
+      restoreRecentSets()
+      if (request.openedFromEditor) {
+        const currentPosition = document.getElementById('set-position')?.value || ''
+        refreshSetPickerFromStorage(id, currentPosition)
+      }
+      if (passes >= 80) clearInterval(guard)
+    }, 250)
   }
 
   function installSetPickerRepair() {
-    if (document.documentElement.dataset.p64SetPicker534 === '1') return
-    document.documentElement.dataset.p64SetPicker534 = '1'
+    if (document.documentElement.dataset.p64SetPicker535 === '1') return
+    document.documentElement.dataset.p64SetPicker535 = '1'
 
-    document.addEventListener('submit', (event) => {
-      const form = event.target
-      if (form?.id === 'set-create-form') rememberNewSetFromSubmit(form)
-    })
+    document.addEventListener('submit', captureNewSetSubmit, true)
+    document.addEventListener('submit', finalizeNewSetSubmit, false)
 
     for (const id of ['add-button', 'empty-add-button']) {
       document.getElementById(id)?.addEventListener('click', () => {
-        requestAnimationFrame(() => requestAnimationFrame(refreshSetPickerFromStorage))
+        requestAnimationFrame(() => requestAnimationFrame(() => refreshSetPickerFromStorage()))
       }, true)
     }
 
     const select = document.getElementById('set-select')
-    select?.addEventListener('pointerdown', refreshSetPickerFromStorage, true)
-    select?.addEventListener('focus', refreshSetPickerFromStorage, true)
+    select?.addEventListener('pointerdown', () => refreshSetPickerFromStorage(select.value, document.getElementById('set-position')?.value || ''), true)
+    select?.addEventListener('focus', () => refreshSetPickerFromStorage(select.value, document.getElementById('set-position')?.value || ''), true)
 
-    // Recheck after returning from background or another iPhone app.
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') requestAnimationFrame(refreshSetPickerFromStorage)
+      if (document.visibilityState === 'visible') requestAnimationFrame(() => refreshSetPickerFromStorage())
     })
+
+    new MutationObserver(tuneCreateSetMenu).observe(document.body, { childList:true, subtree:true })
+    tuneCreateSetMenu()
   }
 
   function tuneTextInput(input, { autocorrect = true, spellcheck = true } = {}) {
@@ -202,6 +278,7 @@
     const tuneDynamicInputs = () => {
       tuneTextInput(document.getElementById('set-new-name'), { autocorrect:true, spellcheck:true })
       tuneTextInput(document.getElementById('set-edit-name'), { autocorrect:true, spellcheck:true })
+      tuneCreateSetMenu()
     }
 
     tuneDynamicInputs()
