@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v8'
+const CACHE = 'pocket64-shell-v9'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
