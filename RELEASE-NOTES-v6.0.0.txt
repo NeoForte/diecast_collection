@@ -1,0 +1,27 @@
+Pocket 64 v6.0.0
+===================
+
+SET ASSIGNMENT FLOW
+- Restores Add to Set as a picker for existing saved Sets only.
+- Existing Sets are grouped by release year and refreshed from the signed-in account's cloud Set records when the editor opens.
+- Removes CREATE NEW SET from inside the Add to Set dropdown.
+- Adds a separate CREATE SET button beside Add to Set.
+- CREATE SET opens the simple Year / Set Name / Cars in Set form already used by Pocket 64.
+- When opened from Add/Edit Car, creating a Set immediately selects it for that car and sets its position.
+- The old Manual / Other choice is not part of the Add/Edit Car flow.
+
+STABILITY
+- Does not rebuild the Set picker while the user is opening/tapping the native iOS select control.
+- Uses a bounded observer only to remove the obsolete embedded CREATE option if base code redraws the picker.
+- No repeating timers or observer mutation loops.
+
+UNCHANGED
+- Photo viewer size and pinch/pan behavior are unchanged.
+- Add Car cancel/reset behavior is unchanged.
+- iOS text-entry tuning is retained.
+
+VERSION
+- Version bumped to 6.0.0.
+
+BACKUP
+- Complete full-project ZIP included for rollback/recovery safety.
