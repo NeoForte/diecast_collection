@@ -1,0 +1,26 @@
+Pocket 64 v5.3.1
+===================
+
+PHOTO VIEWER CLEANUP
+- Replaces the previous viewer override with a dedicated p64-v531-viewer.js file.
+- Removes the legacy FIT/FILL control entirely.
+- Removes photo navigation arrows on phones/touch devices; swipe remains the navigation method.
+- Keeps pinch-to-zoom and pan behavior.
+- Forces the photo to use the full available mobile viewport while preserving the complete image with object-fit: contain.
+- Keeps a simple close button and small photo counter only.
+- Actively removes legacy viewer styles and stale FIT/FILL UI if older code survives in an open session.
+
+CACHE / UPDATE RELIABILITY
+- Service worker shell version bumped and updated to force fresh viewer assets.
+- Service worker now injects the dedicated v5.3.1 viewer into navigation responses and rewrites core asset version queries from version.json.
+- This avoids relying on the old p64-v525-patch.js?v=5.2.7 URL remaining fresh.
+
+STABILITY
+- Preserves the Add Car Cancel/reset safeguard.
+- No database, Supabase, Sets, collection schema, auth, or saved-car data changes.
+
+VERSION
+- Version 5.3.1.
+
+BACKUP
+- Deliver as a complete full-project ZIP for rollback/recovery safety.
