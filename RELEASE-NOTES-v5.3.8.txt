@@ -1,0 +1,23 @@
+Pocket 64 v5.3.8
+===================
+
+SETS
+- Adds a dedicated direct Create & Assign flow that intercepts CREATE A NEW SET before the legacy Set modal can open.
+- New Set form is only: Release Year, Set Name, Cars in Set.
+- Removes the visible preset/reference + MANUAL / OTHER path from Add/Edit Car Set creation.
+- Confirms the Set in Supabase before adding it locally and assigning it to the current car.
+- Immediately selects a successfully created Set for the current car and uses position 1 unless a valid position was already entered.
+- Existing duplicate Set names are reused/selected instead of creating a second copy.
+- CREATE A NEW SET remains the top Set-picker option.
+
+STABILITY
+- Removes the v5.3.7 Set-modal observer/interceptor that could race with the legacy modal.
+- Adds the direct Set-flow script to the service worker core assets.
+- Bumps the shell cache to v5 so iPhone Safari/Chrome receive the corrected flow.
+
+UNCHANGED
+- Photo viewer size and gestures are unchanged.
+- Existing cars, Sets, assignments, auth, and database schema are unchanged.
+
+VERSION
+- Version bumped to 5.3.8.
