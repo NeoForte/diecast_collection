@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v4'
+const CACHE = 'pocket64-shell-v5'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -7,6 +7,7 @@ const CORE_ASSET_NAMES = new Set([
   'showcase-sync.js',
   'p64-v525-patch.js',
   'p64-v531-viewer.js',
+  'p64-v538-set-flow.js',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -68,6 +69,13 @@ async function latestCoreResponse(request) {
       text = text.replace(
         /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
         `<script src="p64-v531-viewer.js?v=${version}"></script>\n  $1`
+      )
+    }
+
+    if (!text.includes('p64-v538-set-flow.js')) {
+      text = text.replace(
+        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
+        `<script src="p64-v538-set-flow.js?v=${version}"></script>\n  $1`
       )
     }
 
