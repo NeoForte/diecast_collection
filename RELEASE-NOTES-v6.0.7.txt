@@ -1,0 +1,8 @@
+Pocket 64 v6.0.7
+
+- Removes the remaining legacy/simple Add to Set UI (the duplicate "gremlin").
+- Keeps the real hidden Set select alive for assignment logic.
+- Leaves only the working ADD TO SET and CREATE SET controls in one two-column row.
+- Preserves Set Position behavior after a Set is chosen.
+- No photo viewer changes.
+- No Set database/schema changes.
