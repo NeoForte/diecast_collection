@@ -1,5 +1,5 @@
 (() => {
-  const PATCH_VERSION = '5.3.2'
+  const PATCH_VERSION = '5.3.3'
   const UI_STATE_PREFIX = 'pocket64-ui-state-v1-'
 
   function isNewCarEditor() {
@@ -228,6 +228,172 @@
     count.style.display = match && Number(match[2]) <= 1 ? 'none' : ''
   }
 
+  function installPhotosLikeGestures() {
+    const viewer = document.getElementById('photo-viewer')
+    const stage = document.getElementById('photo-viewer-stage')
+    const image = document.getElementById('photo-viewer-image')
+    if (!viewer || !stage || !image || stage.dataset.p64GestureV533 === '1') return
+    stage.dataset.p64GestureV533 = '1'
+
+    let scale = 1
+    let translateX = 0
+    let translateY = 0
+    let gesture = null
+
+    const clampScale = (value) => Math.max(1, Math.min(4, Number(value) || 1))
+    const midpoint = (a, b) => ({ x:(a.clientX + b.clientX) / 2, y:(a.clientY + b.clientY) / 2 })
+    const distance = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+
+    function clampPan() {
+      if (scale <= 1.001) {
+        translateX = 0
+        translateY = 0
+        return
+      }
+      const maxX = Math.max(0, ((image.clientWidth * scale) - stage.clientWidth) / 2)
+      const maxY = Math.max(0, ((image.clientHeight * scale) - stage.clientHeight) / 2)
+      translateX = Math.min(maxX, Math.max(-maxX, translateX))
+      translateY = Math.min(maxY, Math.max(-maxY, translateY))
+    }
+
+    function applyTransform() {
+      scale = clampScale(scale)
+      clampPan()
+      image.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`
+    }
+
+    function resetTransform() {
+      scale = 1
+      translateX = 0
+      translateY = 0
+      gesture = null
+      image.style.transform = 'translate3d(0, 0, 0) scale(1)'
+    }
+
+    function beginPinch(touches) {
+      const a = touches[0]
+      const b = touches[1]
+      const mid = midpoint(a, b)
+      const rect = stage.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      const startDistance = Math.max(1, distance(a, b))
+
+      gesture = {
+        type:'pinch',
+        startDistance,
+        startScale:scale,
+        centerX,
+        centerY,
+        anchorX:(mid.x - centerX - translateX) / scale,
+        anchorY:(mid.y - centerY - translateY) / scale,
+      }
+    }
+
+    function beginPan(touch) {
+      gesture = {
+        type:'pan',
+        startX:touch.clientX,
+        startY:touch.clientY,
+        startTranslateX:translateX,
+        startTranslateY:translateY,
+      }
+    }
+
+    stage.addEventListener('touchstart', (event) => {
+      if (viewer.classList.contains('hidden')) return
+      const touches = event.touches || []
+
+      if (touches.length >= 2) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        beginPinch(touches)
+        return
+      }
+
+      if (touches.length === 1 && scale > 1.001) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        beginPan(touches[0])
+      }
+    }, { passive:false, capture:true })
+
+    stage.addEventListener('touchmove', (event) => {
+      if (viewer.classList.contains('hidden')) return
+      const touches = event.touches || []
+
+      if (touches.length >= 2) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        if (!gesture || gesture.type !== 'pinch') beginPinch(touches)
+
+        const a = touches[0]
+        const b = touches[1]
+        const mid = midpoint(a, b)
+        const nextScale = clampScale(gesture.startScale * (distance(a, b) / gesture.startDistance))
+
+        scale = nextScale
+        translateX = mid.x - gesture.centerX - (gesture.anchorX * scale)
+        translateY = mid.y - gesture.centerY - (gesture.anchorY * scale)
+        applyTransform()
+        return
+      }
+
+      if (touches.length === 1 && scale > 1.001) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        const touch = touches[0]
+        if (!gesture || gesture.type !== 'pan') beginPan(touch)
+        translateX = gesture.startTranslateX + (touch.clientX - gesture.startX)
+        translateY = gesture.startTranslateY + (touch.clientY - gesture.startY)
+        applyTransform()
+      }
+    }, { passive:false, capture:true })
+
+    stage.addEventListener('touchend', (event) => {
+      if (viewer.classList.contains('hidden')) return
+      const touches = event.touches || []
+
+      if (gesture?.type === 'pinch') {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+
+        if (scale <= 1.02) {
+          resetTransform()
+          return
+        }
+
+        if (touches.length === 1) beginPan(touches[0])
+        else if (!touches.length) gesture = null
+        return
+      }
+
+      if (scale > 1.001 && gesture?.type === 'pan') {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        if (touches.length === 1) beginPan(touches[0])
+        else gesture = null
+      }
+    }, { passive:false, capture:true })
+
+    stage.addEventListener('touchcancel', (event) => {
+      if (scale > 1.001 || gesture) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+      }
+      gesture = null
+      if (scale <= 1.02) resetTransform()
+    }, { passive:false, capture:true })
+
+    new MutationObserver((mutations) => {
+      if (mutations.some((mutation) => mutation.attributeName === 'src')) resetTransform()
+    }).observe(image, { attributes:true, attributeFilter:['src'] })
+
+    new MutationObserver(() => {
+      if (!viewer.classList.contains('hidden')) resetTransform()
+    }).observe(viewer, { attributes:true, attributeFilter:['class'] })
+  }
+
   function cleanViewer() {
     removeOldViewerUi()
     installSimpleViewerStyles()
@@ -279,6 +445,7 @@
     syncDisplayedVersion()
     cleanViewer()
     installViewerWatchers()
+    installPhotosLikeGestures()
     document.documentElement.dataset.p64PatchVersion = PATCH_VERSION
   }
 
