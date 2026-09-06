@@ -1,0 +1,8 @@
+Pocket 64 v6.0.5
+
+- Replaces the unreliable iPhone native Add to Set dropdown interaction with a dedicated Pocket 64 Set picker.
+- Add to Set now opens a modal showing saved Sets grouped by year, using local saved Set data immediately and refreshing from Supabase when available.
+- Selecting a Set feeds the choice back into the existing Pocket 64 assignment logic.
+- Keeps CREATE SET as a separate matching button beside ADD TO SET.
+- Standardizes text inside Add/Edit Car input/select/textarea boxes to the same 12px size used by CREATE SET.
+- No photo viewer changes.
