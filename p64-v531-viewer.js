@@ -1,5 +1,5 @@
 (() => {
-  const FIX_VERSION = '6.0.2'
+  const FIX_VERSION = '6.0.3'
   const SETS_PREFIX = 'pocket64-sets-v1-'
   const AUTH_KEY = 'sb-ftjayqjpgifdipmjloxx-auth-token'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
@@ -52,26 +52,45 @@
   }
 
   function installSetFlowStyles() {
-    if (document.getElementById('p64-v602-set-styles')) return
-    document.getElementById('p64-v600-set-styles')?.remove()
-    document.getElementById('p64-v601-set-styles')?.remove()
+    ;['p64-v600-set-styles','p64-v601-set-styles','p64-v602-set-styles','p64-v603-set-styles'].forEach((id) => document.getElementById(id)?.remove())
     const style = document.createElement('style')
-    style.id = 'p64-v602-set-styles'
+    style.id = 'p64-v603-set-styles'
     style.textContent = `
       .set-assignment-row {
         grid-template-columns:minmax(0,1.35fr) minmax(112px,.65fr) !important;
-        align-items:end !important;
+        align-items:start !important;
       }
-      .set-assignment-row > label:first-child { margin-bottom:0 !important; }
+      .set-assignment-row > label:first-child {
+        margin-bottom:0 !important;
+      }
       .p64-create-set-wrap {
-        min-width:0; display:flex; align-items:flex-end; align-self:end; padding:0; margin:0;
+        min-width:0;
+        display:grid;
+        grid-template-rows:auto auto;
+        gap:7px;
+        margin:0;
+        padding:0;
+        align-self:start;
+        font-size:14px;
+      }
+      .p64-create-set-spacer {
+        visibility:hidden;
+        line-height:normal;
+        white-space:nowrap;
+        user-select:none;
+        pointer-events:none;
       }
       .p64-create-set-button {
-        min-height:46px; width:100%; box-sizing:border-box; padding:0 10px;
-        border:1px solid rgba(65,161,255,.58); border-radius:11px;
-        background:linear-gradient(145deg,#15375a,#07111d); color:#dff1ff;
+        width:100%;
+        box-sizing:border-box;
+        padding:0 10px;
+        border:1px solid rgba(65,161,255,.58);
+        border-radius:11px;
+        background:linear-gradient(145deg,#15375a,#07111d);
+        color:#dff1ff;
         font:900 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-        letter-spacing:.065em; text-transform:uppercase;
+        letter-spacing:.065em;
+        text-transform:uppercase;
         box-shadow:inset 0 0 16px rgba(36,135,235,.08);
       }
       .p64-create-set-button:active { transform:translateY(1px); }
@@ -92,6 +111,17 @@
     })
   }
 
+  function matchCreateButtonToSelect() {
+    const select = document.getElementById('set-select')
+    const button = document.getElementById('p64-create-set-button')
+    if (!select || !button) return
+    const height = Math.round(select.getBoundingClientRect().height)
+    if (height > 0) {
+      button.style.height = `${height}px`
+      button.style.minHeight = `${height}px`
+    }
+  }
+
   function installCreateSetButton() {
     const row = document.querySelector('.set-assignment-row')
     const select = document.getElementById('set-select')
@@ -101,13 +131,21 @@
     removeEmbeddedCreateOption()
     const existing = document.getElementById('p64-create-set-button')
     if (existing) {
-      existing.closest('.p64-create-set-wrap')?.querySelector('.p64-create-set-label')?.remove()
+      const wrap = existing.closest('.p64-create-set-wrap')
+      if (wrap && !wrap.querySelector('.p64-create-set-spacer')) {
+        const spacer = document.createElement('span')
+        spacer.className = 'p64-create-set-spacer'
+        spacer.setAttribute('aria-hidden','true')
+        spacer.textContent = 'Add to Set'
+        wrap.insertBefore(spacer, existing)
+      }
+      matchCreateButtonToSelect()
       return
     }
 
     const wrap = document.createElement('div')
     wrap.className = 'p64-create-set-wrap'
-    wrap.innerHTML = '<button id="p64-create-set-button" class="p64-create-set-button" type="button">Create Set</button>'
+    wrap.innerHTML = '<span class="p64-create-set-spacer" aria-hidden="true">Add to Set</span><button id="p64-create-set-button" class="p64-create-set-button" type="button">Create Set</button>'
     row.insertBefore(wrap, positionLabel)
 
     wrap.querySelector('button').addEventListener('click', () => {
@@ -117,6 +155,8 @@
       select.dispatchEvent(new Event('change', { bubbles:true }))
       removeEmbeddedCreateOption()
     })
+
+    requestAnimationFrame(matchCreateButtonToSelect)
   }
 
   function renderExistingSets(sets) {
@@ -146,6 +186,7 @@
       select.append(group)
     }
     if ([...select.options].some((option) => option.value === previous)) select.value = previous
+    requestAnimationFrame(matchCreateButtonToSelect)
   }
 
   async function refreshSetsFromCloud() {
@@ -185,6 +226,7 @@
     } finally {
       refreshing = false
       removeEmbeddedCreateOption()
+      requestAnimationFrame(matchCreateButtonToSelect)
     }
   }
 
@@ -192,7 +234,10 @@
     const select = document.getElementById('set-select')
     if (!select || select.dataset.p64V600Watch === '1') return
     select.dataset.p64V600Watch = '1'
-    new MutationObserver(() => removeEmbeddedCreateOption()).observe(select, { childList:true, subtree:true })
+    new MutationObserver(() => {
+      removeEmbeddedCreateOption()
+      requestAnimationFrame(matchCreateButtonToSelect)
+    }).observe(select, { childList:true, subtree:true })
   }
 
   function queueEditorRefresh() {
@@ -200,6 +245,7 @@
       installCreateSetButton()
       watchBasePickerRefreshes()
       refreshSetsFromCloud()
+      matchCreateButtonToSelect()
     }))
   }
 
@@ -211,6 +257,7 @@
     watchBasePickerRefreshes()
     refreshSetsFromCloud()
 
+    window.addEventListener('resize', () => requestAnimationFrame(matchCreateButtonToSelect))
     for (const id of ['add-button','empty-add-button']) {
       document.getElementById(id)?.addEventListener('click', queueEditorRefresh, true)
     }
