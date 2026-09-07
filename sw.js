@@ -18,7 +18,7 @@ const CORE_ASSET_NAMES = new Set([
   'community-garage-hero.png',
   'community-garage-hero-v623.svg',
   'community-garage-hero-v624.svg',
-  'community-garage-hero-v626.jpg',
+  'community-garage-hero-v626.webp',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
