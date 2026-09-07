@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v16'
+const CACHE = 'pocket64-shell-v17'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -56,8 +56,17 @@ async function latestCoreResponse(request) {
       `const APP_VERSION = '${version}'`
     )
 
-    if (!patched.includes('p64-v609-set-ui.js')) {
+    // Load critical UI helpers from the guaranteed app.js path. This protects
+    // installed iOS PWAs that can reopen an older stored HTML shell while still
+    // fetching the fresh app module through the service worker.
+    if (!patched.includes("import('./p64-v609-set-ui.js")) {
       patched += `\nimport('./p64-v609-set-ui.js?v=${version}').catch((error) => console.warn('Pocket 64 Set UI load failed', error))\n`
+    }
+    if (!patched.includes("import('./p64-v620-community.js")) {
+      patched += `\nimport('./p64-v620-community.js?v=${version}').catch((error) => console.warn('Pocket 64 Community Garage load failed', error))\n`
+    }
+    if (!patched.includes("import('./p64-v620-community-open.js")) {
+      patched += `\nimport('./p64-v620-community-open.js?v=${version}').catch((error) => console.warn('Pocket 64 Community Garage entry load failed', error))\n`
     }
 
     return new Response(patched, {
@@ -87,8 +96,6 @@ async function latestCoreResponse(request) {
     injectBeforeApp('p64-v612-camera-guard.js')
     injectBeforeApp('p64-v531-viewer.js')
     injectBeforeApp('p64-v538-set-flow.js')
-    // These three prepend before app.js; call them in reverse so execution is:
-    // v6.1.5 entry groundwork -> v6.2.0 feed -> v6.2.0 entry rebinder.
     injectBeforeApp('p64-v620-community-open.js')
     injectBeforeApp('p64-v620-community.js')
     injectBeforeApp('p64-v615-community-entry.js')
