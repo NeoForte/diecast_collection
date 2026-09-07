@@ -1,6 +1,6 @@
 (() => {
   const VERSION = '6.2.5'
-  const HERO_SRC = `community-garage-hero.png?v=${VERSION}`
+  const HERO_SRC = `community-garage-hero.jpg?v=${VERSION}`
   const MAX_COMMUNITY_EDGE = 1200
   const RECOMPRESS_ABOVE = 280 * 1024
   const TARGET_QUALITY = 0.78
@@ -82,7 +82,7 @@
   function polishHero() {
     const img = document.querySelector('#social-screen .p64-community-hero img')
     if (!img) return false
-    if (!img.src.includes('community-garage-hero.png')) img.src = HERO_SRC
+    if (!img.src.includes('community-garage-hero.jpg')) img.src = HERO_SRC
     img.style.width = '100%'
     img.style.height = '190px'
     img.style.maxHeight = '190px'
