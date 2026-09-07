@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v21'
+const CACHE = 'pocket64-shell-v22'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -14,9 +14,11 @@ const CORE_ASSET_NAMES = new Set([
   'p64-v620-community.js',
   'p64-v620-community-open.js',
   'p64-v623-community-polish.js',
+  'p64-v626-hero-fix.js',
   'community-garage-hero.png',
   'community-garage-hero-v623.svg',
   'community-garage-hero-v624.svg',
+  'community-garage-hero-v626.jpg',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -63,7 +65,7 @@ async function latestCoreResponse(request) {
       patched += `\nimport('./p64-v609-set-ui.js?v=${version}').catch((error) => console.warn('Pocket 64 Set UI load failed', error))\n`
     }
     if (!patched.includes("import('./p64-v623-community-polish.js")) {
-      patched += `\nimport('./p64-v623-community-polish.js?v=${version}')\n  .then(() => import('./p64-v620-community.js?v=${version}'))\n  .then(() => import('./p64-v620-community-open.js?v=${version}'))\n  .catch((error) => console.warn('Pocket 64 Community Garage load failed', error))\n`
+      patched += `\nimport('./p64-v623-community-polish.js?v=${version}')\n  .then(() => import('./p64-v620-community.js?v=${version}'))\n  .then(() => import('./p64-v620-community-open.js?v=${version}'))\n  .then(() => import('./p64-v626-hero-fix.js?v=${version}'))\n  .catch((error) => console.warn('Pocket 64 Community Garage load failed', error))\n`
     }
 
     return new Response(patched, {
@@ -94,12 +96,11 @@ async function latestCoreResponse(request) {
     injectBeforeApp('p64-v531-viewer.js')
     injectBeforeApp('p64-v538-set-flow.js')
 
-    // Community Garage delivery order:
-    // polish/egress/refresh guard -> entry groundwork -> functional feed -> entry rebinder.
     injectBeforeApp('p64-v623-community-polish.js')
     injectBeforeApp('p64-v615-community-entry.js')
     injectBeforeApp('p64-v620-community.js')
     injectBeforeApp('p64-v620-community-open.js')
+    injectBeforeApp('p64-v626-hero-fix.js')
 
     return new Response(text, {
       status: response.status,
