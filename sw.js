@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v14'
+const CACHE = 'pocket64-shell-v15'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -12,6 +12,7 @@ const CORE_ASSET_NAMES = new Set([
   'p64-v612-camera-guard.js',
   'p64-v615-community-entry.js',
   'p64-v620-community.js',
+  'p64-v620-community-open.js',
   'community-garage-hero.png',
   'manifest.webmanifest',
   'jszip.min.js',
@@ -55,9 +56,6 @@ async function latestCoreResponse(request) {
       `const APP_VERSION = '${version}'`
     )
 
-    // Load the modern Set UI from the same guaranteed app.js path. This keeps
-    // Safari and the installed iOS PWA on identical Set controls even when iOS
-    // launches a stored app shell instead of a freshly transformed navigation.
     if (!patched.includes('p64-v609-set-ui.js')) {
       patched += `\nimport('./p64-v609-set-ui.js?v=${version}').catch((error) => console.warn('Pocket 64 Set UI load failed', error))\n`
     }
@@ -78,44 +76,20 @@ async function latestCoreResponse(request) {
 
     text = text.replace(/(styles\.css|jszip\.min\.js|showcase-sync\.js|p64-v525-patch\.js|app\.js)\?v=[^\"']+/g, `$1?v=${version}`)
 
-    if (!text.includes('p64-v612-camera-guard.js')) {
+    const injectBeforeApp = (filename) => {
+      if (text.includes(filename)) return
       text = text.replace(
         /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
-        `<script src="p64-v612-camera-guard.js?v=${version}"></script>\n  $1`
+        `<script src="${filename}?v=${version}"></script>\n  $1`
       )
     }
 
-    if (!text.includes('p64-v531-viewer.js')) {
-      text = text.replace(
-        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
-        `<script src="p64-v531-viewer.js?v=${version}"></script>\n  $1`
-      )
-    }
-
-    if (!text.includes('p64-v538-set-flow.js')) {
-      text = text.replace(
-        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
-        `<script src="p64-v538-set-flow.js?v=${version}"></script>\n  $1`
-      )
-    }
-
-    if (!text.includes('p64-v615-community-entry.js')) {
-      text = text.replace(
-        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
-        `<script src="p64-v615-community-entry.js?v=${version}"></script>\n  $1`
-      )
-    }
-
-    if (!text.includes('p64-v620-community.js')) {
-      text = text.replace(
-        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
-        `<script src="p64-v620-community.js?v=${version}"></script>\n  $1`
-      )
-    }
-
-    // p64-v609-set-ui.js is intentionally NOT injected into navigation here.
-    // It is loaded by the patched app.js response above so installed PWAs and
-    // normal Safari tabs cannot diverge on this UI layer.
+    injectBeforeApp('p64-v612-camera-guard.js')
+    injectBeforeApp('p64-v531-viewer.js')
+    injectBeforeApp('p64-v538-set-flow.js')
+    injectBeforeApp('p64-v615-community-entry.js')
+    injectBeforeApp('p64-v620-community.js')
+    injectBeforeApp('p64-v620-community-open.js')
 
     return new Response(text, {
       status: response.status,
@@ -163,20 +137,14 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
-
   const url = new URL(event.request.url)
   if (url.origin !== self.location.origin) return
-
   const filename = url.pathname.split('/').pop() || 'index.html'
   const isNavigation = event.request.mode === 'navigate'
   const isCoreAsset = CORE_ASSET_NAMES.has(filename)
-
   if (isNavigation || isCoreAsset) {
-    event.respondWith(
-      latestCoreResponse(event.request).catch(() => fetch(event.request))
-    )
+    event.respondWith(latestCoreResponse(event.request).catch(() => fetch(event.request)))
     return
   }
-
   event.respondWith(fetch(event.request))
 })
