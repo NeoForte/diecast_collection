@@ -1,0 +1,40 @@
+name: Build v6.2.6 Community hero
+
+on:
+  push:
+    branches:
+      - release-v6.2.6
+    paths:
+      - '.build-v626/**'
+      - '.github/workflows/build-v626-hero.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-hero:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release-v6.2.6
+      - name: Reconstruct hero when all chunks are present
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq -w 0 9); do
+            if [ ! -f ".build-v626/hero.b64.$i" ]; then
+              echo "Waiting for all hero chunks; missing $i"
+              exit 0
+            fi
+          done
+          cat .build-v626/hero.b64.* | base64 -d > community-garage-hero-v626.jpg
+          file community-garage-hero-v626.jpg
+          bytes=$(stat -c%s community-garage-hero-v626.jpg)
+          test "$bytes" -gt 100000
+          rm -rf .build-v626
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add community-garage-hero-v626.jpg .build-v626
+          git commit -m "Add high-resolution Community Garage hero for v6.2.6"
+          git push origin HEAD:release-v6.2.6
