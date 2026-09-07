@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v19'
+const CACHE = 'pocket64-shell-v20'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -16,6 +16,7 @@ const CORE_ASSET_NAMES = new Set([
   'p64-v623-community-polish.js',
   'community-garage-hero.png',
   'community-garage-hero-v623.svg',
+  'community-garage-hero-v624.svg',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -94,7 +95,7 @@ async function latestCoreResponse(request) {
     injectBeforeApp('p64-v538-set-flow.js')
 
     // Community Garage delivery order:
-    // polish/egress guard -> entry groundwork -> functional feed -> entry rebinder.
+    // polish/egress/refresh guard -> entry groundwork -> functional feed -> entry rebinder.
     injectBeforeApp('p64-v623-community-polish.js')
     injectBeforeApp('p64-v615-community-entry.js')
     injectBeforeApp('p64-v620-community.js')
