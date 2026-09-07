@@ -1,0 +1,9 @@
+Pocket 64 v6.1.3 — Dead-Code Maintenance
+
+- Removed obsolete p64-v606-cleanup.js helper that only forced the visible version to 6.0.9.
+- Removed that helper from the service-worker core list and navigation injection path.
+- Advanced the service-worker shell cache to v12 so installed iPhone PWAs receive the cleanup cleanly.
+- Preserved the working Sets, photo viewer, PWA boot, camera guard, backup/restore, and Supabase behavior unchanged.
+- Audit found additional legacy code (old Showcase/square-camera/Quick Add paths), but those remain for now because removing them safely requires a broader regression-tested consolidation pass.
+
+No database schema changes.
