@@ -25,14 +25,10 @@ jobs:
           for f in w25.b64.00a w25.b64.00b w25.b64.01 w25.b64.02 w25.b64.03 w25.b64.04; do
             test -f ".build-v626/$f" || { echo "Waiting for $f"; exit 0; }
           done
-          cat \
-            .build-v626/w25.b64.00a \
-            .build-v626/w25.b64.00b \
-            .build-v626/w25.b64.01 \
-            .build-v626/w25.b64.02 \
-            .build-v626/w25.b64.03 \
-            .build-v626/w25.b64.04 \
-            | base64 -d > community-garage-hero-v626.webp
+          : > community-garage-hero-v626.webp
+          for f in w25.b64.00a w25.b64.00b w25.b64.01 w25.b64.02 w25.b64.03 w25.b64.04; do
+            base64 --decode --ignore-garbage ".build-v626/$f" >> community-garage-hero-v626.webp
+          done
           test "$(stat -c%s community-garage-hero-v626.webp)" -eq 14006
           echo "dcfb699e08d039045ee820bb13bcf0b3fe2a623296bcce00f5ffc8b6826e0f2a  community-garage-hero-v626.webp" | sha256sum -c -
           rm -rf .build-v626
