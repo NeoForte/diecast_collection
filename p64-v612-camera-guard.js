@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '6.1.2'
+  const VERSION = '6.1.4'
 
   // Pocket 64 now uses the normal iOS/file photo picker for collection photos.
   // The older live-camera experiment is no longer part of the current UI, so
@@ -40,10 +40,50 @@
     }
   }
 
+  // v6.1.4 form cleanup: retire redundant fields from the visible Add/Edit UI
+  // without deleting their underlying values. Existing backup/database data stays
+  // intact, and Set assignment remains the primary organization workflow.
+  function retireRedundantEditorFields() {
+    const series = document.getElementById('series')
+    const seriesCategoryRow = series?.closest('.series-category-row') || series?.closest('.editor-row')
+    if (seriesCategoryRow) {
+      seriesCategoryRow.style.setProperty('display', 'none', 'important')
+      seriesCategoryRow.setAttribute('aria-hidden', 'true')
+    }
+
+    const customCategoryLabel = document.getElementById('custom-category-label')
+    if (customCategoryLabel) {
+      customCategoryLabel.style.setProperty('display', 'none', 'important')
+      customCategoryLabel.setAttribute('aria-hidden', 'true')
+    }
+
+    const seriesNumber = document.getElementById('series-collection-number')
+    const seriesNumberLabel = seriesNumber?.closest('label')
+    if (seriesNumberLabel) {
+      seriesNumberLabel.style.setProperty('display', 'none', 'important')
+      seriesNumberLabel.setAttribute('aria-hidden', 'true')
+    }
+
+    const generalNumber = document.getElementById('general-number')
+    const generalNumberLabel = generalNumber?.closest('label')
+    if (generalNumberLabel) generalNumberLabel.style.setProperty('grid-column', '1 / -1')
+  }
+
   stopRetainedVideoStreams()
-  window.addEventListener('pageshow', stopRetainedVideoStreams)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', retireRedundantEditorFields, { once:true })
+  } else {
+    retireRedundantEditorFields()
+  }
+  window.addEventListener('pageshow', () => {
+    stopRetainedVideoStreams()
+    retireRedundantEditorFields()
+  })
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') stopRetainedVideoStreams()
+    if (document.visibilityState === 'visible') {
+      stopRetainedVideoStreams()
+      retireRedundantEditorFields()
+    }
   })
 
   document.documentElement.dataset.p64CameraGuardVersion = VERSION
