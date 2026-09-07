@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v18'
+const CACHE = 'pocket64-shell-v19'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -13,7 +13,9 @@ const CORE_ASSET_NAMES = new Set([
   'p64-v615-community-entry.js',
   'p64-v620-community.js',
   'p64-v620-community-open.js',
+  'p64-v623-community-polish.js',
   'community-garage-hero.png',
+  'community-garage-hero-v623.svg',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -59,11 +61,8 @@ async function latestCoreResponse(request) {
     if (!patched.includes("import('./p64-v609-set-ui.js")) {
       patched += `\nimport('./p64-v609-set-ui.js?v=${version}').catch((error) => console.warn('Pocket 64 Set UI load failed', error))\n`
     }
-    if (!patched.includes("import('./p64-v620-community.js")) {
-      patched += `\nimport('./p64-v620-community.js?v=${version}').catch((error) => console.warn('Pocket 64 Community Garage load failed', error))\n`
-    }
-    if (!patched.includes("import('./p64-v620-community-open.js")) {
-      patched += `\nimport('./p64-v620-community-open.js?v=${version}').catch((error) => console.warn('Pocket 64 Community Garage entry load failed', error))\n`
+    if (!patched.includes("import('./p64-v623-community-polish.js")) {
+      patched += `\nimport('./p64-v623-community-polish.js?v=${version}')\n  .then(() => import('./p64-v620-community.js?v=${version}'))\n  .then(() => import('./p64-v620-community-open.js?v=${version}'))\n  .catch((error) => console.warn('Pocket 64 Community Garage load failed', error))\n`
     }
 
     return new Response(patched, {
@@ -94,10 +93,9 @@ async function latestCoreResponse(request) {
     injectBeforeApp('p64-v531-viewer.js')
     injectBeforeApp('p64-v538-set-flow.js')
 
-    // Order matters: each helper is inserted immediately before app.js,
-    // so calls below execute in the same order they appear here.
-    // Legacy entry groundwork must run first; the functional feed then replaces
-    // the placeholder screen; finally the entry rebinder points to the new feed.
+    // Community Garage delivery order:
+    // polish/egress guard -> entry groundwork -> functional feed -> entry rebinder.
+    injectBeforeApp('p64-v623-community-polish.js')
     injectBeforeApp('p64-v615-community-entry.js')
     injectBeforeApp('p64-v620-community.js')
     injectBeforeApp('p64-v620-community-open.js')
