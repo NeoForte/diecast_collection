@@ -1,0 +1,32 @@
+name: Package Pocket 64 v6.2.6
+
+on:
+  push:
+    paths:
+      - '.github/workflows/package-v626.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify release markers
+        run: |
+          grep -q '"version": "6.2.6"' version.json
+          grep -q "pocket64-shell-v22" sw.js
+          grep -q "community-garage-hero-v626.jpg" p64-v626-hero-fix.js
+          grep -q "p64-v626-hero-fix.js" sw.js
+          test -f community-garage-hero-v626.jpg
+      - name: Build full project ZIP
+        run: |
+          zip -r Pocket-64-v6.2.6-FULL-PROJECT.zip . -x '.git/*' 'Pocket-64-v6.2.6-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.6-FULL-PROJECT.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.6-FULL-PROJECT
+          path: Pocket-64-v6.2.6-FULL-PROJECT.zip
+          if-no-files-found: error
+          retention-days: 30
