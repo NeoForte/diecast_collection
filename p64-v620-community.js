@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='6.2.0', URL='https://ftjayqjpgifdipmjloxx.supabase.co', KEY='sb_publishable_A8LkOCF3V7RxmyYK81S_9A_68_0p8g0';
+  const VERSION='6.2.0', URL='https://ftjayqjpgifdipmjloxx.supabase.co', KEY='sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum';
   const TITLES=['','New Addition','Finally Found It','Grail Acquired','Favorite Casting','Chase Found','Treasure Hunt','Super Treasure Hunt','Set Complete','Old Favorite',"Couldn't Pass It Up",'Fresh Pickup','Back in the Collection'];
   let db=null, session=null, reactions=[], busy=false;
   const $=id=>document.getElementById(id), sleep=ms=>new Promise(r=>setTimeout(r,ms)), norm=v=>String(v??'').trim().toUpperCase().replace(/\s+/g,' '), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
