@@ -22,19 +22,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for i in $(seq -w 0 9); do
-            if [ ! -f ".build-v626/hero.b64.$i" ]; then
+          for i in 0 1 2 3; do
+            if [ ! -f ".build-v626/hero70.b64.$i" ]; then
               echo "Waiting for all hero chunks; missing $i"
               exit 0
             fi
           done
-          cat .build-v626/hero.b64.* | base64 -d > community-garage-hero-v626.jpg
+          cat .build-v626/hero70.b64.* | base64 -d > community-garage-hero-v626.jpg
           file community-garage-hero-v626.jpg
           bytes=$(stat -c%s community-garage-hero-v626.jpg)
-          test "$bytes" -gt 100000
+          test "$bytes" -gt 40000
           rm -rf .build-v626
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add community-garage-hero-v626.jpg .build-v626
-          git commit -m "Add high-resolution Community Garage hero for v6.2.6"
+          git commit -m "Add Community Garage hero for v6.2.6"
           git push origin HEAD:release-v6.2.6
