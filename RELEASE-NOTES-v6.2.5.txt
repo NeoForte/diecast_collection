@@ -1,0 +1,10 @@
+Pocket 64 v6.2.5
+
+Community Garage hero restoration
+
+- Restores the original cinematic Community Garage artwork with the silver performance car and collectors gathered around it.
+- Replaces the tiny low-resolution hero asset with a much higher-quality version so it stays crisp on iPhone.
+- Keeps the dedicated Community Garage Refresh button as the supported feed refresh action.
+- Keeps pull-down refresh neutralized on Community Garage to avoid the blank-shell reload glitch.
+- Keeps v6.2.3 community-photo egress protection and the 24-post initial feed limit.
+- Bumps the service-worker shell to pocket64-shell-v21 for fresh delivery.
