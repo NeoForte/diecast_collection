@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v12'
+const CACHE = 'pocket64-shell-v13'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -10,6 +10,7 @@ const CORE_ASSET_NAMES = new Set([
   'p64-v538-set-flow.js',
   'p64-v609-set-ui.js',
   'p64-v612-camera-guard.js',
+  'p64-v615-community-entry.js',
   'manifest.webmanifest',
   'jszip.min.js',
   'version.json',
@@ -93,6 +94,13 @@ async function latestCoreResponse(request) {
       text = text.replace(
         /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
         `<script src="p64-v538-set-flow.js?v=${version}"></script>\n  $1`
+      )
+    }
+
+    if (!text.includes('p64-v615-community-entry.js')) {
+      text = text.replace(
+        /(<script\s+type=["']module["']\s+src=["']app\.js\?v=[^"']+["']><\/script>)/,
+        `<script src="p64-v615-community-entry.js?v=${version}"></script>\n  $1`
       )
     }
 
