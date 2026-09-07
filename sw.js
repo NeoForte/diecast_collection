@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v17'
+const CACHE = 'pocket64-shell-v18'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -56,9 +56,6 @@ async function latestCoreResponse(request) {
       `const APP_VERSION = '${version}'`
     )
 
-    // Load critical UI helpers from the guaranteed app.js path. This protects
-    // installed iOS PWAs that can reopen an older stored HTML shell while still
-    // fetching the fresh app module through the service worker.
     if (!patched.includes("import('./p64-v609-set-ui.js")) {
       patched += `\nimport('./p64-v609-set-ui.js?v=${version}').catch((error) => console.warn('Pocket 64 Set UI load failed', error))\n`
     }
@@ -96,9 +93,14 @@ async function latestCoreResponse(request) {
     injectBeforeApp('p64-v612-camera-guard.js')
     injectBeforeApp('p64-v531-viewer.js')
     injectBeforeApp('p64-v538-set-flow.js')
-    injectBeforeApp('p64-v620-community-open.js')
-    injectBeforeApp('p64-v620-community.js')
+
+    // Order matters: each helper is inserted immediately before app.js,
+    // so calls below execute in the same order they appear here.
+    // Legacy entry groundwork must run first; the functional feed then replaces
+    // the placeholder screen; finally the entry rebinder points to the new feed.
     injectBeforeApp('p64-v615-community-entry.js')
+    injectBeforeApp('p64-v620-community.js')
+    injectBeforeApp('p64-v620-community-open.js')
 
     return new Response(text, {
       status: response.status,
