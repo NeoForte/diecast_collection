@@ -1,0 +1,11 @@
+Pocket 64 v6.2.6
+
+Community Garage hero reliability fix.
+
+- Replaces the broken .png hero request with a dedicated .jpg asset path.
+- Adds a focused v6.2.6 hero loader so Safari always points Community Garage at the JPG asset.
+- Keeps the existing Community Garage Refresh button and pull-to-refresh protection unchanged.
+- Keeps Community photo/feed egress protections unchanged.
+- Bumps the service-worker shell to v22 so iPhone Safari/PWA fetch the new release assets.
+
+No database or personal collection data changes.
