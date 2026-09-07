@@ -17,9 +17,11 @@ jobs:
         run: |
           grep -q '"version": "6.2.6"' version.json
           grep -q "pocket64-shell-v22" sw.js
-          grep -q "community-garage-hero-v626.jpg" p64-v626-hero-fix.js
+          grep -q "community-garage-hero-v626.webp" p64-v626-hero-fix.js
+          grep -q "community-garage-hero-v626.webp" sw.js
           grep -q "p64-v626-hero-fix.js" sw.js
-          test -f community-garage-hero-v626.jpg
+          test -f community-garage-hero-v626.webp
+          test $(stat -c%s community-garage-hero-v626.webp) -gt 15000
       - name: Build full project ZIP
         run: |
           zip -r Pocket-64-v6.2.6-FULL-PROJECT.zip . -x '.git/*' 'Pocket-64-v6.2.6-FULL-PROJECT.zip'
