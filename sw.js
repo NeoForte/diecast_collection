@@ -1,4 +1,4 @@
-const CACHE = 'pocket64-shell-v15'
+const CACHE = 'pocket64-shell-v16'
 const PRIVATE_PHOTO_CACHE_PREFIX = 'pocket64-private-photos-v2'
 const CORE_ASSET_NAMES = new Set([
   'index.html',
@@ -87,9 +87,11 @@ async function latestCoreResponse(request) {
     injectBeforeApp('p64-v612-camera-guard.js')
     injectBeforeApp('p64-v531-viewer.js')
     injectBeforeApp('p64-v538-set-flow.js')
-    injectBeforeApp('p64-v615-community-entry.js')
-    injectBeforeApp('p64-v620-community.js')
+    // These three prepend before app.js; call them in reverse so execution is:
+    // v6.1.5 entry groundwork -> v6.2.0 feed -> v6.2.0 entry rebinder.
     injectBeforeApp('p64-v620-community-open.js')
+    injectBeforeApp('p64-v620-community.js')
+    injectBeforeApp('p64-v615-community-entry.js')
 
     return new Response(text, {
       status: response.status,
