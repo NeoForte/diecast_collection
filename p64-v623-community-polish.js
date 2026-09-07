@@ -1,33 +1,93 @@
 (() => {
-  const VERSION = '6.2.3'
-  const ROUTE_KEY = 'p64-route'
-  const HERO_SRC = `community-garage-hero-v623.svg?v=${VERSION}`
+  const VERSION = '6.2.4'
+  const HERO_SRC = `community-garage-hero-v624.svg?v=${VERSION}`
   const MAX_COMMUNITY_EDGE = 1200
   const RECOMPRESS_ABOVE = 280 * 1024
   const TARGET_QUALITY = 0.78
   const FEED_LIMIT = 24
+  let touchStartY = null
 
-  function setCommunityRoute() {
-    try { sessionStorage.setItem(ROUTE_KEY, 'community') } catch {}
+  function isCommunityActive() {
+    return document.getElementById('social-screen')?.classList.contains('active') === true
   }
 
-  function clearCommunityRoute() {
-    try { sessionStorage.removeItem(ROUTE_KEY) } catch {}
+  function installRefreshProtectionStyles() {
+    if (document.getElementById('p64-v624-refresh-protection')) return
+    const style = document.createElement('style')
+    style.id = 'p64-v624-refresh-protection'
+    style.textContent = `
+      html.p64-community-active,
+      html.p64-community-active body {
+        overscroll-behavior-y: none;
+      }
+      #social-screen.active {
+        overscroll-behavior-y: contain;
+      }
+      #social-screen .p64-community-hero {
+        max-height: 190px;
+      }
+      #social-screen .p64-community-hero img {
+        display: block;
+        width: 100%;
+        height: 190px !important;
+        max-height: 190px !important;
+        object-fit: cover;
+        object-position: center 55%;
+        image-rendering: auto;
+      }
+    `
+    document.head.append(style)
   }
 
-  function wantsCommunityRoute() {
-    try { return sessionStorage.getItem(ROUTE_KEY) === 'community' } catch { return false }
+  function syncCommunityState() {
+    document.documentElement.classList.toggle('p64-community-active', isCommunityActive())
+  }
+
+  function installPullToRefreshGuard() {
+    if (document.documentElement.dataset.p64PullGuard624 === '1') return
+    document.documentElement.dataset.p64PullGuard624 = '1'
+
+    document.addEventListener('touchstart', (event) => {
+      syncCommunityState()
+      if (!isCommunityActive() || window.scrollY > 0 || !event.touches?.length) {
+        touchStartY = null
+        return
+      }
+      touchStartY = event.touches[0].clientY
+    }, { passive: true, capture: true })
+
+    document.addEventListener('touchmove', (event) => {
+      if (touchStartY == null || !isCommunityActive() || window.scrollY > 0 || !event.touches?.length) return
+      const delta = event.touches[0].clientY - touchStartY
+      if (delta > 8) event.preventDefault()
+    }, { passive: false, capture: true })
+
+    document.addEventListener('touchend', () => { touchStartY = null }, { passive: true, capture: true })
+    document.addEventListener('touchcancel', () => { touchStartY = null }, { passive: true, capture: true })
+
+    document.addEventListener('click', (event) => {
+      const target = event.target?.closest?.('button, a')
+      if (!target) return
+      if (
+        target.id === 'p64-community-entry' ||
+        target.id === 'p64-community-back' ||
+        target.id === 'collection-nav' ||
+        target.id === 'sets-nav' ||
+        target.id === 'stats-nav' ||
+        target.id === 'settings-row-button'
+      ) setTimeout(syncCommunityState, 0)
+    }, true)
   }
 
   function polishHero() {
     const img = document.querySelector('#social-screen .p64-community-hero img')
     if (!img) return false
-    if (!img.src.includes('community-garage-hero-v623.svg')) img.src = HERO_SRC
+    if (!img.src.includes('community-garage-hero-v624.svg')) img.src = HERO_SRC
     img.style.width = '100%'
-    img.style.height = 'auto'
-    img.style.maxHeight = '220px'
+    img.style.height = '190px'
+    img.style.maxHeight = '190px'
     img.style.objectFit = 'cover'
-    img.style.objectPosition = 'center 54%'
+    img.style.objectPosition = 'center 55%'
     img.style.imageRendering = 'auto'
     img.decoding = 'async'
     return true
@@ -40,21 +100,6 @@
       requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
-  }
-
-  function restoreCommunityAfterReload() {
-    if (!wantsCommunityRoute()) return
-    let tries = 0
-    const tryOpen = () => {
-      const button = document.getElementById('p64-community-entry')
-      if (button) {
-        button.click()
-        waitForHero()
-        return
-      }
-      if (++tries < 50) setTimeout(tryOpen, 100)
-    }
-    setTimeout(tryOpen, 80)
   }
 
   async function blobToBitmap(blob) {
@@ -144,41 +189,13 @@
     }
   }
 
-  function installNavigationPersistence() {
-    if (document.documentElement.dataset.p64CommunityRoute623 === '1') return
-    document.documentElement.dataset.p64CommunityRoute623 = '1'
-
-    document.addEventListener('click', (event) => {
-      const target = event.target?.closest?.('button, a')
-      if (!target) return
-
-      if (target.id === 'p64-community-entry') {
-        setCommunityRoute()
-        setTimeout(waitForHero, 0)
-        return
-      }
-
-      if (
-        target.id === 'p64-community-back' ||
-        target.id === 'collection-nav' ||
-        target.id === 'sets-nav' ||
-        target.id === 'stats-nav' ||
-        target.id === 'settings-row-button'
-      ) {
-        clearCommunityRoute()
-      }
-    }, true)
-  }
-
   function boot() {
+    installRefreshProtectionStyles()
+    installPullToRefreshGuard()
     patchFetchForCommunityEgress()
-    installNavigationPersistence()
-    if (document.getElementById('social-screen')?.classList.contains('active')) {
-      setCommunityRoute()
-      waitForHero()
-    } else {
-      restoreCommunityAfterReload()
-    }
+    syncCommunityState()
+    if (isCommunityActive()) waitForHero()
+    else setTimeout(waitForHero, 80)
     document.documentElement.dataset.p64CommunityPolishVersion = VERSION
   }
 
