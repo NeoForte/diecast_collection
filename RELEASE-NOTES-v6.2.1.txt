@@ -1,0 +1,9 @@
+Pocket 64 v6.2.1
+
+Community Garage loader fix
+
+- Fixes Safari/iPhone showing the old Community Garage placeholder even while Settings reported v6.2.0.
+- Bumps the service-worker shell to v17.
+- Loads the functional Community Garage scripts through the guaranteed fresh app.js path as well as the navigation shell.
+- Keeps the existing v6.2.0 Community Garage backend, feed, preset titles, reactions, sharing, duplicate protection, public community photo copies, and private collection photo separation unchanged.
+- No collection data or Supabase schema changes in this patch.
