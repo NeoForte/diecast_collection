@@ -22,15 +22,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for f in w25.b64.00a w25.b64.00b w25.b64.01 w25.b64.02 w25.b64.03 w25.b64.04; do
-            test -f ".build-v626/$f" || { echo "Waiting for $f"; exit 0; }
-          done
-          : > community-garage-hero-v626.webp
-          for f in w25.b64.00a w25.b64.00b w25.b64.01 w25.b64.02 w25.b64.03 w25.b64.04; do
-            base64 --decode --ignore-garbage ".build-v626/$f" >> community-garage-hero-v626.webp
-          done
-          test "$(stat -c%s community-garage-hero-v626.webp)" -eq 14006
-          echo "dcfb699e08d039045ee820bb13bcf0b3fe2a623296bcce00f5ffc8b6826e0f2a  community-garage-hero-v626.webp" | sha256sum -c -
+          python - <<'PY'
+          import base64, hashlib, pathlib, re
+          root = pathlib.Path('.build-v626')
+          names = ['w25.b64.00a','w25.b64.00b','w25.b64.01','w25.b64.02','w25.b64.03','w25.b64.04']
+          for name in names:
+              if not (root / name).exists():
+                  print(f'Waiting for {name}')
+                  raise SystemExit(0)
+          text = ''.join((root / name).read_text() for name in names)
+          clean = re.sub(r'[^A-Za-z0-9+/=]', '', text)
+          data = base64.b64decode(clean, validate=False)
+          expected_sha = 'dcfb699e08d039045ee820bb13bcf0b3fe2a623296bcce00f5ffc8b6826e0f2a'
+          actual_sha = hashlib.sha256(data).hexdigest()
+          print('decoded bytes:', len(data))
+          print('sha256:', actual_sha)
+          if len(data) != 14006 or actual_sha != expected_sha:
+              raise SystemExit('Hero reconstruction did not match verified source')
+          pathlib.Path('community-garage-hero-v626.webp').write_bytes(data)
+          PY
           rm -rf .build-v626
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
