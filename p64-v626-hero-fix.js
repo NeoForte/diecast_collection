@@ -1,11 +1,11 @@
 (() => {
   const VERSION = '6.2.6'
-  const HERO_SRC = `community-garage-hero-v626.jpg?v=${VERSION}`
+  const HERO_SRC = `community-garage-hero-v626.webp?v=${VERSION}`
 
   function applyHero() {
     const img = document.querySelector('#social-screen .p64-community-hero img')
     if (!img) return false
-    if (!img.src.includes('community-garage-hero-v626.jpg')) img.src = HERO_SRC
+    if (!img.src.includes('community-garage-hero-v626.webp')) img.src = HERO_SRC
     img.alt = 'Collectors admiring a performance car in the Pocket 64 Community Garage'
     img.decoding = 'async'
     img.style.width = '100%'
