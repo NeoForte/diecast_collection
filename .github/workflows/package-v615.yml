@@ -1,0 +1,49 @@
+name: Package Pocket 64 v6.1.5
+
+on:
+  push:
+    branches:
+      - release-v6.1.5-splash-support
+      - main
+    paths:
+      - 'version.json'
+      - 'sw.js'
+      - 'p64-v615-splash-support.js'
+      - 'pocket64-splash-v615.webp'
+      - 'RELEASE-NOTES-v6.1.5.txt'
+      - '.github/workflows/package-v615.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    if: ${{ hashFiles('version.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify version and Community removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.1.5"' version.json
+          grep -q "pocket64-shell-v13" sw.js
+          test -s pocket64-splash-v615.webp
+          test -s p64-v615-splash-support.js
+          ! grep -q 'community-garage' sw.js
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.1.5-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.1.5-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.1.5-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.1.5-FULL-PROJECT.zip > Pocket-64-v6.1.5-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.1.5-FULL-PROJECT
+          path: |
+            Pocket-64-v6.1.5-FULL-PROJECT.zip
+            Pocket-64-v6.1.5-FULL-PROJECT.sha256
+          if-no-files-found: error

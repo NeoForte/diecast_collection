@@ -1,0 +1,10 @@
+Pocket 64 v6.1.5
+
+Splash + Help & Support
+- Adds a short Pocket 64 launch splash using the new wheel / Pocket 64 artwork.
+- Splash uses a subtle slow zoom and fades into the login or main screen in about one second.
+- Combines the Settings support destination into a single Help & Support experience.
+- Help & Support includes FAQs plus the existing support request form.
+- No FAQ search box.
+- No database changes.
+- No Community Garage code or assets reintroduced.
