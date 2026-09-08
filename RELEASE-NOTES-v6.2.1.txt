@@ -1,0 +1,10 @@
+Pocket 64 v6.2.1 — Editor Hardening Checkpoint 2
+
+- Added permanent `editor-core.js` ownership for Add Car cancel/reset behavior.
+- Moved the redundant-editor-field visibility rules into `editor-core.js`.
+- Simplified `camera-safety.js` so it now owns camera protection only.
+- Kept `editor-viewer-core.js` in place for the proven photo-viewer behavior; its old cancel-reset installer is now bypassed because the permanent editor core claims that responsibility first.
+- No database, Supabase schema, collection-data, photo-data, Set-data, or backup-format migrations.
+- This is another staged hardening checkpoint: behavior first migrates to permanent source ownership, then legacy compatibility code is deleted after device verification.
+
+Test focus: Add Car cancel reset (including Set/position/photos/favorite/custom/quantity), Edit Car cancel safety, hidden legacy fields, camera privacy indicator, photo viewer, Sets, Backup/Restore, and Settings version display.
