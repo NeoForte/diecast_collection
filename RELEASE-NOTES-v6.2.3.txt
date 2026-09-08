@@ -1,0 +1,10 @@
+Pocket 64 v6.2.3 — Obsolete Set Helper Removal
+
+- Removed `photo-viewer.js` completely after confirming it contained no required photo-viewer behavior.
+- The removed file was actually an obsolete v6.0.5 Set-picker/UI compatibility helper with its own stale version-display override and MutationObserver.
+- Migrated its only still-useful editor input tuning into permanent `editor-core.js` ownership before deletion.
+- Stopped the transitional bootstrap from loading the obsolete helper.
+- `set-flow.js` and `set-ui.js` remain the current dedicated Set helpers for this checkpoint.
+- No database, Supabase schema, collection-data, photo-data, Set-data, or backup-format migrations.
+
+Test focus: Add/Edit text entry behavior, Add to Set, Create Set, Set assignment/position, photo viewer, camera privacy indicator, Backup/Restore, and Settings version display.
