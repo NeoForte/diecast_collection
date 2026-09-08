@@ -1,3 +1,8 @@
+## 6.4.3
+- Tightened the Safari header vertically without changing anything below the navigation.
+- Reduced the garage/profile icon slightly so the Pocket 64 banner remains the visual focus.
+- Kept the 6.4.2 banner size and left/right header arrangement.
+
 ## 6.4.2
 - Increased the Pocket 64 top banner substantially while preserving the left-logo/right-profile header layout.
 - No other UI or behavior changes.
