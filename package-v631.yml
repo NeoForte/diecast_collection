@@ -1,0 +1,38 @@
+name: Package Pocket 64 v6.3.1
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.3.1 source
+        run: |
+          grep -q "const APP_VERSION = '6.3.1'" app.js
+          grep -q '"version": "6.3.1"' version.json
+          grep -q 'app.js?v=6.3.1' index.html
+          grep -q 'viewer-core.js?v=6.3.1' index.html
+          test -f viewer-core.js
+          test -f pocket64-empty-slot.jpg
+          test -f CSS-AUDIT-v6.3.1.md
+          test ! -f p64-v525-patch.js
+          test ! -f set-flow.js
+          test ! -f set-ui.js
+          ! grep -q 'function retireRedundantEditorFields' editor-core.js
+          grep -q 'series-category-row hidden' index.html
+          node --check app.js
+          node --check showcase-sync.js
+          node --check set-core.js
+          node --check editor-core.js
+          node --check camera-safety.js
+          node --check viewer-core.js
+          node --check set-visuals.js
+      - name: Build full-project zip
+        run: |
+          zip -r Pocket-64-v6.3.1-FULL-PROJECT.zip . -x '.git/*' 'Pocket-64-v6.3.1-FULL-PROJECT.zip'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.3.1-FULL-PROJECT
+          path: Pocket-64-v6.3.1-FULL-PROJECT.zip

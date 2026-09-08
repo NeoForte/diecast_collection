@@ -31,3 +31,6 @@ The future Swift/SwiftUI build should reuse the existing Supabase user IDs, car 
 
 ## Cleanup rule
 If a file is not runtime-required, backend source, legal/license material, or current project documentation, it should not live at repository root. Historical release files remain recoverable through Git history and full-project rollback ZIPs rather than being carried forever in production source.
+
+## CSS audit status (v6.3.1)
+`styles.css` has been inventoried for duplicate selectors and historical override chains. v6.3.1 intentionally makes no CSS declaration/cascade changes. See `CSS-AUDIT-v6.3.1.md`. Retired `p64-v525-patch.js`, `set-flow.js`, and `set-ui.js` files were also removed from the physical repository snapshot.

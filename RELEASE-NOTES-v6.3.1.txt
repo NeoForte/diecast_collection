@@ -1,0 +1,8 @@
+Pocket 64 v6.3.1 — CSS Audit / Repository Hygiene
+
+- Audited the 5,710-line styles.css for duplicate selectors and legacy override chains.
+- No CSS declarations were removed or reordered in this release; visual behavior should remain unchanged.
+- Added CSS-AUDIT-v6.3.1.md documenting duplicate-density areas and safe cleanup candidates.
+- Removed retired p64-v525-patch.js, set-flow.js, and set-ui.js files that were still physically present in the Git snapshot despite no longer being runtime-loaded.
+- Kept viewer-core.js unchanged as the known-good Safari/iPhone viewer dependency.
+- Version/cache references bumped to 6.3.1.
