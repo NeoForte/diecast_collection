@@ -1,0 +1,11 @@
+Pocket 64 v6.2.7
+
+Hardening / source cleanup release. No intended visible behavior changes.
+
+- Removed the transitional p64-v525-patch.js bootstrap.
+- Permanent editor, camera-safety, viewer, and Set-visual modules now load directly from index.html.
+- Moved the bootstrap's final live Safari/PWA retirement behavior into app.js.
+- Preserved the private-photo cache while retiring obsolete service-worker/app caches.
+- Removed stale set-flow.js and set-ui.js files that were already superseded by set-core.js in v6.2.6.
+- Unified primary APP_VERSION ownership at 6.2.7 and updated deployment cache keys.
+- Preserved pocket64-empty-slot.jpg and its active Set empty-slot CSS dependency.

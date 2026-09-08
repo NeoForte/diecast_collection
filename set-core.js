@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '6.2.6'
+  const VERSION = '6.2.8'
   const PROJECT_REF = 'ftjayqjpgifdipmjloxx'
   const SETS_PREFIX = 'pocket64-sets-v1-'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'

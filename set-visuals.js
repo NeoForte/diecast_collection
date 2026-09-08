@@ -8,7 +8,7 @@
     }
     style.textContent = `
       .set-slot-photo.set-empty-photo {
-        background-image: url('pocket64-empty-slot.jpg?v=6.2.6') !important;
+        background-image: url('pocket64-empty-slot.jpg?v=6.2.8') !important;
         background-position: center center !important;
         background-size: cover !important;
         background-repeat: no-repeat !important;

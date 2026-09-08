@@ -1,0 +1,12 @@
+Pocket 64 v6.2.8
+
+Legacy support-layer hardening pass.
+
+- Removed showcase-sync.js global applyPatch retry timers.
+- Removed its main-view MutationObserver that repeatedly reran the entire support layer.
+- Support/UI helpers now initialize once and keep only feature-specific observers where needed.
+- Renamed the Set modal patch helper to a neutral permanent enhancement name.
+- Migrated restore-finalization session state to a neutral key while still accepting the old v5.0.9 key for in-flight compatibility.
+- Removed stale v5.0.9/v5.1.1 ownership/error labels from active backup/restore code.
+- Updated the stale service-worker registration cache key from v5.0.0 to v6.2.8.
+- No visible feature, Set schema, backup format, photo, or collection-data changes intended.

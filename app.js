@@ -5,12 +5,50 @@ const APP_URL = 'https://pocket64.app/'
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
 
+// Permanent Safari-first retirement of Pocket 64's old PWA delivery layer.
+// This replaces the final live responsibility of the retired compatibility
+// bootstrap. Private photo cache data is intentionally preserved.
+async function retireLegacyPwaLayer() {
+  try {
+    if (!('serviceWorker' in navigator)) return
+    const hadController = Boolean(navigator.serviceWorker.controller)
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registrations.map((registration) => registration.unregister()))
+
+    if ('caches' in window) {
+      const keys = await caches.keys()
+      await Promise.all(
+        keys
+          .filter((key) => !key.startsWith('pocket64-private-photos-v2'))
+          .map((key) => caches.delete(key)),
+      )
+    }
+
+    if (hadController && !sessionStorage.getItem('p64-safari-clean-reload')) {
+      sessionStorage.setItem('p64-safari-clean-reload', '1')
+      setTimeout(() => location.reload(), 80)
+    }
+  } catch (error) {
+    console.warn('Pocket 64 Safari cleanup could not retire old PWA state', error)
+  }
+}
+
+function scheduleLegacyPwaRetirement() {
+  setTimeout(() => { retireLegacyPwaLayer() }, 0)
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', scheduleLegacyPwaRetirement, { once:true })
+} else {
+  scheduleLegacyPwaRetirement()
+}
+
 const BRAND_PRESETS = ['None', 'Hot Wheels', 'Matchbox', 'M2', 'Cartuned', 'Maisto', 'Mini GT', 'Majorette', 'Pink Slips', 'Other']
 const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture', 'Premium Pop Culture', 'Elite 64', 'Red Line Club', 'Chase', 'Rare', 'Limited', 'Multipack']
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '5.0.0'
+const APP_VERSION = '6.2.8'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -4643,7 +4681,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=5.0.0', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6.2.8', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

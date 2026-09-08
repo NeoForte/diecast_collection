@@ -1,0 +1,58 @@
+name: Package Pocket 64 v6.2.8
+
+on:
+  push:
+    branches:
+      - release-v6.2.8-support-hardening
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.8 support hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.2.8"' version.json
+          grep -q "const APP_VERSION = '6.2.8'" app.js
+          grep -q "const VERSION = '6.2.8'" set-core.js
+          grep -q 'showcase-sync.js?v=6.2.8' index.html
+          grep -q 'set-core.js?v=6.2.8' index.html
+          grep -q 'pocket64-empty-slot.jpg?v=6.2.8' set-visuals.js
+          grep -q "serviceWorker.register('./sw.js?v=6.2.8'" app.js
+          grep -q 'function initializeSupportUi()' showcase-sync.js
+          grep -q 'function enhanceDatabaseSetModal()' showcase-sync.js
+          ! grep -q 'function applyPatch()' showcase-sync.js
+          ! grep -q 'setTimeout(applyPatch' showcase-sync.js
+          ! grep -q "observe(mainView" showcase-sync.js
+          ! grep -q "Pocket 64 v5.0.9" showcase-sync.js
+          ! grep -q "Pocket 64 v5.1.1" showcase-sync.js
+          test -f pocket64-empty-slot.jpg
+          test -f RELEASE-NOTES-v6.2.8.txt
+          node --check app.js
+          node --check showcase-sync.js
+          node --check set-core.js
+          node --check editor-core.js
+          node --check camera-safety.js
+          node --check viewer-core.js
+          node --check set-visuals.js
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.2.8-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.2.8-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.8-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.2.8-FULL-PROJECT.zip > Pocket-64-v6.2.8-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.8-FULL-PROJECT
+          path: |
+            Pocket-64-v6.2.8-FULL-PROJECT.zip
+            Pocket-64-v6.2.8-FULL-PROJECT.sha256
+          if-no-files-found: error

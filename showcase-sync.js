@@ -1,5 +1,7 @@
 (() => {
   const RESTORE_FINGERPRINT_KEY = 'pocket64-last-restore-file-v400'
+  const FINALIZE_RESTORE_KEY = 'pocket64-finalize-restore-v1'
+  const LEGACY_FINALIZE_RESTORE_KEY = 'p64-v509-finalize-restore'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rHnWVHpdIsrSb_YI8yQ_gw_-OaQ3sum'
   const SETS_STORAGE_PREFIX = 'pocket64-sets-v1'
@@ -460,7 +462,7 @@
       await replaceCloudSetsExactly(client, userId, exactSetState)
       await verifyExactRestore(client, userId, restoreItems.map((item) => item.targetId), exactSetState)
 
-      sessionStorage.setItem('p64-v509-finalize-restore', JSON.stringify({
+      sessionStorage.setItem(FINALIZE_RESTORE_KEY, JSON.stringify({
         userId,
         state:exactSetState,
         cars:restoreItems.length,
@@ -697,8 +699,8 @@
       const button = event.target?.closest?.('#backup-button')
       if (!button) return
 
-      // v5.1.1 owns backup completely. app.js never receives this click,
-      // so there is no local-cache handoff between cloud Sets and backup.json.
+      // This module owns the backup action. Stop the older app.js path so there is
+      // one authoritative cloud-backed export and no duplicate click handling.
       event.preventDefault()
       event.stopImmediatePropagation()
 
@@ -710,7 +712,7 @@
 
       buildAuthoritativeBackupFromCloud(button)
         .catch((error) => {
-          console.error('Pocket 64 v5.1.1 backup failed', error)
+          console.error('Pocket 64 backup failed', error)
           nativeAlert(`Backup failed: ${error.message || error}`)
         })
         .finally(() => {
@@ -731,13 +733,13 @@
       const file = input.files?.[0]
       if (!file) return
 
-      // v5.0.9 owns the complete restore. app.js never receives this event,
-      // so there is no second restore path and no timing race.
+      // This module owns restore input handling. Stop the older app.js path so
+      // only one restore pipeline runs for a selected backup.
       event.preventDefault()
       event.stopImmediatePropagation()
 
       runOwnedRestore(file, input).catch((error) => {
-        console.error('Pocket 64 v5.0.9 restore failed', error)
+        console.error('Pocket 64 restore failed', error)
         nativeAlert(`Restore failed: ${error.message || error}`)
         try { input.value = '' } catch {}
         const restoreButton = document.getElementById('restore-button')
@@ -751,7 +753,8 @@
   async function finalizeOwnedRestoreAfterReload() {
     let payload = null
     try {
-      payload = JSON.parse(sessionStorage.getItem('p64-v509-finalize-restore') || 'null')
+      const raw = sessionStorage.getItem(FINALIZE_RESTORE_KEY) || sessionStorage.getItem(LEGACY_FINALIZE_RESTORE_KEY) || 'null'
+      payload = JSON.parse(raw)
     } catch {}
     if (!payload?.userId || !payload?.state) return
 
@@ -788,7 +791,8 @@
             Number(assignmentCount || 0) !== Number(payload.assignments || 0)) throw error
       })
 
-      sessionStorage.removeItem('p64-v509-finalize-restore')
+      sessionStorage.removeItem(FINALIZE_RESTORE_KEY)
+      sessionStorage.removeItem(LEGACY_FINALIZE_RESTORE_KEY)
 
       const search = document.getElementById('search-input')
       if (search) search.dispatchEvent(new Event('input', { bubbles:true }))
@@ -799,7 +803,7 @@
         `Backup restored and verified.`
       )
     } catch (error) {
-      console.error('Pocket 64 v5.0.9 final verification failed', error)
+      console.error('Pocket 64 restore final verification failed', error)
       nativeAlert(`Restore verification failed: ${error.message || error}`)
     }
   }
@@ -995,7 +999,7 @@
     return years.sort((a,b) => Number(b)-Number(a))
   }
 
-  async function patchDatabaseSetModal() {
+  async function enhanceDatabaseSetModal() {
     const overlay = document.getElementById('set-modal-backdrop')
     const form = document.getElementById('set-create-form')
     const yearInput = document.getElementById('set-new-year')
@@ -1006,8 +1010,8 @@
     const nameInput = document.getElementById('set-new-name')
     const totalInput = document.getElementById('set-new-total')
     if (!overlay || !form || !yearInput || !referenceLabel || !referenceSelect || !referenceMeta || !manualFields || !nameInput || !totalInput) return
-    if (form.dataset.p64DbPatched === '1') return
-    form.dataset.p64DbPatched = '1'
+    if (form.dataset.p64DbEnhanced === '1') return
+    form.dataset.p64DbEnhanced = '1'
 
     overlay.classList.add('p64-db-set-overlay')
     form.classList.add('p64-db-set-card')
@@ -1118,8 +1122,8 @@
     if (!select) return
     select.value = '__new__'
     select.dispatchEvent(new Event('change', { bubbles:true }))
-    setTimeout(patchDatabaseSetModal, 20)
-    setTimeout(patchDatabaseSetModal, 80)
+    setTimeout(enhanceDatabaseSetModal, 20)
+    setTimeout(enhanceDatabaseSetModal, 80)
   }
 
 
@@ -1338,7 +1342,7 @@
     updateVisibleVersion()
   }
 
-  function applyPatch() {
+  function initializeSupportUi() {
     ensureDangerZone()
     ensureFaqPage()
     hideShowcase()
@@ -1346,34 +1350,23 @@
     installSetsCollapsedByDefault()
     installSimplifiedSetEditor()
     installSettingsRefresh()
-    updateVisibleVersion()
     installRestoreRetryGuard()
     installOwnedRestore()
     installCloudOwnedBackup()
     showAccountEmail()
+    updateVisibleVersion()
   }
 
-  ensureDangerZone()
-  installOwnedRestore()
-  installCloudOwnedBackup()
-
   function init() {
-    applyPatch()
+    initializeSupportUi()
     finalizeOwnedRestoreAfterReload()
 
-    setTimeout(applyPatch, 300)
-    setTimeout(applyPatch, 1200)
-
-    const mainView = document.getElementById('main-view')
-    if (mainView) {
-      new MutationObserver(() => {
-        if (!mainView.classList.contains('hidden')) {
-          setTimeout(applyPatch, 0)
-        }
-      }).observe(mainView, { attributes:true, attributeFilter:['class'] })
-    }
-
-    window.addEventListener('pageshow', () => setTimeout(applyPatch, 0))
+    // BFCache restores preserve the injected UI and event handlers. Only refresh
+    // account/version text on pageshow instead of rerunning the whole support layer.
+    window.addEventListener('pageshow', () => {
+      showAccountEmail()
+      updateVisibleVersion()
+    })
   }
 
   if (document.readyState === 'loading') {

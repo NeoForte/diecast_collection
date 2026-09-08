@@ -1,0 +1,57 @@
+name: Package Pocket 64 v6.2.7
+
+on:
+  push:
+    branches:
+      - release-v6.2.7-bootstrap-retirement
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.7 bootstrap retirement
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.2.7"' version.json
+          grep -q "const APP_VERSION = '6.2.7'" app.js
+          grep -q "const VERSION = '6.2.7'" set-core.js
+          grep -q 'editor-core.js?v=6.2.7' index.html
+          grep -q 'camera-safety.js?v=6.2.7' index.html
+          grep -q 'viewer-core.js?v=6.2.7' index.html
+          grep -q 'set-visuals.js?v=6.2.7' index.html
+          grep -q 'set-core.js?v=6.2.7' index.html
+          grep -q 'pocket64-empty-slot.jpg?v=6.2.7' set-visuals.js
+          grep -q 'retireLegacyPwaLayer' app.js
+          test ! -e p64-v525-patch.js
+          test ! -e set-flow.js
+          test ! -e set-ui.js
+          ! grep -q 'p64-v525-patch.js' index.html
+          test -f pocket64-empty-slot.jpg
+          test -f RELEASE-NOTES-v6.2.7.txt
+          node --check app.js
+          node --check set-core.js
+          node --check editor-core.js
+          node --check camera-safety.js
+          node --check viewer-core.js
+          node --check set-visuals.js
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.2.7-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.2.7-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.7-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.2.7-FULL-PROJECT.zip > Pocket-64-v6.2.7-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.7-FULL-PROJECT
+          path: |
+            Pocket-64-v6.2.7-FULL-PROJECT.zip
+            Pocket-64-v6.2.7-FULL-PROJECT.sha256
+          if-no-files-found: error

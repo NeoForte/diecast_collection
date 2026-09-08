@@ -11,10 +11,11 @@ Pocket 64 is intentionally Safari-first. The old installable-PWA layer is being 
 - `camera-safety.js` — iPhone/Safari camera-stream protection only, retained until dormant live-camera code is removed from `app.js`.
 - `viewer-core.js` — permanent Photos-like viewer sizing/gesture core. It no longer contains editor-reset or version-display compatibility code.
 - `set-core.js` — permanent Set editor/create/picker module. v6.2.6 merged the former `set-flow.js` + `set-ui.js` helpers and removed their version-stamped DOM scaffolding.
-- `showcase-sync.js` — legacy-named but still active compatibility/core services. It currently contains important backup/restore, appearance, account, Set, and Settings helpers. Do not remove wholesale until those responsibilities are migrated into permanent modules.
-- `p64-v525-patch.js` — transitional load-order/PWA-retirement bootstrap only. Goal: eliminate this file after Set helper load order and legacy PWA retirement are fully consolidated.
+- `showcase-sync.js` — legacy-named but still active support/core services. It contains authoritative backup/restore plus account, Set-editor, FAQ, and Settings helpers. v6.2.8 removed its global delayed re-patch loop and main-view MutationObserver; initialization is now one-time and feature-specific observers remain only where DOM content genuinely changes.
 
 ## Removed compatibility layers
+- `p64-v525-patch.js` was retired in v6.2.7. Permanent helper modules now load directly from `index.html`, and its final Safari/PWA-retirement behavior lives in `app.js`.
+- `set-flow.js` and `set-ui.js` were retired in v6.2.6 after their required behavior was consolidated into `set-core.js`.
 - `editor-viewer-core.js` was retired in v6.2.2 after editor and viewer ownership were separated.
 - `photo-viewer.js` was retired in v6.2.3. Despite its filename, it contained obsolete v6.0.5 Set-picker/UI code and a stale version-display override, not required photo-viewer behavior.
 
