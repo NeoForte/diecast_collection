@@ -1,0 +1,9 @@
+Pocket 64 v6.2.0 — Runtime Hardening Checkpoint 1
+
+- Began the 6.2 source-hardening series with a deliberately low-risk migration.
+- Renamed five proven runtime helpers from release-number filenames to stable permanent-source names.
+- Preserved the exact existing helper blobs/behavior; this checkpoint changes ownership/naming and load targets, not user data or Supabase schemas.
+- Kept the small p64-v525-patch.js bootstrap temporarily only to preserve the known-good load order while deeper code migration continues.
+- No collection, photo, Set, backup, restore, auth, or database migrations in this checkpoint.
+
+Test focus: Safari launch, Add Car cancel reset, photo picker/camera privacy indicator, photo viewer gestures, Sets landing/editor/assignment, Backup/Restore, Settings version display.

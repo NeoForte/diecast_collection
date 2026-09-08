@@ -1,0 +1,54 @@
+name: Package Pocket 64 v6.2.0
+
+on:
+  push:
+    branches:
+      - release-v6.2.0-runtime-hardening
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.0 runtime hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.2.0"' version.json
+          grep -q "const VERSION='6.2.0'" p64-v525-patch.js
+          grep -q "loadSync('camera-safety.js')" p64-v525-patch.js
+          grep -q "loadSync('editor-viewer-core.js')" p64-v525-patch.js
+          grep -q "ensure('photo-viewer.js'" p64-v525-patch.js
+          grep -q "ensure('set-flow.js'" p64-v525-patch.js
+          grep -q "ensure('set-ui.js'" p64-v525-patch.js
+          test -f camera-safety.js
+          test -f editor-viewer-core.js
+          test -f photo-viewer.js
+          test -f set-flow.js
+          test -f set-ui.js
+          test ! -e p64-v612-camera-guard.js
+          test ! -e p64-v525-core.js
+          test ! -e p64-v531-viewer.js
+          test ! -e p64-v538-set-flow.js
+          test ! -e p64-v609-set-ui.js
+          test ! -e .github/workflows/package-v619.yml
+          test -f RELEASE-NOTES-v6.2.0.txt
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.2.0-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.2.0-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.0-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.2.0-FULL-PROJECT.zip > Pocket-64-v6.2.0-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.0-FULL-PROJECT
+          path: |
+            Pocket-64-v6.2.0-FULL-PROJECT.zip
+            Pocket-64-v6.2.0-FULL-PROJECT.sha256
+          if-no-files-found: error

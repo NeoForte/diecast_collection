@@ -1,14 +1,14 @@
 (() => {
-  const VERSION='6.1.9';
+  const VERSION='6.2.0';
   const loadSync=(src)=>{ if(document.readyState==='loading') document.write(`<script src="${src}?v=${VERSION}"><\/script>`); else { const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); } };
   const ensure=(src,token)=>{ if(document.querySelector(`script[src*="${token}"]`)) return; const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); };
 
-  // Safari-first compatibility bootstrap. Keep only proven runtime helpers here while
-  // older PWA registrations are retired and remaining legacy behavior is moved into source.
-  loadSync('p64-v612-camera-guard.js');
-  loadSync('p64-v525-core.js');
-
-  const syncVersion=()=>document.querySelectorAll('.version-badge').forEach(el=>{el.textContent=`Version ${VERSION}`});
+  // Transitional bootstrap for the first v6.2 hardening checkpoint.
+  // Runtime behavior now lives under stable source-module names rather than
+  // release-number filenames. This bootstrap remains only to preserve the
+  // proven load order while we migrate behavior into app.js/app-services.
+  loadSync('camera-safety.js');
+  loadSync('editor-viewer-core.js');
 
   async function retirePwaLayer(){
     try {
@@ -29,13 +29,10 @@
 
   function finishBoot(){
     setTimeout(()=>{
-      ensure('p64-v531-viewer.js','p64-v531-viewer.js');
-      ensure('p64-v538-set-flow.js','p64-v538-set-flow.js');
-      if(!document.documentElement.dataset.p64SetUiVersion) ensure('p64-v609-set-ui.js','p64-v609-set-ui.js');
-      syncVersion();
+      ensure('photo-viewer.js','photo-viewer.js');
+      ensure('set-flow.js','set-flow.js');
+      if(!document.documentElement.dataset.p64SetUiVersion) ensure('set-ui.js','set-ui.js');
       retirePwaLayer();
-      setTimeout(syncVersion,250);
-      setTimeout(syncVersion,900);
     },0);
   }
 
