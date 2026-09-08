@@ -1,3 +1,7 @@
+## 6.4.8
+- Cropped the built-in black margins from the chrome racing banner while preserving the complete wheel, wordmark, tagline, blue glow, and light streaks.
+- This lets the existing left-aligned header place the visible logo genuinely closer to Safari's left edge without CSS tricks or cropping the artwork in-browser.
+
 ## 6.4.7
 - Tightened the chrome racing header vertically without cropping or shrinking the logo artwork.
 - Reduced only top/bottom header spacing; navigation and collection layout remain unchanged.
