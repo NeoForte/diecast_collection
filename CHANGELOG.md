@@ -1,3 +1,10 @@
+## 6.3.6 — Splash Removal
+
+- Removed the Safari startup splash screen and its zoom/fade behavior at the user's request.
+- Removed the splash image asset and all splash-specific HTML, CSS, and JavaScript.
+- App now opens directly into the normal authentication/main-view flow.
+- Implemented directly in permanent source; no patch file added.
+
 ## 6.3.5 — Safari startup splash
 
 - Added the supplied Pocket 64 neon-wheel artwork as a permanent startup splash asset.

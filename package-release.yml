@@ -25,7 +25,6 @@ jobs:
           grep -q "styles.css?v=$VERSION" index.html
           grep -q "viewer-core.js?v=$VERSION" index.html
           test -f pocket64-empty-slot.jpg
-          test -f pocket64-neon-wheel-splash.png
           test -f viewer-core.js
           test -f CHANGELOG.md
           test -f ARCHITECTURE.md
