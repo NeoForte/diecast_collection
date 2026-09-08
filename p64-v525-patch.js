@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='6.1.5';
+  const VERSION='6.1.6';
   const loadSync=(src)=>{ if(document.readyState==='loading') document.write(`<script src="${src}?v=${VERSION}"><\/script>`); else { const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); } };
   const ensure=(src,token)=>{ if(document.querySelector(`script[src*="${token}"]`)) return; const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); };
 
@@ -27,7 +27,14 @@
     } catch(error){ console.warn('Pocket 64 Safari cleanup could not retire old PWA state',error); }
   }
 
+  function removeLegacyFaqEntry(){
+    document.getElementById('p64-faq-settings-card')?.remove();
+    const overlay=document.getElementById('p64-faq-overlay');
+    if(overlay) overlay.remove();
+  }
+
   function installHelpSupport(){
+    removeLegacyFaqEntry();
     const button=document.getElementById('settings-support-button');
     const strong=button?.querySelector('strong');
     const copy=button?.querySelector('.settings-copy span');
@@ -58,8 +65,9 @@
       syncVersion();
       installHelpSupport();
       retirePwaLayer();
-      setTimeout(syncVersion,250);
-      setTimeout(syncVersion,900);
+      setTimeout(()=>{syncVersion();installHelpSupport();},250);
+      setTimeout(()=>{syncVersion();installHelpSupport();},900);
+      setTimeout(installHelpSupport,1800);
     },0);
   }
 
