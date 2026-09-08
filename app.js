@@ -48,7 +48,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '6.2.8'
+const APP_VERSION = '6.2.9'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -4426,15 +4426,8 @@ function resetPhotoViewerTransform() {
 function fitPhotoViewerImage() {
   const image = photoViewerImageEl()
   if (!image || !image.naturalWidth || !image.naturalHeight) return
-  const maxW = Math.min(window.innerWidth * 0.64, 320)
-  const maxH = Math.min(window.innerHeight * 0.52, 520)
-  const ratio = Math.min(maxW / image.naturalWidth, maxH / image.naturalHeight, 1)
-  const width = Math.max(1, Math.round(image.naturalWidth * ratio))
-  const height = Math.max(1, Math.round(image.naturalHeight * ratio))
-  image.style.setProperty('width', `${width}px`, 'important')
-  image.style.setProperty('height', `${height}px`, 'important')
-  image.style.setProperty('max-width', `${maxW}px`, 'important')
-  image.style.setProperty('max-height', `${maxH}px`, 'important')
+  // Permanent viewer sizing lives in styles.css. Keep this hook for image-load
+  // and viewport changes, but do not reintroduce inline size overrides.
   resetPhotoViewerTransform()
 }
 function renderPhotoViewer() {
@@ -4449,7 +4442,10 @@ function renderPhotoViewer() {
   image.src = current.img.src
   image.alt = `${current.label} car photo`
   if (image.complete) requestAnimationFrame(fitPhotoViewerImage)
-  if (count) count.textContent = `${current.label} · ${photoViewerIndex + 1}/${items.length}`
+  if (count) {
+    count.textContent = `${current.label} · ${photoViewerIndex + 1}/${items.length}`
+    count.classList.toggle('hidden', items.length <= 1)
+  }
   const single = items.length < 2
   $('photo-viewer-prev')?.classList.toggle('hidden', single)
   $('photo-viewer-next')?.classList.toggle('hidden', single)
@@ -4524,66 +4520,140 @@ $('photo-viewer-prev')?.addEventListener('click', () => stepPhotoViewer(-1))
 $('photo-viewer-next')?.addEventListener('click', () => stepPhotoViewer(1))
 $('photo-viewer-stage')?.addEventListener('click', (event) => { if (event.target === $('photo-viewer-stage') && photoViewerScale === 1) closePhotoViewer() })
 $('photo-viewer-stage')?.addEventListener('touchstart', (event) => {
+  const stage = photoViewerStageEl()
   const touches = event.touches || []
+  if (!stage) return
+
   if (touches.length >= 2) {
     event.preventDefault()
+    const a = touches[0]
+    const b = touches[1]
+    const rect = stage.getBoundingClientRect()
+    const midpointX = (a.clientX + b.clientX) / 2
+    const midpointY = (a.clientY + b.clientY) / 2
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    const startDistance = Math.max(1, photoViewerDistance(a, b))
     photoViewerTouchX = null
     photoViewerPanStart = null
-    photoViewerPinchStart = { distance:photoViewerDistance(touches[0], touches[1]), scale:photoViewerScale }
+    photoViewerPinchStart = {
+      distance:startDistance,
+      scale:photoViewerScale,
+      centerX,
+      centerY,
+      anchorX:(midpointX - centerX - photoViewerTranslateX) / photoViewerScale,
+      anchorY:(midpointY - centerY - photoViewerTranslateY) / photoViewerScale,
+    }
     return
   }
+
   const touch = touches[0]
   if (!touch) return
-  if (photoViewerScale > 1) {
+  if (photoViewerScale > 1.001) {
     event.preventDefault()
     photoViewerTouchX = null
-    photoViewerPanStart = { clientX:touch.clientX, clientY:touch.clientY, startX:photoViewerTranslateX, startY:photoViewerTranslateY }
+    photoViewerPanStart = {
+      clientX:touch.clientX,
+      clientY:touch.clientY,
+      startX:photoViewerTranslateX,
+      startY:photoViewerTranslateY,
+    }
     return
   }
+
   photoViewerPanStart = null
   photoViewerPinchStart = null
   photoViewerTouchX = touch.clientX
 }, { passive:false })
+
 $('photo-viewer-stage')?.addEventListener('touchmove', (event) => {
   const touches = event.touches || []
   if (touches.length >= 2 && photoViewerPinchStart) {
     event.preventDefault()
-    const distance = photoViewerDistance(touches[0], touches[1])
+    const a = touches[0]
+    const b = touches[1]
+    const midpointX = (a.clientX + b.clientX) / 2
+    const midpointY = (a.clientY + b.clientY) / 2
+    const distance = photoViewerDistance(a, b)
     if (photoViewerPinchStart.distance > 0) {
       photoViewerScale = clampPhotoViewerScale(photoViewerPinchStart.scale * (distance / photoViewerPinchStart.distance))
+      photoViewerTranslateX = midpointX - photoViewerPinchStart.centerX - (photoViewerPinchStart.anchorX * photoViewerScale)
+      photoViewerTranslateY = midpointY - photoViewerPinchStart.centerY - (photoViewerPinchStart.anchorY * photoViewerScale)
       applyPhotoViewerTransform()
     }
     return
   }
-  if (touches.length === 1 && photoViewerScale > 1 && photoViewerPanStart) {
+
+  if (touches.length === 1 && photoViewerScale > 1.001 && photoViewerPanStart) {
     event.preventDefault()
     photoViewerTranslateX = photoViewerPanStart.startX + (touches[0].clientX - photoViewerPanStart.clientX)
     photoViewerTranslateY = photoViewerPanStart.startY + (touches[0].clientY - photoViewerPanStart.clientY)
     applyPhotoViewerTransform()
   }
 }, { passive:false })
+
 $('photo-viewer-stage')?.addEventListener('touchend', (event) => {
-  if (photoViewerPinchStart && event.touches?.length >= 2) return
-  if (photoViewerPinchStart && event.touches?.length === 1 && photoViewerScale > 1) {
-    const touch = event.touches[0]
-    photoViewerPanStart = { clientX:touch.clientX, clientY:touch.clientY, startX:photoViewerTranslateX, startY:photoViewerTranslateY }
-    photoViewerPinchStart = null
+  const touches = event.touches || []
+
+  if (photoViewerPinchStart) {
+    if (photoViewerScale <= 1.02) {
+      photoViewerScale = 1
+      photoViewerTranslateX = 0
+      photoViewerTranslateY = 0
+      photoViewerPanStart = null
+      photoViewerPinchStart = null
+      applyPhotoViewerTransform()
+      return
+    }
+    if (touches.length === 1) {
+      const touch = touches[0]
+      photoViewerPanStart = {
+        clientX:touch.clientX,
+        clientY:touch.clientY,
+        startX:photoViewerTranslateX,
+        startY:photoViewerTranslateY,
+      }
+      photoViewerPinchStart = null
+      return
+    }
+    if (!touches.length) photoViewerPinchStart = null
+  }
+
+  if (photoViewerScale > 1.001) {
+    if (touches.length === 1) {
+      const touch = touches[0]
+      photoViewerPanStart = {
+        clientX:touch.clientX,
+        clientY:touch.clientY,
+        startX:photoViewerTranslateX,
+        startY:photoViewerTranslateY,
+      }
+    } else {
+      photoViewerPanStart = null
+    }
     return
   }
-  if (photoViewerScale <= 1.02) {
-    photoViewerScale = 1
-    photoViewerTranslateX = 0
-    photoViewerTranslateY = 0
-    applyPhotoViewerTransform()
-  }
-  if (photoViewerScale === 1 && photoViewerTouchX != null) {
+
+  if (photoViewerTouchX != null) {
     const endX = event.changedTouches?.[0]?.clientX ?? photoViewerTouchX
     const delta = endX - photoViewerTouchX
     if (Math.abs(delta) >= 42) stepPhotoViewer(delta < 0 ? 1 : -1)
   }
   photoViewerTouchX = null
   photoViewerPanStart = null
-  if (!event.touches?.length) photoViewerPinchStart = null
+  if (!touches.length) photoViewerPinchStart = null
+}, { passive:false })
+
+$('photo-viewer-stage')?.addEventListener('touchcancel', () => {
+  photoViewerTouchX = null
+  photoViewerPanStart = null
+  photoViewerPinchStart = null
+  if (photoViewerScale <= 1.02) {
+    photoViewerScale = 1
+    photoViewerTranslateX = 0
+    photoViewerTranslateY = 0
+    applyPhotoViewerTransform()
+  }
 }, { passive:false })
 window.addEventListener('resize', () => { if (!$('photo-viewer')?.classList.contains('hidden')) fitPhotoViewerImage() })
 document.addEventListener('keydown', (event) => {
@@ -4681,7 +4751,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=6.2.8', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6.2.9', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

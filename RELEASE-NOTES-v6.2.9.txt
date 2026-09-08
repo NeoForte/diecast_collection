@@ -1,0 +1,11 @@
+Pocket 64 v6.2.9
+
+Viewer source consolidation / hardening
+
+- Retired viewer-core.js.
+- Moved the proven full-screen viewer sizing into permanent styles.css rules.
+- Moved the Photos-like pinch-anchor/pan behavior into app.js, where the viewer already lives.
+- Removed the old version-stamped viewer style IDs, install markers, and MutationObserver cleanup layer.
+- Removed inline image-size overrides that viewer-core had to repeatedly undo.
+- Preserved swipe navigation at 1x, pinch zoom up to 4x, zoomed panning, close behavior, and single-photo counter hiding.
+- No Set, backup/restore, camera, Supabase schema, or collection-data behavior changed.

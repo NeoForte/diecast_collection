@@ -1,0 +1,34 @@
+name: Package Pocket 64 v6.2.9
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.9 source
+        run: |
+          grep -q "const APP_VERSION = '6.2.9'" app.js
+          grep -q '"version": "6.2.9"' version.json
+          grep -q 'app.js?v=6.2.9' index.html
+          ! grep -q 'viewer-core.js' index.html
+          test ! -f viewer-core.js
+          test ! -f p64-v525-patch.js
+          test ! -f set-flow.js
+          test ! -f set-ui.js
+          test -f pocket64-empty-slot.jpg
+          node --check app.js
+          node --check showcase-sync.js
+          node --check set-core.js
+          node --check editor-core.js
+          node --check camera-safety.js
+          node --check set-visuals.js
+      - name: Build full-project zip
+        run: |
+          zip -r Pocket-64-v6.2.9-FULL-PROJECT.zip . -x '.git/*' 'Pocket-64-v6.2.9-FULL-PROJECT.zip'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.9-FULL-PROJECT
+          path: Pocket-64-v6.2.9-FULL-PROJECT.zip
