@@ -1,0 +1,52 @@
+name: Package Pocket 64 Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./version.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Packaging Pocket 64 v$VERSION"
+
+      - name: Verify source
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          grep -q "const APP_VERSION = '$VERSION'" app.js
+          grep -q "styles.css?v=$VERSION" index.html
+          grep -q "viewer-core.js?v=$VERSION" index.html
+          test -f pocket64-empty-slot.jpg
+          test -f viewer-core.js
+          test -f CHANGELOG.md
+          test -f ARCHITECTURE.md
+          test ! -f p64-v525-patch.js
+          test ! -f set-flow.js
+          test ! -f set-ui.js
+          node --check app.js
+          node --check showcase-sync.js
+          node --check set-core.js
+          node --check editor-core.js
+          node --check camera-safety.js
+          node --check viewer-core.js
+          node --check set-visuals.js
+
+      - name: Package full project
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ZIP="Pocket-64-v${VERSION}-FULL-PROJECT.zip"
+          zip -r "$ZIP" . -x '.git/*' "$ZIP"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v${{ steps.version.outputs.version }}-FULL-PROJECT
+          path: Pocket-64-v${{ steps.version.outputs.version }}-FULL-PROJECT.zip
