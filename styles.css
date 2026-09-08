@@ -1283,7 +1283,7 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
 
 /* Pocket 64 v2.4.4 — compact centered brand header + Settings cleanup */
 .topbar {
-  min-height: 70px !important;
+  min-height: 82px !important;
   overflow: visible !important;
 }
 
@@ -1568,7 +1568,7 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
 
 /* Pocket 64 v2.5.2 — larger + lower speedline header logo */
 .topbar {
-  min-height: 72px !important;
+  min-height: 84px !important;
   align-items: center !important;
 }
 
@@ -1595,7 +1595,7 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
 
 @media (max-width: 430px) {
   .topbar {
-    min-height: 70px !important;
+    min-height: 82px !important;
   }
   .brand-header .brand-banner {
     top: calc(50% + 4px) !important;
@@ -1647,7 +1647,7 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
   top: calc(50% + 5px) !important;
   width: min(72vw, 370px) !important;
   max-width: min(72vw, 370px) !important;
-  max-height: 76px !important;
+  max-height: 88px !important;
 }
 
 @media (max-width: 430px) {
@@ -1655,7 +1655,7 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     top: calc(50% + 4px) !important;
     width: min(67vw, 340px) !important;
     max-width: min(67vw, 340px) !important;
-    max-height: 70px !important;
+    max-height: 82px !important;
   }
 }
 
@@ -1664,7 +1664,7 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
     top: calc(50% + 3px) !important;
     width: min(63vw, 305px) !important;
     max-width: min(63vw, 305px) !important;
-    max-height: 64px !important;
+    max-height: 76px !important;
   }
 }
 
@@ -2475,14 +2475,14 @@ html[data-theme="light"] .quantity-display {
 /* Pocket 64 header — banner left, profile right, no overlap */
 .topbar {
   position: relative !important;
-  min-height: 72px !important;
+  min-height: 84px !important;
   align-items: center !important;
 }
 
 .brand-header {
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 72px !important;
+  min-height: 84px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -2501,7 +2501,7 @@ html[data-theme="light"] .quantity-display {
   min-width: 0 !important;
   width: auto !important;
   max-width: calc(100% - 64px) !important;
-  max-height: 76px !important;
+  max-height: 88px !important;
   object-fit: contain !important;
   object-position: left center !important;
   margin: 0 !important;
@@ -2510,7 +2510,7 @@ html[data-theme="light"] .quantity-display {
 @media (max-width: 430px) {
   .topbar,
   .brand-header {
-    min-height: 70px !important;
+    min-height: 82px !important;
   }
   .brand-header {
     gap: 10px !important;
@@ -2518,7 +2518,7 @@ html[data-theme="light"] .quantity-display {
   }
   .brand-header .brand-banner {
     max-width: calc(100% - 60px) !important;
-    max-height: 70px !important;
+    max-height: 82px !important;
   }
 }
 
@@ -2529,7 +2529,7 @@ html[data-theme="light"] .quantity-display {
   }
   .brand-header .brand-banner {
     max-width: calc(100% - 56px) !important;
-    max-height: 64px !important;
+    max-height: 76px !important;
   }
 }
 

@@ -1,3 +1,6 @@
+## 6.4.1
+- Increased the Pocket 64 header banner size while preserving the left-logo/right-profile layout and protected spacing.
+
 ## 6.4.0
 - Fixed the reversed Safari header as a true flex row: Pocket 64 banner on the left, garage/profile icon on the right, with protected spacing and no overlap.
 - No navigation or content below the header changed.
