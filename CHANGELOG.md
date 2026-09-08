@@ -1,3 +1,7 @@
+## 6.4.9
+- Removed the remaining horizontal header inset so the chrome racing banner starts at the far-left Safari viewport edge.
+- Preserved the full cropped logo, current vertical spacing, navigation, and all content below the header.
+
 ## 6.4.8
 - Cropped the built-in black margins from the chrome racing banner while preserving the complete wheel, wordmark, tagline, blue glow, and light streaks.
 - This lets the existing left-aligned header place the visible logo genuinely closer to Safari's left edge without CSS tricks or cropping the artwork in-browser.
