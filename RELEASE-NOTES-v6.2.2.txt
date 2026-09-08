@@ -1,9 +1,0 @@
-Pocket 64 v6.2.2
-
-Community Garage loading-order fix
-
-- Fixes Safari showing the old Community Garage placeholder even while Settings correctly reported v6.2.1.
-- Root cause: Community Garage helper scripts were injected in the wrong execution order. The legacy v6.1.5 placeholder layer ran after the functional v6.2.x feed and overwrote it.
-- Correct execution order is now: legacy entry groundwork -> functional Community Garage feed -> entry rebinder.
-- Bumps the service-worker shell to pocket64-shell-v18 so Safari/PWA clients replace the stale helper ordering.
-- No Community Garage database, privacy, duplicate, reaction, title, or photo rules changed in this patch.

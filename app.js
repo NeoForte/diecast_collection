@@ -3324,7 +3324,6 @@ async function saveCar() {
     }
 
     saveSetAssignment(car.id, pendingSetId, pendingSetPosition)
-    try { window.__p64CommunityPublish?.(car) } catch (hookError) { console.warn('Community Garage hook failed', hookError) }
     await loadCars()
     if (quickAddMode && !editingCar) {
       quickAddKeepBrand = $('diecast-brand').value
