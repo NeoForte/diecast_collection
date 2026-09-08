@@ -1,8 +1,0 @@
-Pocket 64 v6.2.4 — Set Empty-Slot Hotfix
-
-- Restored the intentional `pocket64-empty-slot.jpg` asset used by empty/missing positions inside Set detail grids.
-- The asset was mistakenly removed during the v6.1.9 cleanup even though `styles.css` still actively references it through `.set-empty-photo`.
-- No Set data, assignments, collection data, photos, backup format, Supabase schema, or auth behavior changed.
-- This hotfix restores the original 154 KB JPG from the known-good pre-cleanup source history rather than recreating or replacing the artwork.
-
-Test focus: open a partially filled Set and confirm every unfilled Set position shows the original blank/missing-card image; verify filled cars and Set positions remain unchanged.
