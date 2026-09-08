@@ -1742,15 +1742,15 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
 
 .brand-header .brand-banner {
   position: absolute !important;
-  left: auto !important;
-  right: 8px !important;
+  left: 8px !important;
+  right: auto !important;
   top: calc(50% + 5px) !important;
   transform: translateY(-50%) !important;
   width: min(72vw, 370px) !important;
   max-width: min(72vw, 370px) !important;
   max-height: 76px !important;
   object-fit: contain !important;
-  object-position: right center !important;
+  object-position: left center !important;
   margin: 0 !important;
 }
 
@@ -1790,7 +1790,8 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
 
 @media (max-width: 430px) {
   .brand-header .brand-banner {
-    right: 4px !important;
+    left: 4px !important;
+    right: auto !important;
     width: min(69vw, 340px) !important;
     max-width: min(69vw, 340px) !important;
     max-height: 70px !important;
@@ -1805,7 +1806,8 @@ html[data-theme="light"] .brand-banner { filter:drop-shadow(0 2px 4px rgba(15,23
 
 @media (max-width: 370px) {
   .brand-header .brand-banner {
-    right: 2px !important;
+    left: 2px !important;
+    right: auto !important;
     width: min(65vw, 305px) !important;
     max-width: min(65vw, 305px) !important;
     max-height: 64px !important;
@@ -2525,6 +2527,10 @@ html[data-theme="light"] .quantity-display {
 
 /* Pocket 64 v2.6.4 — larger profile icon + clean Sort row */
 .brand-header .profile-icon-button {
+  position: absolute !important;
+  right: 8px !important;
+  left: auto !important;
+  z-index: 2 !important;
   width: 52px !important;
   height: 52px !important;
   min-width: 52px !important;
@@ -2567,6 +2573,7 @@ html[data-theme="light"] .quantity-display {
 
 @media (max-width: 430px) {
   .brand-header .profile-icon-button {
+    right: 4px !important;
     width: 50px !important;
     height: 50px !important;
     min-width: 50px !important;
@@ -2577,6 +2584,7 @@ html[data-theme="light"] .quantity-display {
 
 @media (max-width: 370px) {
   .brand-header .profile-icon-button {
+    right: 2px !important;
     width: 48px !important;
     height: 48px !important;
     min-width: 48px !important;

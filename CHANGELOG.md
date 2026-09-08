@@ -1,3 +1,7 @@
+## 6.3.8
+- Reversed the top header arrangement in permanent source: Pocket 64 banner on the left, garage/profile icon on the right.
+- No changes below the header.
+
 ## 6.3.7 — Set-safe car removal
 
 - When a car is opened from inside a Set, the destructive **Delete** action is replaced with **Remove from Set**.
