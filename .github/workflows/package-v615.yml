@@ -18,7 +18,6 @@ permissions:
 
 jobs:
   package:
-    if: ${{ hashFiles('version.json') != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
