@@ -7,14 +7,16 @@ Pocket 64 is intentionally Safari-first. The old installable-PWA layer is being 
 - `index.html` — application shell and static UI.
 - `app.js` — primary application behavior, Supabase auth/data/photo logic, collection/editor/stats/settings flows.
 - `styles.css` — primary styling.
+- `editor-core.js` — permanent Add/Edit editor rules, including Add Car cancel/reset and retired-field presentation.
+- `camera-safety.js` — iPhone/Safari camera-stream protection only, retained until dormant live-camera code is removed from `app.js`.
+- `viewer-core.js` — permanent Photos-like viewer sizing/gesture core. It no longer contains editor-reset or version-display compatibility code.
+- `photo-viewer.js` — remaining proven photo-viewer integration helper; planned for later ownership consolidation.
+- `set-flow.js` and `set-ui.js` — remaining proven Set helpers; planned for later ownership consolidation.
 - `showcase-sync.js` — legacy-named but still active compatibility/core services. It currently contains important backup/restore, appearance, account, Set, and Settings helpers. Do not remove wholesale until those responsibilities are migrated into permanent modules.
-- `p64-v525-core.js` — proven Add Car cancel-reset and photo-viewer behavior retained from the stable build.
-- `p64-v531-viewer.js`, `p64-v538-set-flow.js`, `p64-v609-set-ui.js` — proven photo/Set helpers still required by the current web build.
-- `p64-v612-camera-guard.js` — protects iPhone Safari from dormant legacy streaming-camera code until that code is removed from `app.js`.
-- `p64-v525-patch.js` — temporary compatibility bootstrap only. Goal: eliminate this file after helper load order and legacy camera code are permanently consolidated.
+- `p64-v525-patch.js` — transitional load-order/PWA-retirement bootstrap only. Goal: eliminate this file after helper load order and legacy PWA retirement are fully consolidated.
 
 ## Backend
-Supabase remains the data/auth/storage backend and is a good continuity point for the future native iOS app.
+Supabase remains the data/auth/storage backend and is the continuity point for the future native iOS app.
 
 Backend source kept in this repository:
 - `supabase/functions/pocket64-support/index.ts`
