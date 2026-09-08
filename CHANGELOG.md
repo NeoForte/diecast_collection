@@ -1,3 +1,7 @@
+## 6.4.4
+- Corrected the header garage/profile icon to a true circle at Safari phone widths.
+- No layout or behavior below the header was changed.
+
 ## 6.4.3
 - Tightened the Safari header vertically without changing anything below the navigation.
 - Reduced the garage/profile icon slightly so the Pocket 64 banner remains the visual focus.
