@@ -1,13 +1,13 @@
 (() => {
-  const VERSION='6.2.1';
+  const VERSION='6.2.2';
   const loadSync=(src)=>{ if(document.readyState==='loading') document.write(`<script src="${src}?v=${VERSION}"><\/script>`); else { const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); } };
   const ensure=(src,token)=>{ if(document.querySelector(`script[src*="${token}"]`)) return; const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); };
 
   // Transitional bootstrap while the remaining compatibility behavior is moved
-  // into permanent source modules. Editor rules now live in editor-core.js.
+  // into permanent source modules. Editor rules and viewer core now have single owners.
   loadSync('editor-core.js');
   loadSync('camera-safety.js');
-  loadSync('editor-viewer-core.js');
+  loadSync('viewer-core.js');
 
   async function retirePwaLayer(){
     try {
