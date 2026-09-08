@@ -1,0 +1,52 @@
+name: Package Pocket 64 v6.2.3
+
+on:
+  push:
+    branches:
+      - release-v6.2.3-old-set-helper-removal
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.3 obsolete helper removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.2.3"' version.json
+          grep -q "const VERSION='6.2.3'" p64-v525-patch.js
+          grep -q "loadSync('editor-core.js')" p64-v525-patch.js
+          grep -q "loadSync('camera-safety.js')" p64-v525-patch.js
+          grep -q "loadSync('viewer-core.js')" p64-v525-patch.js
+          ! grep -q "photo-viewer.js" p64-v525-patch.js
+          test ! -e photo-viewer.js
+          test -f editor-core.js
+          grep -q 'function tuneEditorInputs' editor-core.js
+          grep -q 'autocorrect' editor-core.js
+          test -f viewer-core.js
+          test -f set-flow.js
+          test -f set-ui.js
+          test ! -e editor-viewer-core.js
+          test ! -e .github/workflows/package-v622.yml
+          test ! -e RELEASE-NOTES-v6.2.2.txt
+          test -f RELEASE-NOTES-v6.2.3.txt
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.2.3-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.2.3-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.3-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.2.3-FULL-PROJECT.zip > Pocket-64-v6.2.3-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.3-FULL-PROJECT
+          path: |
+            Pocket-64-v6.2.3-FULL-PROJECT.zip
+            Pocket-64-v6.2.3-FULL-PROJECT.sha256
+          if-no-files-found: error
