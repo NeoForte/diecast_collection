@@ -32,7 +32,7 @@ The future Swift/SwiftUI build should reuse the existing Supabase user IDs, car 
 ## Cleanup rule
 If a file is not runtime-required, backend source, legal/license material, or current project documentation, it should not live at repository root. Historical release files remain recoverable through Git history and full-project rollback ZIPs rather than being carried forever in production source.
 
-## CSS cleanup status (v6.3.3)
+## CSS cleanup status (v6.3.4)
 `styles.css` was inventoried in v6.3.1. v6.3.2 began the surgical cleanup phase with the main header/banner chain only. Five exact historical duplicate alignment rules were removed from the v2.4.7 section while identical later declarations remain in v2.5.2/v2.6.x, preserving the final cascade. No banner sizing/positioning or other visual behavior was intentionally changed.
 
 Retired `p64-v525-patch.js`, `set-flow.js`, and `set-ui.js` remain absent from the physical project snapshot. `viewer-core.js` remains an active known-good dependency and is not a cleanup target.
@@ -40,3 +40,8 @@ Retired `p64-v525-patch.js`, `set-flow.js`, and `set-ui.js` remain absent from t
 
 ## CSS audit snapshot
 The v6.3.1 audit found 5,710 lines, about 1,237 simple rule blocks, 176 repeated selector strings, and 8 exact repeated selector/declaration groups. The densest historical override area is `.brand-header .brand-banner`. Repetition alone is not considered safe to delete because later-wins cascade behavior and media queries can make apparently duplicate rules functional. CSS cleanup should continue one visual area at a time with Safari comparison before and after.
+
+
+## v6.3.4 source-only UI policy
+
+The Newest sort, Set removal option, and Home-card copy changes are implemented directly in `app.js`/`styles.css`. No version-specific patch file was introduced.

@@ -5691,3 +5691,15 @@ html[data-theme="light"] .p64-modal-overlay { background:rgba(0,0,0,.42); }
   top:calc(100% + 8px) !important;
   z-index:50 !important;
 }
+
+/* Pocket 64 v6.3.4 — main-card model emphasis (permanent source rule) */
+#collection-screen .square-card-info .car-title {
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#collection-screen .square-card-info .car-sub:empty { display:none !important; }
+

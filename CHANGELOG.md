@@ -2,6 +2,13 @@
 
 Continuous release history. New entries are added here instead of creating a new release-note file for every version.
 
+## Pocket 64 v6.3.4 — Main Card + Set UI
+
+- "Newest" now means newly added cars only (`created_at`). Editing photos, favorites, Set assignments, notes, quantity, or other fields no longer moves an older car to the top.
+- Editing a car that is already assigned to a Set now offers **REMOVE FROM SET** directly in the Add to Set selector. Saving removes the assignment without deleting the car or Set.
+- Main collection cards no longer repeat the diecast brand under the model. The subtitle is now year/color only, and the model title can use up to two lines for longer names.
+- Implemented directly in permanent source; no patch/helper file added.
+
 ## Pocket 64 v6.3.3 — Repository Housekeeping
 
 - Consolidated version-specific release-note files into this single continuous `CHANGELOG.md`.

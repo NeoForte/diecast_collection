@@ -48,7 +48,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '6.3.3'
+const APP_VERSION = '6.3.4'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -954,7 +954,9 @@ function refreshSetEditorOptions(selectedSetId = '', selectedPosition = '') {
   if (!select || !pos || !label) return
   const state = readSetsState()
   const previous = selectedSetId || select.value
+  const currentAssignment = editingCar?.id ? assignmentForCar(editingCar.id, state) : null
   select.replaceChildren(new Option('', ''), new Option('+ NEW SET', '__new__'))
+  if (currentAssignment) select.append(new Option('REMOVE FROM SET', '__remove__'))
   const groups = new Map()
   for (const set of state.sets) {
     if (!groups.has(set.year)) groups.set(set.year, [])
@@ -2743,9 +2745,9 @@ function dateValue(value) {
 }
 
 function newestActivityValue(car) {
-  // A duplicate quantity increase represents a newly acquired copy. That path
-  // updates updated_at, so Newest can surface it without rewriting created_at.
-  return Math.max(dateValue(car?.created_at), dateValue(car?.updated_at))
+  // "Newest" means newest garage entry, not most recently edited. Photo changes,
+  // favorites, Set assignments, notes, quantity edits, etc. must not move a card.
+  return dateValue(car?.created_at)
 }
 
 function specialRank(car) {
@@ -2836,6 +2838,10 @@ function displayTitle(car) {
 
 function displaySubtitle(car) {
   return [car.diecast_brand, car.model_year, car.color].filter(Boolean).join(' · ') || 'No details yet'
+}
+
+function displayMainCardSubtitle(car) {
+  return [car.model_year, car.color].filter(Boolean).join(' · ')
 }
 
 async function updateCardQuantity(car, delta, controls) {
@@ -2976,7 +2982,7 @@ function renderCars() {
       </div>`
 
     card.querySelector('.car-title').textContent = displayTitle(car)
-    card.querySelector('.car-sub').textContent = displaySubtitle(car)
+    card.querySelector('.car-sub').textContent = displayMainCardSubtitle(car)
     const photoBox = card.querySelector('.car-photo')
 
     if (car.photo_path) {
@@ -3269,9 +3275,11 @@ async function saveCar() {
   saveButton.disabled = true
   if (bottomSaveButton) { bottomSaveButton.textContent = 'Saving…'; bottomSaveButton.disabled = true }
   try {
-    autoSelectExistingSetFromEditorFields()
-    const pendingSetId = $('set-select')?.value || ''
-    const pendingSetPosition = $('set-position')?.value || ''
+    const requestedSetChoice = $('set-select')?.value || ''
+    if (requestedSetChoice !== '__remove__') autoSelectExistingSetFromEditorFields()
+    const pendingSetChoice = requestedSetChoice === '__remove__' ? requestedSetChoice : ($('set-select')?.value || '')
+    const pendingSetId = pendingSetChoice === '__remove__' ? '' : pendingSetChoice
+    const pendingSetPosition = pendingSetChoice === '__remove__' ? '' : ($('set-position')?.value || '')
     const payload = editorPayload()
     let car
     if (editingCar) {
@@ -4152,7 +4160,15 @@ $('sets-add-button')?.addEventListener('click', () => createSetModal())
 $('set-more-button')?.addEventListener('click', () => $('set-more-menu')?.classList.toggle('hidden'))
 $('set-edit-button')?.addEventListener('click', editOpenSet)
 $('set-delete-button')?.addEventListener('click', deleteOpenSet)
-$('set-select')?.addEventListener('change', () => { if ($('set-select').value === '__new__') { $('set-select').value = ''; createSetModal($('model-year')?.value === 'Other' ? $('custom-year')?.value : ($('model-year')?.value || '')) } else refreshSetEditorOptions($('set-select').value, '') })
+$('set-select')?.addEventListener('change', () => {
+  const value = $('set-select').value
+  if (value === '__new__') {
+    $('set-select').value = ''
+    createSetModal($('model-year')?.value === 'Other' ? $('custom-year')?.value : ($('model-year')?.value || ''))
+  } else {
+    refreshSetEditorOptions(value, '')
+  }
+})
 for (const id of ['series','series-collection-number','model-year','custom-year']) {
   $(id)?.addEventListener('change', autoSelectExistingSetFromEditorFields)
   $(id)?.addEventListener('blur', autoSelectExistingSetFromEditorFields)
@@ -4681,7 +4697,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=6.3.3', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6.3.4', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)
