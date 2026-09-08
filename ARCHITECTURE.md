@@ -45,3 +45,7 @@ The v6.3.1 audit found 5,710 lines, about 1,237 simple rule blocks, 176 repeated
 ## v6.3.7 source-only UI policy
 
 The Newest sort, Set removal option, and Home-card copy changes are implemented directly in `app.js`/`styles.css`. No version-specific patch file was introduced.
+
+
+## UI notes
+- As of v6.4.5, the Safari header uses the `pocket64-chrome-racing-banner.png` hero banner and the old top-row garage icon remains in source only as a hidden compatibility control for existing profile-icon logic in `app.js`.

@@ -1,3 +1,8 @@
+## 6.4.5
+- Replaced the header and sign-in branding with the chrome racing Pocket 64 banner.
+- Made the new logo the hero header element and removed the visible top-row garage icon to give the banner full room on Safari.
+- Tightened the top header layout around the new banner without changing the nav or collection layout below.
+
 ## 6.4.4
 - Corrected the header garage/profile icon to a true circle at Safari phone widths.
 - No layout or behavior below the header was changed.
