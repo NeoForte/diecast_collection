@@ -1,4 +1,8 @@
 ## 6.3.8
+## 6.3.9
+- Fixed the reversed top header layout so the Pocket 64 banner stays fully clear of the profile icon on iPhone Safari.
+- Banner remains left, profile remains right; nothing below the header was changed.
+
 - Reversed the top header arrangement in permanent source: Pocket 64 banner on the left, garage/profile icon on the right.
 - No changes below the header.
 

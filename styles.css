@@ -2472,7 +2472,7 @@ html[data-theme="light"] .quantity-display {
 }
 
 
-/* Pocket 64 v2.6.3 — lock header logo back to approved vertical position */
+/* Pocket 64 header — banner left, profile right, with protected spacing */
 .topbar {
   position: relative !important;
   min-height: 72px !important;
@@ -2483,19 +2483,20 @@ html[data-theme="light"] .quantity-display {
   position: relative !important;
   align-items: center !important;
   min-height: 72px !important;
+  width: 100% !important;
 }
 
 .brand-header .brand-banner {
   position: absolute !important;
-  left: auto !important;
-  right: 8px !important;
+  left: 8px !important;
+  right: auto !important;
   top: calc(50% + 10px) !important;
   transform: translateY(-50%) !important;
-  width: min(108vw, 580px) !important;
-  max-width: min(108vw, 580px) !important;
+  width: min(calc(100% - 84px), 580px) !important;
+  max-width: min(calc(100% - 84px), 580px) !important;
   max-height: 116px !important;
   object-fit: contain !important;
-  object-position: right center !important;
+  object-position: left center !important;
   margin: 0 !important;
 }
 
@@ -2506,20 +2507,22 @@ html[data-theme="light"] .quantity-display {
   }
 
   .brand-header .brand-banner {
-    right: 4px !important;
+    left: 4px !important;
+    right: auto !important;
     top: calc(50% + 9px) !important;
-    width: min(101vw, 535px) !important;
-    max-width: min(101vw, 535px) !important;
+    width: calc(100% - 70px) !important;
+    max-width: calc(100% - 70px) !important;
     max-height: 108px !important;
   }
 }
 
 @media (max-width: 370px) {
   .brand-header .brand-banner {
-    right: 2px !important;
+    left: 2px !important;
+    right: auto !important;
     top: calc(50% + 8px) !important;
-    width: min(95vw, 490px) !important;
-    max-width: min(95vw, 490px) !important;
+    width: calc(100% - 66px) !important;
+    max-width: calc(100% - 66px) !important;
     max-height: 98px !important;
   }
 }
