@@ -1,3 +1,0 @@
-Pocket 64 v3.4.3
-- Model field now uses the full available Add/Edit form width.
-- No other layout or behavior changes.

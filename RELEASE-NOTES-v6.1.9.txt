@@ -1,0 +1,12 @@
+Pocket 64 v6.1.9 — Source Consolidation
+
+- Purged obsolete PWA manifest/icon assets from the live source tree.
+- Removed unused legacy image assets and duplicate historical banner files.
+- Removed old root release-note clutter, duplicate README.txt, obsolete snapshot/update files; history remains available in Git.
+- Moved the support Edge Function source and support-request SQL into a proper `supabase/` source structure.
+- Added ARCHITECTURE.md documenting the current runtime, remaining compatibility helpers, and native iOS handoff direction.
+- Kept the self-retiring service worker temporarily so previously registered clients can unregister cleanly.
+- Kept proven photo/Set/camera compatibility helpers in place; no risky feature rewrites in this cleanup.
+- Updated visible/runtime version to 6.1.9.
+
+No database schema changes. No collection data changes.

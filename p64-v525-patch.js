@@ -1,10 +1,10 @@
 (() => {
-  const VERSION='6.1.8';
+  const VERSION='6.1.9';
   const loadSync=(src)=>{ if(document.readyState==='loading') document.write(`<script src="${src}?v=${VERSION}"><\/script>`); else { const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); } };
   const ensure=(src,token)=>{ if(document.querySelector(`script[src*="${token}"]`)) return; const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); };
 
-  // Safari-first boot: preserve the proven camera guard, photo viewer, Set flow,
-  // Set UI, and Add Car cancel-reset behavior while old PWA state is retired.
+  // Safari-first compatibility bootstrap. Keep only proven runtime helpers here while
+  // older PWA registrations are retired and remaining legacy behavior is moved into source.
   loadSync('p64-v612-camera-guard.js');
   loadSync('p64-v525-core.js');
 

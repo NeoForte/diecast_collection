@@ -1,7 +1,0 @@
-Pocket 64 v6.0.2
-
-- Align Add to Set and Create Set controls on the exact same row/baseline.
-- Remove leftover bottom margin from the Add to Set label.
-- Keep both controls at the same visual height.
-- No Set behavior changes.
-- No photo viewer changes.

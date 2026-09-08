@@ -1,9 +1,0 @@
-Pocket 64 v6.1.7
-
-Help + workflow cleanup
-- Permanently suppresses the legacy Help & FAQs card/overlay so Settings shows only the single Help & Support entry.
-- Keeps FAQs and the support form together inside Help & Support.
-- Removes stale v6.1.5 and v6.1.6 packaging workflows that were re-running on later main-branch releases and sending failure emails.
-- Future version-specific packaging workflows are branch-only so old release checks do not fail when the app version advances.
-
-No database schema changes. No collection data, private photos, Sets, backup/restore, or photo handling changed.

@@ -1,8 +1,0 @@
-Pocket 64 v6.0.10
-
-- ADD TO SET now shows the full verified Hot Wheels Set reference library (2020-2026), even when a Set has 0 cars assigned.
-- Personal/manual Sets and cloud-saved Sets are merged into the same picker.
-- Known reference Sets are materialized into the user's saved Sets only when selected, then assigned normally.
-- 2026 THEN AND NOW (10 cars) is included in the known Set library.
-- Existing two-button Set UI remains unchanged: ADD TO SET | CREATE SET.
-- No photo viewer changes.
