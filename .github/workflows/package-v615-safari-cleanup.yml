@@ -1,0 +1,52 @@
+name: Package Pocket 64 v6.1.5 Safari Cleanup
+
+on:
+  push:
+    branches:
+      - release-v6.1.5-safari-cleanup
+      - main
+    paths:
+      - 'version.json'
+      - 'sw.js'
+      - 'manifest.webmanifest'
+      - 'p64-v525-patch.js'
+      - 'p64-v525-core.js'
+      - 'RELEASE-NOTES-v6.1.5.txt'
+      - '.github/workflows/package-v615-safari-cleanup.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Safari cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.1.5"' version.json
+          test -s p64-v525-patch.js
+          test -s p64-v525-core.js
+          grep -q 'display": "browser"' manifest.webmanifest
+          test ! -e pwa-loader.html
+          test ! -e icon-512.png
+          test ! -e Pocket-64-v3.0.8.zip
+          test ! -e package-v5.3.0.yml
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.1.5-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.1.5-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.1.5-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.1.5-FULL-PROJECT.zip > Pocket-64-v6.1.5-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.1.5-FULL-PROJECT
+          path: |
+            Pocket-64-v6.1.5-FULL-PROJECT.zip
+            Pocket-64-v6.1.5-FULL-PROJECT.sha256
+          if-no-files-found: error
