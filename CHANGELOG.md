@@ -1,3 +1,7 @@
+## 6.4.2
+- Increased the Pocket 64 top banner substantially while preserving the left-logo/right-profile header layout.
+- No other UI or behavior changes.
+
 ## 6.4.1
 - Increased the Pocket 64 header banner size while preserving the left-logo/right-profile layout and protected spacing.
 
