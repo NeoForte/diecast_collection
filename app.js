@@ -48,7 +48,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '6.3.4'
+const APP_VERSION = '6.3.5'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -530,6 +530,32 @@ function hideScreens() {
 
 const AUTH_PANEL_IDS = ['signin-panel','signup-panel','verify-panel','forgot-panel','reset-panel','support-panel']
 
+const startupSplash = $('startup-splash')
+let startupSplashFinished = false
+function finishStartupSplash({ animate = false } = {}) {
+  if (startupSplashFinished) return
+  startupSplashFinished = true
+  if (!startupSplash) return
+
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+  const removeSplash = () => startupSplash.remove()
+
+  if (!animate || reducedMotion) {
+    startupSplash.classList.add('is-exiting')
+    window.setTimeout(removeSplash, 180)
+    return
+  }
+
+  // Hold the supplied artwork briefly, then push it toward the viewer before login.
+  window.setTimeout(() => {
+    startupSplash.classList.add('is-zooming')
+    window.setTimeout(() => {
+      startupSplash.classList.add('is-exiting')
+      window.setTimeout(removeSplash, 180)
+    }, 760)
+  }, 240)
+}
+
 function showAuthPanel(panelId = 'signin-panel') {
   authFlowPanel = AUTH_PANEL_IDS.includes(panelId) ? panelId : 'signin-panel'
   for (const id of AUTH_PANEL_IDS) $(id)?.classList.toggle('hidden', id !== authFlowPanel)
@@ -539,6 +565,7 @@ function showAuth(panelId = 'signin-panel') {
   authView.classList.remove('hidden')
   mainView.classList.add('hidden')
   showAuthPanel(panelId)
+  if (panelId === 'signin-panel') finishStartupSplash({ animate:true })
 }
 
 function showSupportPanel(returnPanel = authFlowPanel) {
@@ -564,6 +591,7 @@ function clearAuthRedirectUrl() {
 }
 
 function showMain() {
+  finishStartupSplash({ animate:false })
   authView.classList.add('hidden')
   mainView.classList.remove('hidden')
   showCollection()
@@ -4697,7 +4725,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=6.3.4', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6.3.5', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

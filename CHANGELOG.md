@@ -1,3 +1,11 @@
+## 6.3.5 — Safari startup splash
+
+- Added the supplied Pocket 64 neon-wheel artwork as a permanent startup splash asset.
+- On an unauthenticated Safari launch, the splash holds briefly, then performs a quick centered push/zoom before revealing Sign In.
+- Existing signed-in sessions see only the static startup frame while authentication resolves; no login animation is forced before the main garage.
+- Respects Reduced Motion by skipping the zoom animation.
+- No patch file was added.
+
 # Pocket 64 Changelog
 
 Continuous release history. New entries are added here instead of creating a new release-note file for every version.
