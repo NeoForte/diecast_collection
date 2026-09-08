@@ -1,3 +1,10 @@
+## 6.4.11
+- Added a real alpha-transparent PNG logo.
+- Framed the visible logo in a responsive SVG viewport to exclude empty canvas while retaining the full wheel and nearby glow.
+- Replaced accumulated recent header overrides with one compact, left-aligned layout in normal document flow.
+- Removed reserved header minimum heights and the opaque header panel; retained device safe-area insets.
+- Updated header and sign-in logo presentation. Full-project release, no patch files.
+
 ## 6.4.10
 - Replaced header and sign-in branding with the approved full-wheel logo, preserving its complete artwork and natural proportions.
 - Kept the left-aligned header and contain sizing so the wheel remains visible at phone widths.

@@ -5732,172 +5732,54 @@ html[data-theme="light"] .p64-modal-overlay { background:rgba(0,0,0,.42); }
 
 
 
-/* v6.4.5 — chrome racing banner hero header */
+/* v6.4.11 — compact, transparent branding in normal document flow.
+   The SVG viewBox frames the PNG's visible artwork, not its empty canvas.
+   Keep the complete wheel and its close glow within the 128..624 frame. */
 .topbar {
-  min-height: 106px !important;
-  padding-top: max(10px, env(safe-area-inset-top)) !important;
-  padding-bottom: 6px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 4px 0 2px !important;
+  padding-top: max(4px, env(safe-area-inset-top, 0px)) !important;
+  padding-left: env(safe-area-inset-left, 0px) !important;
+  padding-right: env(safe-area-inset-right, 0px) !important;
+  gap: 0 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 0 !important;
 }
-
 .brand-header.brand-header-logo-only {
+  flex: 1 1 auto !important;
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 96px !important;
+  min-height: 0 !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  padding: 0 10px !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
 }
-
 .brand-header.brand-header-logo-only .brand-banner {
   display: block !important;
-  width: min(92vw, 700px) !important;
-  max-width: 100% !important;
-  max-height: 132px !important;
-  margin: 0 auto !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,.42)) !important;
+  position: static !important;
+  transform: none !important;
+  flex: 0 1 auto !important;
+  width: 100% !important;
+  max-width: 470px !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 auto 0 0 !important;
+  filter: none !important;
 }
-
 .auth-brand-banner {
-  width: min(92vw, 360px) !important;
-  max-width: 100% !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 360px !important;
   height: auto !important;
   margin: 0 auto 14px !important;
 }
-
-.topbar .profile-icon-button.hidden {
+.topbar .profile-icon-button.hidden,
+.topbar .topbar-actions:empty {
   display: none !important;
-}
-
-@media (max-width: 430px) {
-  .topbar {
-    min-height: 98px !important;
-    padding-top: max(8px, env(safe-area-inset-top)) !important;
-    padding-bottom: 4px !important;
-  }
-
-  .brand-header.brand-header-logo-only {
-    min-height: 90px !important;
-    padding: 0 8px !important;
-  }
-
-  .brand-header.brand-header-logo-only .brand-banner {
-    width: min(94vw, 640px) !important;
-    max-height: 120px !important;
-  }
-}
-
-@media (max-width: 370px) {
-  .topbar {
-    min-height: 92px !important;
-  }
-
-  .brand-header.brand-header-logo-only {
-    min-height: 84px !important;
-    padding: 0 6px !important;
-  }
-
-  .brand-header.brand-header-logo-only .brand-banner {
-    width: min(95vw, 600px) !important;
-    max-height: 108px !important;
-  }
-}
-
-
-/* v6.4.6 — tighter chrome-banner vertical rhythm; logo remains fully visible */
-.topbar {
-  min-height: 96px !important;
-  padding-top: max(6px, env(safe-area-inset-top)) !important;
-  padding-bottom: 1px !important;
-}
-
-.brand-header.brand-header-logo-only {
-  min-height: 86px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-@media (max-width: 430px) {
-  .topbar {
-    min-height: 90px !important;
-    padding-top: max(5px, env(safe-area-inset-top)) !important;
-    padding-bottom: 0 !important;
-  }
-
-  .brand-header.brand-header-logo-only {
-    min-height: 82px !important;
-  }
-}
-
-@media (max-width: 370px) {
-  .topbar {
-    min-height: 86px !important;
-    padding-top: max(4px, env(safe-area-inset-top)) !important;
-  }
-
-  .brand-header.brand-header-logo-only {
-    min-height: 78px !important;
-  }
-}
-
-
-/* v6.4.7 — left-aligned chrome header banner */
-.brand-header.brand-header-logo-only {
-  justify-content: flex-start !important;
-  align-items: center !important;
-}
-
-.brand-header.brand-header-logo-only .brand-banner {
-  margin: 0 !important;
-  object-position: left center !important;
-}
-
-@media (max-width: 430px) {
-  .brand-header.brand-header-logo-only {
-    justify-content: flex-start !important;
-  }
-  .brand-header.brand-header-logo-only .brand-banner {
-    margin: 0 !important;
-    object-position: left center !important;
-  }
-}
-
-@media (max-width: 370px) {
-  .brand-header.brand-header-logo-only {
-    justify-content: flex-start !important;
-  }
-}
-
-
-/* v6.4.9 — true flush-left chrome banner */
-.topbar {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.brand-header.brand-header-logo-only {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  justify-content: flex-start !important;
-}
-
-.brand-header.brand-header-logo-only .brand-banner {
-  margin-left: 0 !important;
-  margin-right: auto !important;
-  object-position: left center !important;
-}
-
-@media (max-width: 430px) {
-  .topbar {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-
-  .brand-header.brand-header-logo-only {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
 }
