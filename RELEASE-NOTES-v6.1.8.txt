@@ -1,0 +1,11 @@
+Pocket 64 v6.1.8
+
+Source cleanup / Help consolidation
+- Moved the Settings Help & Support label, FAQ content, and support layout into index.html instead of injecting them from a runtime patch.
+- Removed Help/FAQ manipulation from p64-v525-patch.js so that helper is back to boot/runtime compatibility duties only.
+- Retired the legacy Help & FAQs creation path using source-level compatibility anchors, preventing the old showcase helper from creating a second Settings card or FAQ overlay.
+- Removed obsolete iOS Home Screen/PWA metadata from index.html; Safari is the supported web target.
+- Updated asset cache-busting references to v6.1.8.
+- Removed the obsolete v6.1.7 packaging workflow before packaging this release.
+
+No database schema changes. No collection records, private car photos, Sets, or backups are modified.
