@@ -1,0 +1,9 @@
+Pocket 64 v6.2.6 — Set Core Consolidation
+
+- Merged the proven set-flow.js and set-ui.js behavior into one permanent set-core.js module.
+- Removed the retired set-flow.js and set-ui.js helper files.
+- Replaced old v5.3.8/v6.0.9-style Set DOM IDs/classes with permanent neutral names.
+- Loads set-core.js directly from index.html instead of through the transitional p64-v525 bootstrap.
+- Preserves current Set creation, Add to Set, official/reference Set materialization, position assignment, and local/cloud state behavior.
+- Preserves the restored empty Set slot artwork and bumps its cache key to v6.2.6.
+- Leaves p64-v525-patch.js in place for the remaining editor/camera/viewer/set-visual compatibility bootstrap, ready for a later removal pass.

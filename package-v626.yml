@@ -1,0 +1,51 @@
+name: Package Pocket 64 v6.2.6
+
+on:
+  push:
+    branches:
+      - release-v6.2.6-set-core
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.6 Set core consolidation
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.2.6"' version.json
+          grep -q "const VERSION='6.2.6'" p64-v525-patch.js
+          grep -q "const VERSION = '6.2.6'" set-core.js
+          grep -q 'set-core.js?v=6.2.6' index.html
+          grep -q 'pocket64-empty-slot.jpg?v=6.2.6' set-visuals.js
+          test -f set-core.js
+          test ! -e set-flow.js
+          test ! -e set-ui.js
+          ! grep -q 'set-flow.js' p64-v525-patch.js
+          ! grep -q 'set-ui.js' p64-v525-patch.js
+          ! grep -q 'p64-v538' set-core.js
+          ! grep -q 'p64-v609' set-core.js
+          test -f pocket64-empty-slot.jpg
+          test -f RELEASE-NOTES-v6.2.6.txt
+          node --check set-core.js
+          node --check p64-v525-patch.js
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.2.6-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.2.6-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.6-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.2.6-FULL-PROJECT.zip > Pocket-64-v6.2.6-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.6-FULL-PROJECT
+          path: |
+            Pocket-64-v6.2.6-FULL-PROJECT.zip
+            Pocket-64-v6.2.6-FULL-PROJECT.sha256
+          if-no-files-found: error

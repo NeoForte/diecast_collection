@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='6.2.5';
+  const VERSION='6.2.6';
   const loadSync=(src)=>{ if(document.readyState==='loading') document.write(`<script src="${src}?v=${VERSION}"><\/script>`); else { const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); } };
   const ensure=(src,token)=>{ if(document.querySelector(`script[src*="${token}"]`)) return; const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); };
 
@@ -27,8 +27,6 @@
 
   function finishBoot(){
     setTimeout(()=>{
-      ensure('set-flow.js','set-flow.js');
-      if(!document.documentElement.dataset.p64SetUiVersion) ensure('set-ui.js','set-ui.js');
       retirePwaLayer();
     },0);
   }
