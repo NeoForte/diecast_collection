@@ -1,0 +1,7 @@
+Pocket 64 v6.3.2 — Header CSS Surgical Cleanup
+
+- First CSS consolidation pass, limited to the main header/banner chain.
+- Removed five byte-equivalent historical header alignment rule blocks from the v2.4.7 section.
+- The identical later declarations remain in the v2.5.2/v2.6.x rules, preserving the final cascade and approved visual layout.
+- No banner sizing, positioning, profile icon, navigation, Sets, viewer, backup, or data behavior was intentionally changed.
+- viewer-core.js remains untouched and active.
