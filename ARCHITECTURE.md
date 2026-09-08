@@ -7,9 +7,9 @@ Pocket 64 is intentionally Safari-first. The old installable-PWA layer is being 
 - `index.html` — application shell and static UI.
 - `app.js` — primary application behavior, Supabase auth/data/photo logic, collection/editor/stats/settings flows.
 - `styles.css` — primary styling.
-- `editor-core.js` — permanent Add/Edit editor rules, including Add Car cancel/reset, editor input behavior, and retired-field presentation.
+- `editor-core.js` — permanent Add/Edit editor rules, including Add Car cancel/reset and editor input behavior. Retired compatibility fields are now hidden directly in `index.html` rather than patched at runtime.
 - `camera-safety.js` — iPhone/Safari camera-stream protection only, retained until dormant live-camera code is removed from `app.js`.
-- Photo viewer sizing and gesture behavior are now owned directly by `styles.css` + `app.js` (v6.2.10); the transitional `viewer-core.js` layer is retired.
+- `viewer-core.js` — active, known-good iPhone/Safari photo-viewer sizing and gesture compatibility. A v6.2.9 attempt to retire it caused initial over-zoom and broken pinch/pan; v6.2.10 restored it. Do not remove or refactor without dedicated gesture regression testing.
 - `set-core.js` — permanent Set editor/create/picker module. v6.2.6 merged the former `set-flow.js` + `set-ui.js` helpers and removed their version-stamped DOM scaffolding.
 - `showcase-sync.js` — legacy-named but still active support/core services. It contains authoritative backup/restore plus account, Set-editor, FAQ, and Settings helpers. v6.2.8 removed its global delayed re-patch loop and main-view MutationObserver; initialization is now one-time and feature-specific observers remain only where DOM content genuinely changes.
 

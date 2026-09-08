@@ -72,36 +72,10 @@
     })
   }
 
-  function retireRedundantEditorFields() {
-    const series = document.getElementById('series')
-    const seriesCategoryRow = series?.closest('.series-category-row') || series?.closest('.editor-row')
-    if (seriesCategoryRow) {
-      seriesCategoryRow.style.setProperty('display', 'none', 'important')
-      seriesCategoryRow.setAttribute('aria-hidden', 'true')
-    }
-
-    const customCategoryLabel = document.getElementById('custom-category-label')
-    if (customCategoryLabel) {
-      customCategoryLabel.style.setProperty('display', 'none', 'important')
-      customCategoryLabel.setAttribute('aria-hidden', 'true')
-    }
-
-    const seriesNumber = document.getElementById('series-collection-number')
-    const seriesNumberLabel = seriesNumber?.closest('label')
-    if (seriesNumberLabel) {
-      seriesNumberLabel.style.setProperty('display', 'none', 'important')
-      seriesNumberLabel.setAttribute('aria-hidden', 'true')
-    }
-
-    const generalNumber = document.getElementById('general-number')
-    const generalNumberLabel = generalNumber?.closest('label')
-    if (generalNumberLabel) generalNumberLabel.style.setProperty('grid-column', '1 / -1')
-  }
 
   function applyEditorSourceRules() {
     installCancelReset()
     tuneEditorInputs()
-    retireRedundantEditorFields()
   }
 
   if (document.readyState === 'loading') {

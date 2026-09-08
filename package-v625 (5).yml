@@ -1,0 +1,44 @@
+name: Package Pocket 64 v6.2.5
+
+on:
+  push:
+    branches:
+      - release-v6.2.5-empty-slot-cache-bust
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.5 empty-slot cache hotfix
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.2.5"' version.json
+          grep -q "const VERSION='6.2.5'" p64-v525-patch.js
+          grep -q "loadSync('set-visuals.js')" p64-v525-patch.js
+          test -f set-visuals.js
+          grep -q "pocket64-empty-slot.jpg?v=6.2.5" set-visuals.js
+          test -f pocket64-empty-slot.jpg
+          test -f RELEASE-NOTES-v6.2.5.txt
+          test ! -e RELEASE-NOTES-v6.2.4.txt
+          test ! -e .github/workflows/package-v624.yml
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.2.5-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.2.5-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.5-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.2.5-FULL-PROJECT.zip > Pocket-64-v6.2.5-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.5-FULL-PROJECT
+          path: |
+            Pocket-64-v6.2.5-FULL-PROJECT.zip
+            Pocket-64-v6.2.5-FULL-PROJECT.sha256
+          if-no-files-found: error

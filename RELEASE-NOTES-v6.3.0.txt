@@ -1,0 +1,10 @@
+Pocket 64 v6.3.0
+
+Source-hardening release.
+
+- Moved retired editor-field visibility from runtime JavaScript into source markup.
+- Kept the retired Series/Collection, Category, and Series/Collection Number controls in the DOM for backward data compatibility, but they no longer require editor-core.js to hide/reflow them on every page show.
+- General Number is source-defined as the full-width visible number field.
+- Preserved the known-good v6.2.10 viewer-core.js photo viewer unchanged in behavior.
+- Corrected ARCHITECTURE.md to document viewer-core.js as an active compatibility dependency after the v6.2.9 regression.
+- No intentional changes to car data, Sets, backup/restore, Supabase, camera behavior, or photo-viewer gestures.

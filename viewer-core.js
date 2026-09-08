@@ -1,5 +1,5 @@
 (() => {
-  const VIEWER_CORE_VERSION = '6.2.10'
+  const VIEWER_CORE_VERSION = '6.3.0'
 
   function removeOldViewerUi() {
     document.getElementById('p64-view-mode-toggle')?.remove()
