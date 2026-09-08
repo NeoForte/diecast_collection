@@ -1,4 +1,4 @@
-name: Package Pocket 64 v6.2.9
+name: Package Pocket 64 v6.2.10
 
 on:
   workflow_dispatch:
@@ -8,11 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify v6.2.9 source
+      - name: Verify v6.2.10 source
         run: |
-          grep -q "const APP_VERSION = '6.2.9'" app.js
-          grep -q '"version": "6.2.9"' version.json
-          grep -q 'app.js?v=6.2.9' index.html
+          grep -q "const APP_VERSION = '6.2.10'" app.js
+          grep -q '"version": "6.2.10"' version.json
+          grep -q 'app.js?v=6.2.10' index.html
           ! grep -q 'viewer-core.js' index.html
           test ! -f viewer-core.js
           test ! -f p64-v525-patch.js
@@ -27,8 +27,8 @@ jobs:
           node --check set-visuals.js
       - name: Build full-project zip
         run: |
-          zip -r Pocket-64-v6.2.9-FULL-PROJECT.zip . -x '.git/*' 'Pocket-64-v6.2.9-FULL-PROJECT.zip'
+          zip -r Pocket-64-v6.2.10-FULL-PROJECT.zip . -x '.git/*' 'Pocket-64-v6.2.10-FULL-PROJECT.zip'
       - uses: actions/upload-artifact@v4
         with:
-          name: Pocket-64-v6.2.9-FULL-PROJECT
-          path: Pocket-64-v6.2.9-FULL-PROJECT.zip
+          name: Pocket-64-v6.2.10-FULL-PROJECT
+          path: Pocket-64-v6.2.10-FULL-PROJECT.zip
