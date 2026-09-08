@@ -1,0 +1,45 @@
+name: Package Pocket 64 v6.1.7
+
+on:
+  push:
+    branches:
+      - release-v6.1.7-help-workflow-cleanup
+    paths:
+      - 'version.json'
+      - 'p64-v525-patch.js'
+      - 'RELEASE-NOTES-v6.1.7.txt'
+      - '.github/workflows/package-v617.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.1.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.1.7"' version.json
+          grep -q "const VERSION='6.1.7'" p64-v525-patch.js
+          grep -q 'p64-v617-faq-suppression' p64-v525-patch.js
+          test ! -e .github/workflows/package-v615-safari-cleanup.yml
+          test ! -e .github/workflows/package-v616.yml
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.1.7-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.1.7-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.1.7-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.1.7-FULL-PROJECT.zip > Pocket-64-v6.1.7-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.1.7-FULL-PROJECT
+          path: |
+            Pocket-64-v6.1.7-FULL-PROJECT.zip
+            Pocket-64-v6.1.7-FULL-PROJECT.sha256
+          if-no-files-found: error
