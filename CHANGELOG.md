@@ -1,3 +1,7 @@
+## 6.4.6
+- Tightened the chrome racing header vertically without cropping or shrinking the logo artwork.
+- Reduced only top/bottom header spacing; navigation and collection layout remain unchanged.
+
 ## 6.4.5
 - Replaced the header and sign-in branding with the chrome racing Pocket 64 banner.
 - Made the new logo the hero header element and removed the visible top-row garage icon to give the banner full room on Safari.
