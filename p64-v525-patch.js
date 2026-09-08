@@ -1,22 +1,14 @@
 (() => {
-  const VERSION='6.1.7';
+  const VERSION='6.1.8';
   const loadSync=(src)=>{ if(document.readyState==='loading') document.write(`<script src="${src}?v=${VERSION}"><\/script>`); else { const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); } };
   const ensure=(src,token)=>{ if(document.querySelector(`script[src*="${token}"]`)) return; const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); };
 
-  // Safari-first boot: keep the proven camera guard and v5.3.3 patch active
-  // without depending on the old PWA service-worker injection path.
+  // Safari-first boot: preserve the proven camera guard, photo viewer, Set flow,
+  // Set UI, and Add Car cancel-reset behavior while old PWA state is retired.
   loadSync('p64-v612-camera-guard.js');
   loadSync('p64-v525-core.js');
 
   const syncVersion=()=>document.querySelectorAll('.version-badge').forEach(el=>{el.textContent=`Version ${VERSION}`});
-
-  function installLegacyFaqSuppression(){
-    if(document.getElementById('p64-v617-faq-suppression')) return;
-    const style=document.createElement('style');
-    style.id='p64-v617-faq-suppression';
-    style.textContent='#p64-faq-settings-card,#p64-faq-overlay{display:none!important;visibility:hidden!important;pointer-events:none!important;}';
-    document.head.append(style);
-  }
 
   async function retirePwaLayer(){
     try {
@@ -35,46 +27,15 @@
     } catch(error){ console.warn('Pocket 64 Safari cleanup could not retire old PWA state',error); }
   }
 
-  function removeLegacyFaqEntry(){
-    document.getElementById('p64-faq-settings-card')?.remove();
-    document.getElementById('p64-faq-overlay')?.remove();
-  }
-
-  function installHelpSupport(){
-    installLegacyFaqSuppression();
-    removeLegacyFaqEntry();
-    const button=document.getElementById('settings-support-button');
-    const strong=button?.querySelector('strong');
-    const copy=button?.querySelector('.settings-copy span');
-    if(strong) strong.textContent='Help & Support';
-    if(copy) copy.textContent='FAQs and contact support in one place.';
-    const title=document.getElementById('settings-support-title');
-    if(title) title.textContent='Help & Support';
-    const modal=document.querySelector('.settings-support-modal');
-    const form=document.getElementById('settings-support-form');
-    if(modal && form && !document.getElementById('p64-help-faqs')){
-      const faq=document.createElement('div');
-      faq.id='p64-help-faqs';
-      faq.style.cssText='display:grid;gap:8px;margin:12px 0 16px';
-      faq.innerHTML=`
-        <details><summary>How do I protect my collection?</summary><p>Use Settings → Backup & Restore and export a backup regularly.</p></details>
-        <details><summary>Why is a photo not showing right away?</summary><p>Refresh once and make sure the photo finished uploading before leaving the car screen.</p></details>
-        <details><summary>How do Sets work?</summary><p>Create a Set, then assign cars to it and choose their Set Position from Add/Edit.</p></details>
-        <details><summary>Having sign-in trouble?</summary><p>Use Forgot Password on the sign-in screen, or send a support request below.</p></details>`;
-      form.parentNode.insertBefore(faq,form);
-    }
-  }
-
   function finishBoot(){
-    installLegacyFaqSuppression();
     setTimeout(()=>{
       ensure('p64-v531-viewer.js','p64-v531-viewer.js');
       ensure('p64-v538-set-flow.js','p64-v538-set-flow.js');
       if(!document.documentElement.dataset.p64SetUiVersion) ensure('p64-v609-set-ui.js','p64-v609-set-ui.js');
       syncVersion();
-      installHelpSupport();
       retirePwaLayer();
-      [250,900,1800,3000].forEach(delay=>setTimeout(()=>{syncVersion();installHelpSupport();},delay));
+      setTimeout(syncVersion,250);
+      setTimeout(syncVersion,900);
     },0);
   }
 
