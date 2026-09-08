@@ -1,3 +1,10 @@
+## 6.3.7 — Set-safe car removal
+
+- When a car is opened from inside a Set, the destructive **Delete** action is replaced with **Remove from Set**.
+- Removing from a Set deletes only that Set assignment; the car and all photos remain in the main collection.
+- Permanent **Delete Vehicle** remains available when the same car is opened from the normal collection/Edit Car flow.
+- Implemented directly in permanent source; no patch file added.
+
 ## 6.3.6 — Splash Removal
 
 - Removed the Safari startup splash screen and its zoom/fade behavior at the user's request.

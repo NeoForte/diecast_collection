@@ -48,7 +48,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '6.3.6'
+const APP_VERSION = '6.3.7'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -1990,6 +1990,11 @@ function showEditor(car = null, options = {}) {
   $('more-details-section').classList.toggle('quick-collapsed', quickAddMode)
   $('more-details-toggle').textContent = 'More Details ▾'
   deleteButton.classList.toggle('hidden', !car)
+  if (deleteButton && car) {
+    const fromSet = Boolean(editorReturnSetId)
+    deleteButton.textContent = fromSet ? 'Remove from Set' : 'Delete'
+    deleteButton.setAttribute('aria-label', fromSet ? 'Remove vehicle from this Set' : 'Delete vehicle')
+  }
   const bottomSaveButton = $('bottom-save-button')
   bottomSaveButton?.classList.remove('hidden')
   if (bottomSaveButton) bottomSaveButton.textContent = quickAddMode ? 'Save & Next' : 'Save'
@@ -3461,6 +3466,21 @@ async function clearCollection() {
 
 async function deleteCar() {
   if (!editingCar) return
+
+  if (editorReturnSetId) {
+    const approved = await pocket64Confirm({
+      title:'Remove from Set?',
+      message:'This vehicle will be removed from this Set only. It will remain in your collection.',
+      confirmText:'Remove',
+      danger:false,
+    })
+    if (!approved) return
+    editorMessage.textContent = 'Removing from Set…'
+    removeSetAssignment(editingCar.id)
+    returnFromEditor()
+    return
+  }
+
   const approved = await pocket64Confirm({
     title:'Delete Vehicle?',
     message:'This vehicle will be permanently deleted from your collection. This cannot be undone.',
@@ -4697,7 +4717,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=6.3.6', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6.3.7', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)
