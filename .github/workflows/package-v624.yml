@@ -1,0 +1,41 @@
+name: Package Pocket 64 v6.2.4
+
+on:
+  push:
+    branches:
+      - release-v6.2.4-empty-slot-hotfix
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v6.2.4 empty-slot hotfix
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"version": "6.2.4"' version.json
+          test -f pocket64-empty-slot.jpg
+          grep -q "url('pocket64-empty-slot.jpg')" styles.css
+          test -f RELEASE-NOTES-v6.2.4.txt
+          test ! -e RELEASE-NOTES-v6.2.3.txt
+          test ! -e .github/workflows/package-v623.yml
+      - name: Build full rollback ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r Pocket-64-v6.2.4-FULL-PROJECT.zip . \
+            -x '.git/*' \
+            -x 'Pocket-64-v6.2.4-FULL-PROJECT.zip'
+          unzip -t Pocket-64-v6.2.4-FULL-PROJECT.zip
+          sha256sum Pocket-64-v6.2.4-FULL-PROJECT.zip > Pocket-64-v6.2.4-FULL-PROJECT.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pocket-64-v6.2.4-FULL-PROJECT
+          path: |
+            Pocket-64-v6.2.4-FULL-PROJECT.zip
+            Pocket-64-v6.2.4-FULL-PROJECT.sha256
+          if-no-files-found: error
