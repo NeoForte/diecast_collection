@@ -1,4 +1,4 @@
-## 6.4.6
+## 6.4.7
 - Tightened the chrome racing header vertically without cropping or shrinking the logo artwork.
 - Reduced only top/bottom header spacing; navigation and collection layout remain unchanged.
 
