@@ -1,0 +1,6 @@
+Pocket 64 v6.1.6
+
+Help cleanup
+- Removed the legacy separate Help & FAQs settings card that was still being injected by an older helper layer.
+- Kept one combined Help & Support entry with FAQs and Contact Support together.
+- No collection, photo, Set, backup, or database behavior changed.
