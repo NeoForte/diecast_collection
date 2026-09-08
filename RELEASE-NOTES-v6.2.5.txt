@@ -1,0 +1,8 @@
+Pocket 64 v6.2.5 — Set Empty-Slot Cache Hotfix
+
+- Fixes the restored Set empty-slot artwork not appearing in Safari after v6.2.4.
+- The image asset is present and the Set renderer still applies the correct `set-empty-photo` class.
+- Bumps the stylesheet cache key and the empty-slot image URL so Safari/edge caches cannot keep serving the earlier missing-asset response.
+- No collection, Set, photo, database, Supabase schema, or backup-format changes.
+
+Test focus: open any incomplete Set and verify every EMPTY SLOT card shows the original Pocket 64 missing-card artwork.
