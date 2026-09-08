@@ -1,3 +1,8 @@
+## 6.4.10
+- Replaced header and sign-in branding with the approved full-wheel logo, preserving its complete artwork and natural proportions.
+- Kept the left-aligned header and contain sizing so the wheel remains visible at phone widths.
+- Full-project release; no temporary patch files.
+
 ## 6.4.9
 - Removed the remaining horizontal header inset so the chrome racing banner starts at the far-left Safari viewport edge.
 - Preserved the full cropped logo, current vertical spacing, navigation, and all content below the header.
