@@ -1,5 +1,5 @@
 (() => {
-  const VERSION='6.1.6';
+  const VERSION='6.1.7';
   const loadSync=(src)=>{ if(document.readyState==='loading') document.write(`<script src="${src}?v=${VERSION}"><\/script>`); else { const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); } };
   const ensure=(src,token)=>{ if(document.querySelector(`script[src*="${token}"]`)) return; const s=document.createElement('script'); s.src=`${src}?v=${VERSION}`; s.async=false; document.head.append(s); };
 
@@ -9,6 +9,14 @@
   loadSync('p64-v525-core.js');
 
   const syncVersion=()=>document.querySelectorAll('.version-badge').forEach(el=>{el.textContent=`Version ${VERSION}`});
+
+  function installLegacyFaqSuppression(){
+    if(document.getElementById('p64-v617-faq-suppression')) return;
+    const style=document.createElement('style');
+    style.id='p64-v617-faq-suppression';
+    style.textContent='#p64-faq-settings-card,#p64-faq-overlay{display:none!important;visibility:hidden!important;pointer-events:none!important;}';
+    document.head.append(style);
+  }
 
   async function retirePwaLayer(){
     try {
@@ -29,11 +37,11 @@
 
   function removeLegacyFaqEntry(){
     document.getElementById('p64-faq-settings-card')?.remove();
-    const overlay=document.getElementById('p64-faq-overlay');
-    if(overlay) overlay.remove();
+    document.getElementById('p64-faq-overlay')?.remove();
   }
 
   function installHelpSupport(){
+    installLegacyFaqSuppression();
     removeLegacyFaqEntry();
     const button=document.getElementById('settings-support-button');
     const strong=button?.querySelector('strong');
@@ -58,6 +66,7 @@
   }
 
   function finishBoot(){
+    installLegacyFaqSuppression();
     setTimeout(()=>{
       ensure('p64-v531-viewer.js','p64-v531-viewer.js');
       ensure('p64-v538-set-flow.js','p64-v538-set-flow.js');
@@ -65,9 +74,7 @@
       syncVersion();
       installHelpSupport();
       retirePwaLayer();
-      setTimeout(()=>{syncVersion();installHelpSupport();},250);
-      setTimeout(()=>{syncVersion();installHelpSupport();},900);
-      setTimeout(installHelpSupport,1800);
+      [250,900,1800,3000].forEach(delay=>setTimeout(()=>{syncVersion();installHelpSupport();},delay));
     },0);
   }
 
