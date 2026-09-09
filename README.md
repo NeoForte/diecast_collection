@@ -26,3 +26,7 @@ Normal features and fixes should be implemented directly in permanent source. Te
 Keep a verified Pocket 64 backup before major changes. Full-project release ZIPs are rollback packages for the source tree; collection-data backups are handled by the app itself.
 
 For historical changes, see `CHANGELOG.md`.
+
+## v6.4.12 upload
+
+This ZIP contains the full project. Upload its contents into the existing repository, replacing matching files. Keep `supabase/functions/pocket64-support/index.ts` and `supabase/migrations/20260902_support_requests.sql` in their existing folders. The duplicated root `index*.ts` and `20260902_support_requests*.sql` copies are omitted; remove those root copies from an existing checkout if they are still present. No new database migration or support-function deployment is required for these UI changes.

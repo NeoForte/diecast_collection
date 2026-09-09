@@ -1,3 +1,16 @@
+# v6.4.12 — Sets, Help pages, and calmer visuals
+
+- Add to Set now uses a Release year dropdown followed by a prefilled Set dropdown and explicit Add to Set button. Changing years clears the previous choice. Existing assignments open on their own year.
+- Removed the gold plus badge from the main Add Car tile and strengthened its silver/blue border.
+- Replaced the Help popup with a normal Help & Support application screen and a separate Contact Support screen, linked by Help / Contact Support.
+- Restored the previous 22 FAQs and added four answers for the current Set picker, missing Sets, photo viewing, and cancel behavior. No FAQ search box.
+- Stats labels use softer silver; totals and count boxes use muted blue, with corresponding light-theme colors.
+- Removed the tire graphics from Set year headings and simplified the row layout.
+- Removed ten byte-identical root copies of backend SQL/TypeScript. Canonical backend files remain under supabase/.
+- Implemented changes in permanent source; removed the obsolete FAQ popup builder and its injected styles. No patch/hotfix file added.
+
+Validation: JavaScript syntax, HTML asset references and unique IDs, Help/Contact screen transitions, year filtering and alphabetical ordering, same-name Sets across years, existing-assignment selection, unsupported-year handling, and browsing without assignment passed. Live support submission and physical iPhone visual/gesture testing were not performed. The existing backend submission handler and photo viewer were preserved.
+
 ## 6.4.11
 - Added a real alpha-transparent PNG logo.
 - Framed the visible logo in a responsive SVG viewport to exclude empty canvas while retaining the full wheel and nearby glow.

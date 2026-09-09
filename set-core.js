@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '6.2.8'
+  const VERSION = '6.4.12'
   const PROJECT_REF = 'ftjayqjpgifdipmjloxx'
   const SETS_PREFIX = 'pocket64-sets-v1-'
   const SUPABASE_URL = 'https://ftjayqjpgifdipmjloxx.supabase.co'
@@ -268,7 +268,8 @@
       .p64-set-status{grid-column:1/-1;margin:0;color:#9ba7b3;font-size:12px;min-height:15px}
       .p64-set-picker-backdrop{position:fixed;inset:0;z-index:10060;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}
       .p64-set-picker{width:min(100%,390px);max-height:min(78dvh,680px);overflow:auto;border:1px solid rgba(64,157,247,.52);border-radius:18px;background:linear-gradient(145deg,#141a21,#06080b 76%);box-shadow:0 22px 60px rgba(0,0,0,.65);padding:16px}
-      .p64-set-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.p64-set-picker-head strong{font-size:15px;letter-spacing:.08em}.p64-set-close{width:38px;height:38px;border:0;background:transparent;color:#9fb0c0;font-size:26px}.p64-set-picker-status{color:#8798a8;font-size:12px;margin:0 0 10px}.p64-set-year{margin:14px 0 7px;color:#7fbfff;font-size:11px;font-weight:900;letter-spacing:.12em}.p64-set-choice{width:100%;min-height:44px;margin:0 0 8px;padding:9px 11px;border:1px solid rgba(83,150,215,.35);border-radius:10px;background:rgba(20,38,57,.72);color:#eaf4ff;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:800}.p64-set-choice span:last-child{color:#8fa6ba;font-weight:700;white-space:nowrap}
+      .p64-set-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.p64-set-picker-head strong{font-size:15px;letter-spacing:.08em}.p64-set-close{width:38px;height:38px;border:0;background:transparent;color:#9fb0c0;font-size:26px}.p64-set-picker-status{color:#8798a8;font-size:12px;margin:0 0 10px}#p64-set-list{display:grid;gap:10px}#p64-set-list label{color:#aebdcc;font-size:14px;font-weight:700}#p64-set-list select{width:100%;min-width:0;min-height:46px;font-size:16px;padding:10px;border:1px solid #536f89;border-radius:10px;background:#101b28;color:#c7d9e9}#p64-picker-assign{min-height:44px;margin-top:8px;border:1px solid #6389ae;background:#173a5a;color:#d3e4f4}#p64-picker-assign:disabled{opacity:.45;cursor:default}
+
       @media(max-width:390px){.p64-set-row{gap:10px}.p64-set-button{font-size:12px!important;padding:0 7px!important}}
     `
     document.head.append(style)
@@ -352,17 +353,58 @@
     }
   }
 
-  function renderList(host,sets) {
+  function renderList(host, sets) {
     host.replaceChildren()
-    if (!sets.length) { const p=document.createElement('p'); p.className='p64-set-picker-status'; p.textContent='No saved Sets found yet.'; host.append(p); return }
-    const groups=new Map()
-    for (const set of sets) { if(!groups.has(set.year)) groups.set(set.year,[]); groups.get(set.year).push(set) }
-    for (const year of [...groups.keys()].sort((a,b)=>Number(b)-Number(a))) {
-      const y=document.createElement('div'); y.className='p64-set-year'; y.textContent=year; host.append(y)
-      groups.get(year).sort((a,b)=>a.name.localeCompare(b.name)).forEach((set)=>{
-        const b=document.createElement('button'); b.type='button'; b.className='p64-set-choice'; b.innerHTML=`<span>${set.name}</span><span>${set.total} CARS</span>`; b.addEventListener('click',()=>chooseSet(set,b)); host.append(b)
-      })
+    if (!sets.length) {
+      const message = document.createElement('p')
+      message.className = 'p64-set-picker-status'
+      message.textContent = 'No Sets available. Close this box and use Create Set to add your own.'
+      host.append(message)
+      return
     }
+    const groups = new Map()
+    for (const set of sets) {
+      if (!groups.has(set.year)) groups.set(set.year, [])
+      groups.get(set.year).push(set)
+    }
+    host.innerHTML = '<label for="p64-picker-year">Release year</label><select id="p64-picker-year"></select><label for="p64-picker-set">Set</label><select id="p64-picker-set"></select><button id="p64-picker-assign" type="button" disabled>Add to Set</button>'
+    const yearSelect = host.querySelector('#p64-picker-year')
+    const setSelect = host.querySelector('#p64-picker-set')
+    const assign = host.querySelector('#p64-picker-assign')
+    const years = [...groups.keys()].sort((a,b) => Number(b)-Number(a))
+    yearSelect.append(new Option('Choose a year', ''))
+    for (const year of years) yearSelect.append(new Option(year, year))
+    const currentId = document.getElementById('set-select')?.value
+    const assigned = sets.find(set => set.id && set.id === currentId)
+    const editorYear = document.getElementById('model-year')?.value === 'Other'
+      ? document.getElementById('custom-year')?.value
+      : document.getElementById('model-year')?.value
+    const preferredYear = assigned?.year || editorYear || ''
+    yearSelect.value = years.includes(preferredYear) ? preferredYear : ''
+    let rows = []
+    const refreshSets = () => {
+      rows = [...(groups.get(yearSelect.value) || [])].sort((a,b) => a.name.localeCompare(b.name))
+      setSelect.replaceChildren(new Option(yearSelect.value ? 'Choose a Set' : 'Choose a year first', ''))
+      rows.forEach((set,index) => setSelect.append(new Option(`${set.name} (${set.total})`, String(index))))
+      setSelect.disabled = !rows.length
+      assign.disabled = true
+    }
+    refreshSets()
+    if (assigned && assigned.year === yearSelect.value) {
+      setSelect.value = String(rows.findIndex(set => set.id === assigned.id))
+      assign.disabled = setSelect.value === ''
+    }
+    yearSelect.addEventListener('change', refreshSets)
+    setSelect.addEventListener('change', () => { assign.disabled = setSelect.value === '' })
+    assign.addEventListener('click', async () => {
+      if (setSelect.value === '') return
+      const entry = rows[Number(setSelect.value)]
+      if (!entry) return
+      yearSelect.disabled = setSelect.disabled = true
+      await chooseSet(entry, assign)
+      yearSelect.disabled = false
+      setSelect.disabled = !rows.length
+    })
   }
 
   async function openPicker() {
@@ -370,10 +412,13 @@
     const overlay=document.createElement('div')
     overlay.id='p64-set-picker-backdrop'
     overlay.className='p64-set-picker-backdrop'
-    overlay.innerHTML='<div class="p64-set-picker" role="dialog" aria-modal="true"><div class="p64-set-picker-head"><strong>ADD TO SET</strong><button class="p64-set-close" type="button">×</button></div><p id="p64-set-picker-status" class="p64-set-picker-status">Loading all Sets…</p><div id="p64-set-list"></div></div>'
+    overlay.innerHTML='<div class="p64-set-picker" role="dialog" aria-modal="true" aria-labelledby="p64-set-picker-title"><div class="p64-set-picker-head"><strong id="p64-set-picker-title">ADD TO SET</strong><button class="p64-set-close" type="button" aria-label="Close Add to Set">×</button></div><p id="p64-set-picker-status" class="p64-set-picker-status" role="status">Loading Sets…</p><div id="p64-set-list"></div></div>'
     document.body.append(overlay)
     overlay.querySelector('.p64-set-close')?.addEventListener('click',()=>overlay.remove())
     overlay.addEventListener('click',(e)=>{if(e.target===overlay)overlay.remove()})
+    overlay.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { overlay.remove(); document.getElementById('p64-set-add')?.focus() }
+    })
     const list=overlay.querySelector('#p64-set-list')
     const status=overlay.querySelector('#p64-set-picker-status')
     const auth=currentUserContext()
@@ -399,7 +444,7 @@
 
     const allSets=mergeAllSets(references,personal)
     renderList(list,allSets)
-    if(status)status.textContent=allSets.length?'Choose a Set':'No Sets available'
+    if(status)status.textContent=allSets.length?'Choose a year, then a Set.':'No Sets available'
   }
 
   function refreshUi() {

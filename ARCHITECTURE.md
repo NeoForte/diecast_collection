@@ -11,7 +11,7 @@ Pocket 64 is intentionally Safari-first. The old installable-PWA layer is being 
 - `camera-safety.js` — iPhone/Safari camera-stream protection only, retained until dormant live-camera code is removed from `app.js`.
 - `viewer-core.js` — active, known-good iPhone/Safari photo-viewer sizing and gesture compatibility. A v6.2.9 attempt to retire it caused initial over-zoom and broken pinch/pan; v6.2.10 restored it. Do not remove or refactor without dedicated gesture regression testing.
 - `set-core.js` — permanent Set editor/create/picker module. v6.2.6 merged the former `set-flow.js` + `set-ui.js` helpers and removed their version-stamped DOM scaffolding.
-- `showcase-sync.js` — legacy-named but still active support/core services. It contains authoritative backup/restore plus account, Set-editor, FAQ, and Settings helpers. v6.2.8 removed its global delayed re-patch loop and main-view MutationObserver; initialization is now one-time and feature-specific observers remain only where DOM content genuinely changes.
+- `showcase-sync.js` — legacy-named but still active support/core services. It contains authoritative backup/restore plus account, Set-editor and Settings helpers. v6.2.8 removed its global delayed re-patch loop and main-view MutationObserver; initialization is now one-time and feature-specific observers remain only where DOM content genuinely changes.
 
 ## Removed compatibility layers
 - `p64-v525-patch.js` was retired in v6.2.7. Permanent helper modules now load directly from `index.html`, and its final Safari/PWA-retirement behavior lives in `app.js`.
@@ -49,3 +49,9 @@ The Newest sort, Set removal option, and Home-card copy changes are implemented 
 
 ## UI notes
 - As of v6.4.5, the Safari header uses the `pocket64-chrome-racing-banner.png` hero banner and the old top-row garage icon remains in source only as a hidden compatibility control for existing profile-icon logic in `app.js`.
+
+## Help and Set picker ownership
+
+Help & Support and Contact Support are ordinary sibling `.screen` sections in `index.html`, controlled by `showHelpPage` and the standard `hideScreens` lifecycle in `app.js`. FAQ content and styling live directly in `index.html` and `styles.css`; the obsolete overlay builder is removed from `showcase-sync.js`. Contact reuses the existing support form and backend invocation.
+
+`set-core.js` owns Add to Set's two native dropdowns. Choosing a year only changes the displayed options; the explicit Add to Set action uses the existing assignment path. Reference and saved Sets are merged by year and name. Source changes do not migrate collection records.

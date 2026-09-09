@@ -48,7 +48,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '6.4.11'
+const APP_VERSION = '6.4.12'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -526,6 +526,8 @@ function hideScreens() {
   settingsScreen.classList.remove('active')
   setsScreen?.classList.remove('active')
   editorScreen.classList.remove('active')
+  $('help-screen')?.classList.remove('active')
+  $('contact-screen')?.classList.remove('active')
 }
 
 const AUTH_PANEL_IDS = ['signin-panel','signup-panel','verify-panel','forgot-panel','reset-panel','support-panel']
@@ -701,17 +703,20 @@ async function sharePocket64App() {
   }
 }
 
-function openSettingsSupport() {
-  const overlay = $('settings-support-overlay')
-  const email = $('settings-support-email')
-  if (email) email.value = String(session?.user?.email || '').trim()
-  $('settings-support-form-message').textContent = ''
-  overlay?.classList.remove('hidden')
-  setTimeout(() => $('settings-support-message-input')?.focus(), 40)
+function showHelpPage(page = 'help') {
+  hideScreens()
+  backToTopButton?.classList.add('hidden')
+  $(page === 'contact' ? 'contact-screen' : 'help-screen').classList.add('active')
+  mainNav.classList.remove('hidden')
+  setActiveNav('settings')
+  window.scrollTo({ top:0, behavior:'auto' })
+  $(page === 'contact' ? 'contact-title' : 'help-title').focus({ preventScroll:true })
 }
 
-function closeSettingsSupport() {
-  $('settings-support-overlay')?.classList.add('hidden')
+function openSettingsSupport() {
+  const email = $('settings-support-email')
+  if (email) email.value = String(session?.user?.email || '').trim()
+  showHelpPage('contact')
 }
 
 function pocket64Confirm({ title='Are you sure?', message='', confirmText='Confirm', danger=false } = {}) {
@@ -1263,7 +1268,7 @@ function renderSetsLanding() {
     const head = document.createElement('button')
     head.type = 'button'
     head.className = 'set-year-header'
-    head.innerHTML = `<span class="set-wheel" data-year="${year}" aria-hidden="true"><span>${String(year).slice(-2)}</span></span><span class="set-year-copy"><strong>${year}</strong><small>${rows.length} SET${rows.length === 1 ? '' : 'S'}</small></span><span class="set-year-chevron" aria-hidden="true">⌄</span>`
+    head.innerHTML = `<span class="set-year-copy"><strong>${year}</strong><small>${rows.length} SET${rows.length === 1 ? '' : 'S'}</small></span><span class="set-year-chevron" aria-hidden="true">⌄</span>`
     const list = document.createElement('div')
     list.className = 'set-year-list'
 
@@ -4128,9 +4133,10 @@ async function saveProfileIcon(file) {
 }
 
 $('share-app-button')?.addEventListener('click', sharePocket64App)
-$('settings-support-button')?.addEventListener('click', openSettingsSupport)
-$('settings-support-close')?.addEventListener('click', closeSettingsSupport)
-$('settings-support-overlay')?.addEventListener('click', (event) => { if (event.target === $('settings-support-overlay')) closeSettingsSupport() })
+$('settings-support-button')?.addEventListener('click', () => showHelpPage())
+$('help-back-button')?.addEventListener('click', showSettings)
+$('help-contact-button')?.addEventListener('click', openSettingsSupport)
+$('contact-back-button')?.addEventListener('click', () => showHelpPage())
 $('settings-support-form')?.addEventListener('submit', async (event) => {
   event.preventDefault()
   const email = $('settings-support-email').value.trim().toLowerCase()
@@ -4717,7 +4723,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=6.4.11', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6.4.12', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)
