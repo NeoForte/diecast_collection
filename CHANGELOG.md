@@ -1,3 +1,9 @@
+# v6.4.13 — Clear Collection button fix
+
+- Fixed Settings → Danger Zone → Clear Collection not responding.
+- Clear Collection now uses delegated click handling so the dynamically injected Danger Zone button is reliably wired after page load.
+- Preserves the existing two-step confirmation and account-scoped deletion behavior.
+
 # v6.4.12 — Sets, Help pages, and calmer visuals
 
 - Add to Set now uses a Release year dropdown followed by a prefilled Set dropdown and explicit Add to Set button. Changing years clears the previous choice. Existing assignments open on their own year.

@@ -5703,7 +5703,7 @@ html[data-theme="light"] .p64-modal-overlay { background:rgba(0,0,0,.42); }
 
 
 
-/* v6.4.12 — compact, transparent branding in normal document flow.
+/* v6.4.13 — compact, transparent branding in normal document flow.
    The SVG viewBox frames the PNG's visible artwork, not its empty canvas.
    Keep the complete wheel and its close glow within the 128..624 frame. */
 .topbar {
