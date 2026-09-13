@@ -48,7 +48,7 @@ const SPECIAL_STATUSES = ['TH', 'STH', 'Silver Series', 'Premium', 'Car Culture'
 const COLOR_PRESETS = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Gold', 'Brown', 'Tan', 'Other']
 const EXCLUSIVE_RETAILERS = ['Walmart', 'Target', 'Walgreens', 'Dollar General', 'Kroger', 'Other']
 const EXCLUSIVE_TYPES = ['Store Recolor', 'ZAMAC', 'Red Edition', 'Exclusive Series', 'Other']
-const APP_VERSION = '6.4.13'
+const APP_VERSION = '6.4.14'
 const VERIFY_REDIRECT_URL = `${APP_URL}?verified=1`
 const RESET_REDIRECT_URL = `${APP_URL}?reset=1`
 const PENDING_VERIFY_EMAIL_KEY = 'pocket64-pending-verify-email'
@@ -2279,14 +2279,6 @@ async function loadCars() {
   return carsLoadPromise
 }
 
-function backupFilename(extension = 'zip') {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `Pocket64_Backup_${year}-${month}-${day}.${extension}`
-}
-
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -2341,111 +2333,6 @@ async function validateBackupIntegrity(zip, backup) {
     }
   }
   return { verified: true, legacy: false }
-}
-
-async function exportBackup() {
-  if (!session?.user) {
-    alert('Your session expired. Sign out and sign back in, then try the backup again.')
-    return
-  }
-
-  const button = $('backup-button')
-  const restoreButton = $('restore-button')
-  const originalText = button.textContent
-  button.disabled = true
-  restoreButton.disabled = true
-  button.textContent = 'Preparing…'
-
-  try {
-    const JSZip = requireZipSupport()
-    await loadCars()
-
-    const zip = new JSZip()
-    const photoMap = {}
-    const integrityFiles = {}
-    const photoEntries = cars.flatMap((car) => [
-      { car, slot:1, path:car.photo_path },
-      { car, slot:2, path:car.photo2_path },
-      { car, slot:3, path:car.photo3_path },
-    ].filter((item) => Boolean(item.path)))
-    const failures = []
-
-    for (let index = 0; index < photoEntries.length; index += 1) {
-      const { car, slot, path } = photoEntries[index]
-      button.textContent = `Photos ${index + 1}/${photoEntries.length}`
-      const data = await getPrivatePhotoBlob(path)
-      if (!data) {
-        failures.push(`${car.model || car.id} photo ${slot}`)
-        continue
-      }
-      const photoFile = `photos/${car.id}-${slot}.jpg`
-      if (!photoMap[car.id] || typeof photoMap[car.id] !== 'object') photoMap[car.id] = {}
-      photoMap[car.id][String(slot)] = photoFile
-      zip.file(photoFile, data, { binary: true, compression: 'STORE' })
-      integrityFiles[photoFile] = await sha256Hex(data)
-    }
-
-    if (failures.length) {
-      const preview = failures.slice(0, 5).join(', ')
-      const more = failures.length > 5 ? ` and ${failures.length - 5} more` : ''
-      throw new Error(`${failures.length} stored photo${failures.length === 1 ? '' : 's'} could not be downloaded (${preview}${more}). No backup file was created so you do not mistake an incomplete backup for a complete one. Please retry.`)
-    }
-
-    const backupCars = cars.map((car) => ({ ...car }))
-    const backup = {
-      format: 'ajs-garage-backup',
-      version: 7,
-      exported_at: new Date().toISOString(),
-      source_user_id: session.user.id,
-      car_count: backupCars.length,
-      photo_count: photoEntries.length,
-      note: 'Self-contained Pocket 64 backup. backup.json contains all current collection fields and the photos folder contains the actual private car images.',
-      photos: photoMap,
-      sets: readSetsState(),
-      cars: backupCars,
-    }
-
-    const backupText = JSON.stringify(backup, null, 2)
-    zip.file('backup.json', backupText)
-    integrityFiles['backup.json'] = await sha256Hex(backupText)
-    zip.file('integrity.json', JSON.stringify({
-      format: 'pocket64-integrity',
-      version: 1,
-      algorithm: 'SHA-256',
-      generated_at: backup.exported_at,
-      files: integrityFiles,
-    }, null, 2))
-    zip.file('README.txt', [
-      "Pocket 64 Disaster-Recovery Backup",
-      '',
-      `Exported: ${backup.exported_at}`,
-      `Cars: ${backup.car_count}`,
-      `Photos: ${backup.photo_count}`,
-      '',
-      'Keep this ZIP file somewhere safe. Do not unzip or modify it before restoring in Pocket 64.',
-      'The backup contains collection data, Sets, and the actual stored car images, including optional photos 2 and 3.',
-      'Pocket 64 v3.3.0+ also validates SHA-256 checksums before a restore changes your collection.',
-    ].join('\n'))
-
-    button.textContent = 'Packing…'
-    const blob = await zip.generateAsync(
-      { type: 'blob', compression: 'STORE' },
-      (metadata) => { button.textContent = `Packing ${Math.round(metadata.percent)}%` },
-    )
-    downloadBlob(blob, backupFilename('zip'))
-    recordSuccessfulBackup()
-
-    button.textContent = 'Saved ✓'
-    setTimeout(() => { button.textContent = originalText }, 1800)
-  } catch (err) {
-    console.error(err)
-    button.textContent = 'Backup failed'
-    alert(`Backup failed: ${err.message || err}`)
-    setTimeout(() => { button.textContent = originalText }, 2600)
-  } finally {
-    button.disabled = false
-    restoreButton.disabled = false
-  }
 }
 
 function isUuid(value) {
@@ -4219,8 +4106,7 @@ $('share-button').addEventListener('click', shareCurrentCar)
 $('quantity-minus').addEventListener('click', () => stepQuantity(-1))
 $('quantity-plus').addEventListener('click', () => stepQuantity(1))
 deleteButton.addEventListener('click', deleteCar)
-$('backup-button').addEventListener('click', exportBackup)
-$('backup-reminder-now').addEventListener('click', exportBackup)
+document.addEventListener('pocket64:backup-completed', recordSuccessfulBackup)
 $('backup-reminder-later').addEventListener('click', () => {
   try { localStorage.setItem(BACKUP_REMINDER_DISMISSED_KEY, String(Date.now())) } catch {}
   updateBackupReminder()
@@ -4729,7 +4615,7 @@ if (isVerificationReturn) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=6.4.13', { updateViaCache:'none' })
+      const registration = await navigator.serviceWorker.register('./sw.js?v=6.4.14', { updateViaCache:'none' })
       await registration.update()
     } catch (error) {
       console.error('Service worker registration failed', error)

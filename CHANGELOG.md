@@ -1,3 +1,10 @@
+# v6.4.14 — Backup date and export cleanup
+
+- Record the last-backup date when a verified cloud backup starts downloading; refresh the date and reminder immediately.
+- Use the same cloud exporter for Settings and the backup reminder; remove the duplicate legacy exporter.
+- Prevent overlapping exports and restore each button's prior state after success or failure.
+- Preserve the v6.4.13 Clear Collection fix.
+
 # v6.4.13 — Clear Collection button fix
 
 - Fixed Settings → Danger Zone → Clear Collection not responding.

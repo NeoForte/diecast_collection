@@ -683,6 +683,7 @@
     }
 
     p64DownloadBlob(blob, p64BackupFilename('zip'))
+    document.dispatchEvent(new CustomEvent('pocket64:backup-completed'))
 
     nativeAlert(
       `Backup complete ✓\n\n` +
@@ -695,20 +696,17 @@
     if (document.documentElement.dataset.p64CloudOwnedBackup === '1') return
     document.documentElement.dataset.p64CloudOwnedBackup = '1'
 
-    document.addEventListener('click', (event) => {
-      const button = event.target?.closest?.('#backup-button')
-      if (!button) return
+    const buttons = ['backup-button', 'backup-reminder-now']
+      .map((id) => document.getElementById(id)).filter(Boolean)
+    let backupInProgress = false
 
-      // This module owns the backup action. Stop the older app.js path so there is
-      // one authoritative cloud-backed export and no duplicate click handling.
-      event.preventDefault()
-      event.stopImmediatePropagation()
-
-      const restoreButton = document.getElementById('restore-button')
-      const originalText = button.textContent || 'Backup'
-
-      button.disabled = true
-      if (restoreButton) restoreButton.disabled = true
+    for (const button of buttons) button.addEventListener('click', () => {
+      if (backupInProgress) return
+      backupInProgress = true
+      const controls = [...buttons, document.getElementById('restore-button')].filter(Boolean)
+      const previousStates = controls.map((control) => control.disabled)
+      const originalText = button.textContent
+      controls.forEach((control) => { control.disabled = true })
 
       buildAuthoritativeBackupFromCloud(button)
         .catch((error) => {
@@ -716,11 +714,11 @@
           nativeAlert(`Backup failed: ${error.message || error}`)
         })
         .finally(() => {
-          button.disabled = false
+          controls.forEach((control, index) => { control.disabled = previousStates[index] })
           button.textContent = originalText
-          if (restoreButton) restoreButton.disabled = false
+          backupInProgress = false
         })
-    }, true)
+    })
   }
 
   function installOwnedRestore() {

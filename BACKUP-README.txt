@@ -1,9 +1,9 @@
-Pocket 64 v6.4.13 — Clear Collection fix + Support email
+Pocket 64 v6.4.14 — Backup date fix + unified cloud export
 Source commit: 0228f27d7cf55bb665d0c70587720c577f27810f
 
 This is the current full-project backup.
 Includes the deployed support function with working Resend notifications.
-App version is 6.4.13. Clear Collection event wiring is fixed in this build.
+App version is 6.4.14. Clear Collection event wiring is fixed in this build.
 
 Restoring the website files alone does not redeploy the Supabase function.
 If restoring the backend, deploy supabase/functions/pocket64-support/index.ts
