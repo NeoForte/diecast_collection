@@ -3,6 +3,9 @@ name: Package Pocket 64 Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   package:
     runs-on: ubuntu-latest
@@ -20,6 +23,7 @@ jobs:
       - name: Verify source
         shell: bash
         run: |
+          set -euo pipefail
           VERSION="${{ steps.version.outputs.version }}"
           grep -q "const APP_VERSION = '$VERSION'" app.js
           grep -q "styles.css?v=$VERSION" index.html
@@ -28,9 +32,12 @@ jobs:
           test -f viewer-core.js
           test -f CHANGELOG.md
           test -f ARCHITECTURE.md
+          test -f IOS-HANDOFF.md
           test ! -f p64-v525-patch.js
           test ! -f set-flow.js
           test ! -f set-ui.js
+          test ! -f index.ts
+          test ! -f "index (6).ts"
           node --check app.js
           node --check showcase-sync.js
           node --check set-core.js
@@ -42,11 +49,14 @@ jobs:
       - name: Package full project
         shell: bash
         run: |
+          set -euo pipefail
           VERSION="${{ steps.version.outputs.version }}"
           ZIP="Pocket-64-v${VERSION}-FULL-PROJECT.zip"
           zip -r "$ZIP" . -x '.git/*' "$ZIP"
+          unzip -t "$ZIP"
 
       - uses: actions/upload-artifact@v4
         with:
           name: Pocket-64-v${{ steps.version.outputs.version }}-FULL-PROJECT
           path: Pocket-64-v${{ steps.version.outputs.version }}-FULL-PROJECT.zip
+          if-no-files-found: error
